@@ -344,16 +344,16 @@ export default function AdminDashboard({
       {/* Top bar */}
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3 shadow-sm">
         <div className="flex items-center gap-3">
-          <Image src="/logo.png" alt="Logo" width={36} height={36} className="rounded-lg" />
+          <Image src="/logo.png" alt="Logo" width={36} height={36} className="rounded-xl shadow-xs" />
           <div>
-            <h1 className="text-base font-bold text-[#2E3192]">Panel Camrevoc</h1>
-            <p className="text-xs text-gray-500">Operando como: <strong>{operator}</strong></p>
+            <h1 className="text-base font-bold text-slate-900">Panel Camrevoc</h1>
+            <p className="text-xs text-slate-500">Operando como: <strong className="text-slate-800">{operator}</strong></p>
           </div>
         </div>
         <button
           onClick={handleLogout}
           disabled={isPending}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-100 transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 shadow-xs transition-colors"
         >
           <LogOut className="h-3.5 w-3.5" />
           Salir
@@ -366,7 +366,7 @@ export default function AdminDashboard({
           <MetricCard
             label="Pollos solicitados"
             value={String(metrics.totalSolicitados)}
-            color="border-[#2E3192]"
+            color="border-slate-800"
           />
           <MetricCard
             label="Pollos confirmados"
@@ -394,8 +394,8 @@ export default function AdminDashboard({
                 onClick={() => setFilter(f)}
                 className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
                   filter === f
-                    ? "bg-[#2E3192] text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    ? "bg-[#009B4D] text-white shadow-xs"
+                    : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-100"
                 }`}
               >
                 {f}
@@ -403,13 +403,13 @@ export default function AdminDashboard({
             ))}
           </div>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Buscar por nombre o WhatsApp…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-xl border border-gray-300 py-2 pl-9 pr-4 text-sm focus:border-[#2E3192] focus:outline-none focus:ring-2 focus:ring-[#2E3192]/20 sm:w-72"
+              className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-4 text-sm text-slate-900 shadow-xs focus:border-[#009B4D] focus:outline-none focus:ring-2 focus:ring-[#009B4D]/20 sm:w-72"
             />
           </div>
         </div>

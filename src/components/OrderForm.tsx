@@ -17,209 +17,6 @@ import {
   AlertCircle,
 } from "lucide-react";
 
-// ─── Theme system ─────────────────────────────────────────────────────────────
-
-export type Theme = "minimal" | "calido" | "dark";
-
-interface ThemeTokens {
-  // Page
-  pageBg: string;
-  // Card (the white container)
-  cardBg: string;
-  cardBorder: string;
-  cardShadow: string;
-  cardRounded: string;
-  // Section headings
-  sectionHeading: string;
-  // Labels / body text
-  labelText: string;
-  bodyText: string;
-  mutedText: string;
-  // Inputs
-  inputBg: string;
-  inputBorder: string;
-  inputText: string;
-  inputPlaceholder: string;
-  inputFocus: string;
-  inputDisabled: string;
-  // Primary button
-  btnPrimary: string;
-  btnPrimaryHover: string;
-  btnPrimaryText: string;
-  // Accent / copy button
-  copyBtn: string;
-  copyBtnHover: string;
-  copyBtnText: string;
-  copyBtnBorder: string;
-  // Bank card
-  bankCardBg: string;
-  bankCardBorder: string;
-  bankCardTitle: string;
-  bankCardText: string;
-  bankCardMono: string;
-  // Vale distributor
-  valeCollapsedBg: string;
-  valeCollapsedBorder: string;
-  valeExpandedBg: string;
-  valeExpandedBorder: string;
-  valeNumBg: string;
-  valeNumText: string;
-  valeAddBtn: string;
-  valeExpandLink: string;
-  // File drop zone
-  dropZoneBg: string;
-  dropZoneBorder: string;
-  dropZoneHover: string;
-  dropZoneText: string;
-  dropZoneAccent: string;
-  // Success
-  successAccent: string;
-  // Footer text
-  footerText: string;
-  // Header subtitle
-  headerSubtitle: string;
-}
-
-export const THEMES: Record<Theme, ThemeTokens> = {
-  minimal: {
-    pageBg: "bg-slate-50",
-    cardBg: "bg-white",
-    cardBorder: "border border-slate-200",
-    cardShadow: "shadow-xl shadow-slate-200/60",
-    cardRounded: "rounded-3xl",
-    sectionHeading: "text-[#1E293B]",
-    labelText: "text-slate-700",
-    bodyText: "text-slate-800",
-    mutedText: "text-slate-500",
-    inputBg: "bg-white",
-    inputBorder: "border-slate-300",
-    inputText: "text-slate-900",
-    inputPlaceholder: "placeholder-slate-400",
-    inputFocus: "focus:border-[#009B4D] focus:ring-[#009B4D]/20",
-    inputDisabled: "disabled:bg-slate-50",
-    btnPrimary: "bg-[#009B4D]",
-    btnPrimaryHover: "hover:bg-[#007a3d]",
-    btnPrimaryText: "text-white",
-    copyBtn: "bg-slate-50",
-    copyBtnHover: "hover:bg-[#009B4D]/10",
-    copyBtnText: "text-slate-700",
-    copyBtnBorder: "border-slate-300",
-    bankCardBg: "bg-gradient-to-br from-emerald-50 to-teal-50",
-    bankCardBorder: "border-emerald-200",
-    bankCardTitle: "text-emerald-800",
-    bankCardText: "text-slate-700",
-    bankCardMono: "text-slate-900",
-    valeCollapsedBg: "bg-slate-50",
-    valeCollapsedBorder: "border-slate-300",
-    valeExpandedBg: "bg-white",
-    valeExpandedBorder: "border-slate-200",
-    valeNumBg: "bg-emerald-100",
-    valeNumText: "text-emerald-800",
-    valeAddBtn: "border-[#009B4D]/40 text-[#009B4D] hover:bg-[#009B4D]/5",
-    valeExpandLink: "text-[#009B4D] hover:text-[#007a3d]",
-    dropZoneBg: "bg-slate-50",
-    dropZoneBorder: "border-slate-300",
-    dropZoneHover: "hover:border-[#009B4D] hover:bg-emerald-50/50",
-    dropZoneText: "text-slate-600",
-    dropZoneAccent: "text-[#009B4D]",
-    successAccent: "text-[#009B4D]",
-    footerText: "text-slate-500",
-    headerSubtitle: "text-slate-500",
-  },
-
-  calido: {
-    pageBg: "bg-[#FBF9F5]",
-    cardBg: "bg-white/95",
-    cardBorder: "border border-stone-200",
-    cardShadow: "shadow-2xl shadow-stone-300/40",
-    cardRounded: "rounded-3xl",
-    sectionHeading: "text-stone-800",
-    labelText: "text-stone-700",
-    bodyText: "text-stone-800",
-    mutedText: "text-stone-500",
-    inputBg: "bg-stone-50",
-    inputBorder: "border-stone-300",
-    inputText: "text-stone-900",
-    inputPlaceholder: "placeholder-stone-400",
-    inputFocus: "focus:border-[#E52427] focus:ring-[#E52427]/20",
-    inputDisabled: "disabled:bg-stone-100",
-    btnPrimary: "bg-[#E52427]",
-    btnPrimaryHover: "hover:bg-[#c41f22]",
-    btnPrimaryText: "text-white",
-    copyBtn: "bg-stone-100",
-    copyBtnHover: "hover:bg-[#009B4D]/10",
-    copyBtnText: "text-stone-700",
-    copyBtnBorder: "border-stone-300",
-    bankCardBg: "bg-gradient-to-br from-amber-50 to-orange-50",
-    bankCardBorder: "border-amber-200",
-    bankCardTitle: "text-amber-800",
-    bankCardText: "text-stone-700",
-    bankCardMono: "text-stone-900",
-    valeCollapsedBg: "bg-stone-50",
-    valeCollapsedBorder: "border-stone-300",
-    valeExpandedBg: "bg-white",
-    valeExpandedBorder: "border-stone-200",
-    valeNumBg: "bg-red-100",
-    valeNumText: "text-[#E52427]",
-    valeAddBtn: "border-[#E52427]/40 text-[#E52427] hover:bg-[#E52427]/5",
-    valeExpandLink: "text-[#E52427] hover:text-[#c41f22]",
-    dropZoneBg: "bg-stone-50",
-    dropZoneBorder: "border-stone-300",
-    dropZoneHover: "hover:border-[#009B4D] hover:bg-green-50/50",
-    dropZoneText: "text-stone-600",
-    dropZoneAccent: "text-[#009B4D]",
-    successAccent: "text-[#009B4D]",
-    footerText: "text-stone-500",
-    headerSubtitle: "text-amber-700",
-  },
-
-  dark: {
-    pageBg: "bg-[#0B0F17]",
-    cardBg: "bg-[#151B28]",
-    cardBorder: "border border-slate-800",
-    cardShadow: "shadow-2xl shadow-black/60",
-    cardRounded: "rounded-3xl",
-    sectionHeading: "text-slate-100",
-    labelText: "text-slate-300",
-    bodyText: "text-slate-200",
-    mutedText: "text-slate-500",
-    inputBg: "bg-[#1E2635]",
-    inputBorder: "border-slate-700",
-    inputText: "text-slate-100",
-    inputPlaceholder: "placeholder-slate-600",
-    inputFocus: "focus:border-emerald-500 focus:ring-emerald-500/20",
-    inputDisabled: "disabled:bg-[#1a2030]",
-    btnPrimary: "bg-emerald-600",
-    btnPrimaryHover: "hover:bg-emerald-500",
-    btnPrimaryText: "text-white",
-    copyBtn: "bg-slate-800",
-    copyBtnHover: "hover:bg-emerald-900/50",
-    copyBtnText: "text-slate-300",
-    copyBtnBorder: "border-slate-700",
-    bankCardBg: "bg-gradient-to-br from-slate-800 to-slate-900",
-    bankCardBorder: "border-slate-700",
-    bankCardTitle: "text-emerald-400",
-    bankCardText: "text-slate-300",
-    bankCardMono: "text-slate-100",
-    valeCollapsedBg: "bg-[#1E2635]",
-    valeCollapsedBorder: "border-slate-700",
-    valeExpandedBg: "bg-[#1E2635]",
-    valeExpandedBorder: "border-slate-700",
-    valeNumBg: "bg-emerald-900/50",
-    valeNumText: "text-emerald-400",
-    valeAddBtn: "border-emerald-700/60 text-emerald-400 hover:bg-emerald-900/30",
-    valeExpandLink: "text-emerald-400 hover:text-emerald-300",
-    dropZoneBg: "bg-[#1E2635]",
-    dropZoneBorder: "border-slate-700",
-    dropZoneHover: "hover:border-emerald-600 hover:bg-emerald-900/20",
-    dropZoneText: "text-slate-400",
-    dropZoneAccent: "text-emerald-400",
-    successAccent: "text-emerald-400",
-    footerText: "text-slate-600",
-    headerSubtitle: "text-slate-400",
-  },
-};
-
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function formatARS(amount: number) {
@@ -235,12 +32,10 @@ function formatARS(amount: number) {
 function CopyButton({
   value,
   label,
-  t,
   highlight,
 }: {
   value: string;
   label: string;
-  t: ThemeTokens;
   highlight?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
@@ -255,15 +50,16 @@ function CopyButton({
     <button
       type="button"
       onClick={handleCopy}
-      className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all
-        ${copied ? "border-green-400 bg-green-500/10 text-green-600" : `${t.copyBtn} ${t.copyBtnHover} ${t.copyBtnText} ${t.copyBtnBorder}`}
-        ${highlight ? "font-semibold" : ""}
-      `}
+      className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
+        copied
+          ? "border-emerald-400 bg-emerald-50 text-emerald-700 shadow-sm"
+          : "border-slate-300 bg-slate-50 text-slate-700 hover:border-emerald-300 hover:bg-emerald-50/50"
+      } ${highlight ? "font-semibold" : ""}`}
     >
       {copied ? (
-        <Check className="h-3.5 w-3.5 text-green-500" />
+        <Check className="h-3.5 w-3.5 text-emerald-600" />
       ) : (
-        <Copy className="h-3.5 w-3.5" />
+        <Copy className="h-3.5 w-3.5 text-slate-500" />
       )}
       {copied ? "¡Copiado!" : `Copiar ${label}`}
     </button>
@@ -272,48 +68,52 @@ function CopyButton({
 
 // ─── BankCard ─────────────────────────────────────────────────────────────────
 
-function BankCard({ t }: { t: ThemeTokens }) {
+function BankCard() {
   return (
-    <div className={`rounded-2xl border p-5 ${t.bankCardBg} ${t.bankCardBorder}`}>
-      <h2 className={`mb-4 text-sm font-bold uppercase tracking-wider ${t.bankCardTitle}`}>
+    <div className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50/80 to-teal-50/60 p-5 shadow-sm">
+      <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-emerald-800">
         💳 Datos para transferencia
       </h2>
-      <div className={`space-y-2.5 text-sm ${t.bankCardText}`}>
+      <div className="space-y-3 text-sm text-slate-700">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <p>
+            <span className="font-semibold text-slate-900">Banco:</span>{" "}
+            {DATOS_BANCARIOS.banco}
+          </p>
+          <p className="sm:col-span-2">
+            <span className="font-semibold text-slate-900">Titular:</span>{" "}
+            {DATOS_BANCARIOS.titular}
+          </p>
+        </div>
         <p>
-          <span className={`font-semibold ${t.bankCardMono}`}>Banco:</span>{" "}
-          {DATOS_BANCARIOS.banco}
-        </p>
-        <p>
-          <span className={`font-semibold ${t.bankCardMono}`}>Titular:</span>{" "}
-          {DATOS_BANCARIOS.titular}
-        </p>
-        <p>
-          <span className={`font-semibold ${t.bankCardMono}`}>CUIT:</span>{" "}
+          <span className="font-semibold text-slate-900">CUIT:</span>{" "}
           {DATOS_BANCARIOS.cuit}
         </p>
 
         {/* CBU row */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 pt-1">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-200/70 bg-white/70 px-3.5 py-2.5">
           <div className="flex flex-col">
-            <span className={`text-xs font-semibold uppercase tracking-wide ${t.bankCardTitle}`}>
+            <span className="text-[11px] font-bold uppercase tracking-wide text-emerald-800">
               CBU
             </span>
-            <span className={`font-mono text-xs ${t.bankCardMono}`}>{DATOS_BANCARIOS.cbu}</span>
+            <span className="font-mono text-xs text-slate-900 sm:text-sm">
+              {DATOS_BANCARIOS.cbu}
+            </span>
           </div>
-          <CopyButton value={DATOS_BANCARIOS.cbu} label="CBU" t={t} />
+          <CopyButton value={DATOS_BANCARIOS.cbu} label="CBU" />
         </div>
 
-        {/* Alias row — highlighted */}
-        <div className={`flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border p-3 ${t.bankCardBg} ${t.bankCardBorder}`}>
+        {/* Alias row — destacado */}
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-300 bg-white px-3.5 py-3 shadow-sm">
           <div className="flex flex-col">
-            <span className={`text-xs font-bold uppercase tracking-wide ${t.bankCardTitle}`}>
+            <span className="text-[11px] font-bold uppercase tracking-wide text-emerald-800">
               🏷️ Alias (recomendado)
             </span>
-            <span className={`font-mono text-lg font-extrabold tracking-widest ${t.bankCardMono}`}>
+            <span className="font-mono text-base font-extrabold tracking-wider text-emerald-950 sm:text-lg">
               {DATOS_BANCARIOS.alias}
             </span>
           </div>
-          <CopyButton value={DATOS_BANCARIOS.alias} label="Alias" t={t} highlight />
+          <CopyButton value={DATOS_BANCARIOS.alias} label="Alias" highlight />
         </div>
       </div>
     </div>
@@ -333,14 +133,12 @@ function ValesDistributor({
   nombreComprador,
   vales,
   onChange,
-  t,
   isBusy,
 }: {
   totalPollos: number;
   nombreComprador: string;
   vales: ValeRow[];
   onChange: (v: ValeRow[]) => void;
-  t: ThemeTokens;
   isBusy: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -363,15 +161,13 @@ function ValesDistributor({
     onChange(vales.map((v) => (v.id === id ? { ...v, [field]: value } : v)));
   };
 
-  const inputCls = `w-full rounded-lg border px-2 py-1.5 text-sm transition-colors focus:outline-none focus:ring-2
-    ${t.inputBg} ${t.inputBorder} ${t.inputText} ${t.inputFocus} ${t.inputDisabled}`;
+  const inputCls =
+    "w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors placeholder-slate-400 focus:border-[#009B4D] focus:outline-none focus:ring-2 focus:ring-[#009B4D]/20 disabled:bg-slate-50";
 
   if (!expanded) {
     return (
-      <div
-        className={`rounded-xl border border-dashed p-4 text-center ${t.valeCollapsedBg} ${t.valeCollapsedBorder}`}
-      >
-        <p className={`mb-2 text-sm ${t.bodyText}`}>
+      <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-center">
+        <p className="mb-2 text-sm text-slate-700">
           Se generará <strong>1 vale</strong> por los {totalPollos} pollo
           {totalPollos !== 1 ? "s" : ""} a nombre de{" "}
           <strong>{nombreComprador || "vos"}</strong>.
@@ -379,7 +175,7 @@ function ValesDistributor({
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className={`inline-flex items-center gap-1.5 text-sm font-medium ${t.valeExpandLink}`}
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#009B4D] hover:text-[#007a3d]"
         >
           <Plus className="h-4 w-4" />
           Dividir en varios vales / QRs
@@ -391,7 +187,7 @@ function ValesDistributor({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className={`text-sm font-semibold ${t.sectionHeading}`}>Distribución de vales</h3>
+        <h3 className="text-sm font-semibold text-slate-900">Distribución de vales</h3>
         <button
           type="button"
           onClick={() => {
@@ -404,7 +200,7 @@ function ValesDistributor({
               },
             ]);
           }}
-          className={`text-xs underline ${t.mutedText} hover:${t.bodyText}`}
+          className="text-xs text-slate-500 underline hover:text-slate-700"
         >
           Volver a 1 solo vale
         </button>
@@ -413,10 +209,10 @@ function ValesDistributor({
       {/* Balance indicator */}
       {diferencia !== 0 && (
         <div
-          className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+          className={`flex items-center gap-2 rounded-xl border px-3.5 py-2 text-sm ${
             diferencia > 0
-              ? "border-amber-300 bg-amber-50 text-amber-700"
-              : "border-red-300 bg-red-50 text-red-700"
+              ? "border-amber-300 bg-amber-50 text-amber-800"
+              : "border-rose-300 bg-rose-50 text-rose-800"
           }`}
         >
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
@@ -426,7 +222,7 @@ function ValesDistributor({
         </div>
       )}
       {diferencia === 0 && sumaActual > 0 && (
-        <div className="flex items-center gap-2 rounded-lg border border-green-300 bg-green-50 px-3 py-2 text-sm text-green-700">
+        <div className="flex items-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-3.5 py-2 text-sm text-emerald-800">
           <Check className="h-4 w-4 flex-shrink-0" />
           ¡La distribución está completa!
         </div>
@@ -436,16 +232,14 @@ function ValesDistributor({
         {vales.map((vale, idx) => (
           <div
             key={vale.id}
-            className={`flex gap-2 rounded-xl border p-3 ${t.valeExpandedBg} ${t.valeExpandedBorder}`}
+            className="flex gap-2.5 rounded-xl border border-slate-200 bg-white p-3 shadow-xs"
           >
-            <span
-              className={`mt-2.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold ${t.valeNumBg} ${t.valeNumText}`}
-            >
+            <span className="mt-2.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-800">
               {idx + 1}
             </span>
             <div className="flex flex-1 flex-col gap-2 sm:flex-row">
               <div className="flex flex-col gap-1">
-                <label className={`text-xs font-medium ${t.labelText}`}>Pollos</label>
+                <label className="text-xs font-medium text-slate-600">Pollos</label>
                 <input
                   type="number"
                   min={1}
@@ -454,11 +248,11 @@ function ValesDistributor({
                     updateVale(vale.id, "cantidad_pollos", Math.max(1, parseInt(e.target.value) || 1))
                   }
                   disabled={isBusy}
-                  className={`${inputCls} w-20 text-center`}
+                  className={`${inputCls} w-20 text-center font-semibold`}
                 />
               </div>
               <div className="flex flex-1 flex-col gap-1">
-                <label className={`text-xs font-medium ${t.labelText}`}>
+                <label className="text-xs font-medium text-slate-600">
                   ¿A nombre de quién retira?
                 </label>
                 <input
@@ -475,7 +269,8 @@ function ValesDistributor({
               <button
                 type="button"
                 onClick={() => removeVale(vale.id)}
-                className="mt-2 self-start rounded-lg p-1.5 text-slate-400 hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                className="mt-2 self-start rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-colors"
+                title="Eliminar vale"
               >
                 <Trash2 className="h-4 w-4" />
               </button>
@@ -487,7 +282,7 @@ function ValesDistributor({
       <button
         type="button"
         onClick={addVale}
-        className={`flex w-full items-center justify-center gap-2 rounded-xl border border-dashed py-2.5 text-sm font-medium transition-colors ${t.valeAddBtn}`}
+        className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-emerald-300 py-2.5 text-sm font-semibold text-[#009B4D] hover:bg-emerald-50/50 transition-colors"
       >
         <Plus className="h-4 w-4" />
         Agregar otro vale
@@ -508,7 +303,7 @@ function FilePreview({
   if (files.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-2 pt-1">
       {files.map((file, i) => {
         const isImage = file.type.startsWith("image/");
         const url = isImage ? URL.createObjectURL(file) : null;
@@ -516,7 +311,7 @@ function FilePreview({
         return (
           <div
             key={i}
-            className="relative flex h-20 w-20 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 overflow-hidden"
+            className="relative flex h-20 w-20 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 overflow-hidden shadow-xs"
           >
             {url ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -535,7 +330,8 @@ function FilePreview({
             <button
               type="button"
               onClick={() => onRemove(i)}
-              className="absolute right-0.5 top-0.5 rounded-full bg-white/90 p-0.5 text-slate-600 backdrop-blur hover:text-red-500 shadow"
+              className="absolute right-1 top-1 rounded-full bg-white/90 p-0.5 text-slate-600 backdrop-blur hover:text-rose-600 shadow"
+              title="Quitar comprobante"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -551,31 +347,29 @@ function FilePreview({
 function SuccessScreen({
   vales,
   email,
-  t,
 }: {
   vales: ValeCreado[];
   email: string;
-  t: ThemeTokens;
 }) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
 
   return (
-    <div className="flex flex-col items-center gap-6 py-8 text-center">
-      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
-        <CheckCircle className="h-10 w-10 text-green-600" />
+    <div className="flex flex-col items-center gap-6 py-6 text-center">
+      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 shadow-xs">
+        <CheckCircle className="h-10 w-10 text-[#009B4D]" />
       </div>
 
       <div>
-        <h2 className={`text-2xl font-bold ${t.sectionHeading}`}>¡Pedido recibido con éxito!</h2>
-        <p className={`mt-2 max-w-md mx-auto ${t.bodyText}`}>
+        <h2 className="text-2xl font-bold text-slate-900">¡Pedido recibido con éxito!</h2>
+        <p className="mt-2 max-w-md text-sm text-slate-600">
           Estamos revisando tu transferencia. Apenas la confirmemos, te enviaremos los vales
           definitivos a{" "}
-          <span className={`font-medium ${t.successAccent}`}>{email}</span>.
+          <span className="font-semibold text-slate-900">{email}</span>.
         </p>
       </div>
 
-      <div className="w-full max-w-md space-y-3">
-        <h3 className={`text-left text-sm font-semibold uppercase tracking-wide ${t.mutedText}`}>
+      <div className="w-full max-w-md space-y-3 pt-2">
+        <h3 className="text-left text-xs font-bold uppercase tracking-wider text-slate-500">
           Tus vales generados
         </h3>
         {vales.map((vale) => {
@@ -591,20 +385,20 @@ function SuccessScreen({
           return (
             <div
               key={vale.codigo}
-              className="rounded-xl border border-green-200 bg-green-50 p-4 text-left"
+              className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 text-left shadow-xs"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-mono text-lg font-bold tracking-wider text-green-800">
+                  <p className="font-mono text-lg font-extrabold tracking-wider text-emerald-900">
                     {vale.codigo}
                   </p>
                   <p className="text-sm text-slate-700">
-                    <span className="font-medium">{vale.cantidad_pollos}</span> pollo
+                    <span className="font-bold text-slate-900">{vale.cantidad_pollos}</span> pollo
                     {vale.cantidad_pollos !== 1 ? "s" : ""}
                     {vale.destinatario && (
                       <>
                         {" "}· Retira{" "}
-                        <span className="font-medium">{vale.destinatario}</span>
+                        <span className="font-semibold text-slate-900">{vale.destinatario}</span>
                       </>
                     )}
                   </p>
@@ -613,7 +407,7 @@ function SuccessScreen({
                   href={`https://wa.me/?text=${waText}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-green-700 transition-colors"
+                  className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-xl bg-[#009B4D] px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-[#007a3d] transition-colors"
                 >
                   <Share2 className="h-3.5 w-3.5" />
                   Compartir
@@ -633,34 +427,32 @@ function Field({
   label,
   required,
   error,
-  t,
   children,
 }: {
   label: string;
   required?: boolean;
   error?: string;
-  t: ThemeTokens;
   children: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-1.5">
       {label && (
-        <label className={`text-sm font-medium ${t.labelText}`}>
+        <label className="text-sm font-medium text-slate-700">
           {label}
-          {required && <span className="ml-0.5 text-red-500">*</span>}
+          {required && <span className="ml-0.5 text-rose-500">*</span>}
         </label>
       )}
       {children}
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="text-xs text-rose-600">{error}</p>}
     </div>
   );
 }
 
 // ─── Section heading ─────────────────────────────────────────────────────────
 
-function SectionHeading({ emoji, label, t }: { emoji: string; label: string; t: ThemeTokens }) {
+function SectionHeading({ emoji, label }: { emoji: string; label: string }) {
   return (
-    <h2 className={`flex items-center gap-2 text-base font-bold ${t.sectionHeading}`}>
+    <h2 className="flex items-center gap-2 text-base font-bold text-slate-900">
       <span>{emoji}</span>
       {label}
     </h2>
@@ -669,8 +461,8 @@ function SectionHeading({ emoji, label, t }: { emoji: string; label: string; t: 
 
 // ─── Divider ─────────────────────────────────────────────────────────────────
 
-function Divider({ t }: { t: ThemeTokens }) {
-  return <hr className={`border-t ${t.cardBorder}`} />;
+function Divider() {
+  return <hr className="border-t border-slate-200" />;
 }
 
 // ─── Main form ────────────────────────────────────────────────────────────────
@@ -685,9 +477,10 @@ interface FormErrors {
   comprobantes?: string;
 }
 
-export default function OrderForm({ theme }: { theme: Theme }) {
-  const t = THEMES[theme];
+const inputCls =
+  "w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-xs placeholder-slate-400 transition-colors focus:border-[#009B4D] focus:outline-none focus:ring-2 focus:ring-[#009B4D]/20 disabled:bg-slate-50";
 
+export default function OrderForm() {
   // Fields
   const [nombreComprador, setNombreComprador] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
@@ -842,13 +635,9 @@ export default function OrderForm({ theme }: { theme: Theme }) {
 
   const isBusy = uploading || submitting;
 
-  // Shared input class built from theme tokens
-  const inputCls = `w-full rounded-xl border px-4 py-2.5 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2
-    ${t.inputBg} ${t.inputBorder} ${t.inputText} ${t.inputPlaceholder} ${t.inputFocus} ${t.inputDisabled}`;
-
   // ─── Success screen ────────────────────────────────────────────────────────
   if (successData) {
-    return <SuccessScreen vales={successData.vales} email={successData.email} t={t} />;
+    return <SuccessScreen vales={successData.vales} email={successData.email} />;
   }
 
   // ─── Form ──────────────────────────────────────────────────────────────────
@@ -857,9 +646,9 @@ export default function OrderForm({ theme }: { theme: Theme }) {
 
       {/* ① TUS DATOS ──────────────────────────────────────────────────────── */}
       <section className="space-y-4">
-        <SectionHeading emoji="🧑" label="Tus datos" t={t} />
+        <SectionHeading emoji="🧑" label="Tus datos" />
 
-        <Field label="Nombre y Apellido" required t={t} error={errors.nombre_comprador}>
+        <Field label="Nombre y Apellido" required error={errors.nombre_comprador}>
           <input
             type="text"
             placeholder="Ej: María González"
@@ -871,7 +660,7 @@ export default function OrderForm({ theme }: { theme: Theme }) {
         </Field>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Teléfono / WhatsApp" required t={t} error={errors.whatsapp}>
+          <Field label="Teléfono / WhatsApp" required error={errors.whatsapp}>
             <input
               type="tel"
               placeholder="Ej: +54 299 4123456"
@@ -881,7 +670,7 @@ export default function OrderForm({ theme }: { theme: Theme }) {
               className={inputCls}
             />
           </Field>
-          <Field label="Email" required t={t} error={errors.email}>
+          <Field label="Email" required error={errors.email}>
             <input
               type="email"
               placeholder="tu@correo.com"
@@ -895,7 +684,7 @@ export default function OrderForm({ theme }: { theme: Theme }) {
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {/* Etapa — select cerrado */}
-          <Field label="Etapa" required t={t} error={errors.etapa}>
+          <Field label="Etapa" required error={errors.etapa}>
             <select
               value={etapa}
               onChange={(e) => setEtapa(e.target.value)}
@@ -913,7 +702,7 @@ export default function OrderForm({ theme }: { theme: Theme }) {
             </select>
           </Field>
 
-          <Field label="Animador / Vendedor" required t={t} error={errors.animador_vendedor}>
+          <Field label="Animador / Vendedor" required error={errors.animador_vendedor}>
             <input
               type="text"
               placeholder="Nombre de quien te vendió"
@@ -926,13 +715,13 @@ export default function OrderForm({ theme }: { theme: Theme }) {
         </div>
       </section>
 
-      <Divider t={t} />
+      <Divider />
 
       {/* ② TU PEDIDO Y VALES ───────────────────────────────────────────────── */}
       <section className="space-y-4">
-        <SectionHeading emoji="🐔" label="Tu pedido y vales" t={t} />
+        <SectionHeading emoji="🐔" label="Tu pedido y vales" />
 
-        <Field label="Cantidad de pollos" required t={t} error={errors.cantidad_total}>
+        <Field label="Cantidad de pollos" required error={errors.cantidad_total}>
           <div className="flex items-center gap-4">
             <input
               type="number"
@@ -940,13 +729,13 @@ export default function OrderForm({ theme }: { theme: Theme }) {
               value={cantidadTotal}
               onChange={(e) => handleCantidadChange(parseInt(e.target.value) || 1)}
               disabled={isBusy}
-              className={`${inputCls} w-28 text-center`}
+              className={`${inputCls} w-28 text-center text-base font-bold`}
             />
             <div className="flex flex-col">
-              <span className={`text-2xl font-extrabold tabular-nums ${t.successAccent}`}>
+              <span className="text-2xl font-extrabold tabular-nums text-slate-900">
                 {formatARS(cantidadTotal * PRECIO_POLLO)}
               </span>
-              <span className={`text-xs ${t.mutedText}`}>{formatARS(PRECIO_POLLO)} c/u</span>
+              <span className="text-xs text-slate-500">{formatARS(PRECIO_POLLO)} c/u</span>
             </div>
           </div>
         </Field>
@@ -956,37 +745,36 @@ export default function OrderForm({ theme }: { theme: Theme }) {
           nombreComprador={nombreComprador}
           vales={vales}
           onChange={setVales}
-          t={t}
           isBusy={isBusy}
         />
       </section>
 
-      <Divider t={t} />
+      <Divider />
 
       {/* ③ DATOS PARA TRANSFERENCIA ────────────────────────────────────────── */}
       <section>
-        <BankCard t={t} />
+        <BankCard />
       </section>
 
-      <Divider t={t} />
+      <Divider />
 
       {/* ④ COMPROBANTE DE PAGO ─────────────────────────────────────────────── */}
       <section className="space-y-3">
-        <SectionHeading emoji="📎" label="Comprobante de pago" t={t} />
-        <p className={`text-xs ${t.mutedText}`}>
+        <SectionHeading emoji="📎" label="Comprobante de pago" />
+        <p className="text-xs text-slate-500">
           Adjuntá hasta 4 archivos (imagen PNG, JPG, WEBP o PDF).
         </p>
 
-        <Field label="" t={t} error={errors.comprobantes}>
+        <Field label="" error={errors.comprobantes}>
           <div
-            className={`cursor-pointer rounded-xl border-2 border-dashed px-4 py-6 text-center transition-colors ${t.dropZoneBg} ${t.dropZoneBorder} ${t.dropZoneHover}`}
+            className="cursor-pointer rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center transition-colors hover:border-[#009B4D] hover:bg-emerald-50/40"
             onClick={() => fileInputRef.current?.click()}
           >
-            <p className={`text-sm ${t.dropZoneText}`}>
-              <span className={`font-semibold ${t.dropZoneAccent}`}>Seleccioná archivos</span> o
+            <p className="text-sm text-slate-600">
+              <span className="font-semibold text-[#009B4D]">Seleccioná archivos</span> o
               arrastralos acá
             </p>
-            <p className={`mt-1 text-xs ${t.mutedText}`}>
+            <p className="mt-1 text-xs text-slate-400">
               {archivos.length}/4 archivos seleccionados
             </p>
             <input
@@ -1006,7 +794,7 @@ export default function OrderForm({ theme }: { theme: Theme }) {
 
       {/* Global error */}
       {globalError && (
-        <div className="flex items-start gap-2 rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700">
+        <div className="flex items-start gap-2 rounded-xl border border-rose-300 bg-rose-50 p-4 text-sm text-rose-800">
           <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
           {globalError}
         </div>
@@ -1016,8 +804,7 @@ export default function OrderForm({ theme }: { theme: Theme }) {
       <button
         type="submit"
         disabled={isBusy || !valesBalanced}
-        className={`flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 text-base font-bold shadow-md transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60
-          ${t.btnPrimary} ${t.btnPrimaryHover} ${t.btnPrimaryText}`}
+        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#009B4D] px-6 py-4 text-base font-bold text-white shadow-md shadow-emerald-700/20 transition-all hover:bg-[#007a3d] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isBusy ? (
           <>
@@ -1030,7 +817,7 @@ export default function OrderForm({ theme }: { theme: Theme }) {
       </button>
 
       {!valesBalanced && !isBusy && (
-        <p className="text-center text-xs text-amber-600">
+        <p className="text-center text-xs text-amber-700">
           Corregí la distribución de vales antes de enviar.
         </p>
       )}

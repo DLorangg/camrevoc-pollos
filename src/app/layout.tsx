@@ -13,18 +13,28 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Venta de Pollos · Camrevoc Don Bosco Neuquén",
+  title: "Pollada Solidaria | Camrevoc - Don Bosco Neuquén",
   description:
-    "Comprá tu pollo y generá tu vale de retiro. Comunidad Salesiana Don Bosco Neuquén.",
+    "Reservá tus pollos para la pollada solidaria de Camrevoc. Casa Salesiana Don Bosco Neuquén.",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html
       lang="es"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
+        {children}
+      </body>
     </html>
   );
 }

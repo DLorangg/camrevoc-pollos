@@ -7,6 +7,11 @@ export const metadata: Metadata = {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">{children}</div>
+    <div className="min-h-screen bg-slate-50 font-sans flex flex-col justify-between">
+      <div className="flex-1">{children}</div>
+      <footer className="py-6 text-center text-xs text-slate-400">
+        Diseñado con ❤️ por Dami Lorang
+      </footer>
+    </div>
   );
 }

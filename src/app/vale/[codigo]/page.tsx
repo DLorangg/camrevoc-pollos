@@ -14,7 +14,12 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { codigo } = await params;
   return {
-    title: `Vale ${codigo} · Camrevoc`,
+    title: `Vale ${codigo} | Pollada Solidaria · Camrevoc`,
+    description: `Vale digital para retiro de pollos de Camrevoc. Código: ${codigo}`,
+    icons: {
+      icon: "/logo.png",
+      apple: "/logo.png",
+    },
     robots: { index: false, follow: false },
   };
 }
@@ -36,22 +41,25 @@ export default async function ValePage({ params }: Props) {
 
   if (pedidoPendiente) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-amber-50 px-4 py-12">
-        <div className="w-full max-w-sm rounded-3xl border border-amber-200 bg-white p-8 shadow-xl text-center space-y-4">
-          <Image src="/logo.png" alt="Camrevoc" width={64} height={64} className="mx-auto rounded-xl" />
+      <div className="flex min-h-screen flex-col items-center justify-between bg-slate-50 px-4 py-12">
+        <div className="my-auto w-full max-w-sm rounded-3xl border border-amber-200 bg-white p-8 shadow-xl text-center space-y-4">
+          <Image src="/logo.png" alt="Camrevoc" width={64} height={64} className="mx-auto rounded-2xl shadow-xs" />
           <span className="text-5xl">⏳</span>
-          <h1 className="text-xl font-bold text-amber-700">Pago en revisión</h1>
-          <p className="text-gray-600 text-sm">
+          <h1 className="text-xl font-bold text-amber-800">Pago en revisión</h1>
+          <p className="text-slate-600 text-sm">
             Este vale todavía no está habilitado para retiro. Tu transferencia está siendo verificada.
           </p>
-          <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
+          <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-900">
             Estado del pedido:{" "}
             <strong>
               {vale.pedidos.estado_pago === "Rechazado" ? "⚠️ Rechazado" : "Pendiente"}
             </strong>
           </div>
-          <p className="text-xs text-gray-400">Código: <span className="font-mono font-bold">{codigo}</span></p>
+          <p className="text-xs text-slate-400">Código: <span className="font-mono font-bold text-slate-600">{codigo}</span></p>
         </div>
+        <footer className="pt-6 text-center text-xs text-slate-400">
+          Diseñado con ❤️ por Dami Lorang
+        </footer>
       </div>
     );
   }
@@ -69,7 +77,7 @@ export default async function ValePage({ params }: Props) {
       : "—";
 
     return (
-      <div className="flex min-h-screen flex-col bg-[#E52427]">
+      <div className="flex min-h-screen flex-col justify-between bg-[#E52427]">
         <div className="flex flex-1 flex-col items-center justify-center px-4 py-12 text-center">
           <div className="w-full max-w-sm space-y-6">
             <Image
@@ -77,7 +85,7 @@ export default async function ValePage({ params }: Props) {
               alt="Camrevoc"
               width={72}
               height={72}
-              className="mx-auto rounded-2xl opacity-90"
+              className="mx-auto rounded-2xl opacity-90 shadow-md"
             />
             <div>
               <p className="text-6xl mb-2">⚠️</p>
@@ -104,6 +112,9 @@ export default async function ValePage({ params }: Props) {
             </p>
           </div>
         </div>
+        <footer className="pb-6 text-center text-xs text-white/60">
+          Diseñado con ❤️ por Dami Lorang
+        </footer>
       </div>
     );
   }
@@ -111,7 +122,7 @@ export default async function ValePage({ params }: Props) {
   // ─── Vale válido ───────────────────────────────────────────────────────────
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#009B4D]">
+    <div className="flex min-h-screen flex-col justify-between bg-[#009B4D]">
       <div className="flex flex-1 flex-col items-center justify-center px-4 py-10 text-center">
         <div className="w-full max-w-sm space-y-6">
           {/* Logo */}
@@ -173,6 +184,9 @@ export default async function ValePage({ params }: Props) {
           </p>
         </div>
       </div>
+      <footer className="pb-6 text-center text-xs text-white/70">
+        Diseñado con ❤️ por Dami Lorang
+      </footer>
     </div>
   );
 }
