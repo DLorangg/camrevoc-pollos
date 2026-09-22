@@ -4,8 +4,8 @@ import { cookies } from "next/headers";
 
 const ADMIN_SESSION_COOKIE = "admin_session";
 const OPERATOR_COOKIE = "admin_operator";
-const VALID_OPERATORS = ["Damián", "Pepo", "Facu", "Otro"] as const;
-export type Operator = (typeof VALID_OPERATORS)[number];
+
+export type Operator = string;
 
 // ─── Login / Logout ──────────────────────────────────────────────────────────
 
@@ -40,14 +40,21 @@ export async function logoutAdmin(): Promise<void> {
   jar.delete(OPERATOR_COOKIE);
 }
 
+// ─── Operator Management ─────────────────────────────────────────────────────
+
 export async function setOperator(
-  operator: Operator,
-): Promise<{ ok: boolean }> {
-  if (!VALID_OPERATORS.includes(operator)) {
-    return { ok: false };
+  operator: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const trimmed = operator.trim();
+  if (!trimmed || trimmed.length < 2) {
+    return { ok: false, error: "El nombre debe tener al menos 2 caracteres." };
   }
+  if (trimmed.length > 50) {
+    return { ok: false, error: "El nombre no puede superar los 50 caracteres." };
+  }
+
   const jar = await cookies();
-  jar.set(OPERATOR_COOKIE, operator, {
+  jar.set(OPERATOR_COOKIE, trimmed, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
@@ -57,11 +64,18 @@ export async function setOperator(
   return { ok: true };
 }
 
-export async function getOperator(): Promise<Operator | null> {
+export async function clearOperator(): Promise<{ ok: boolean }> {
   const jar = await cookies();
-  const val = jar.get(OPERATOR_COOKIE)?.value;
-  if (val && VALID_OPERATORS.includes(val as Operator)) {
-    return val as Operator;
+  jar.set(OPERATOR_COOKIE, "", { path: "/", maxAge: 0 });
+  jar.delete(OPERATOR_COOKIE);
+  return { ok: true };
+}
+
+export async function getOperator(): Promise<string | null> {
+  const jar = await cookies();
+  const val = jar.get(OPERATOR_COOKIE)?.value?.trim();
+  if (val && val.length > 0) {
+    return val;
   }
   return null;
 }

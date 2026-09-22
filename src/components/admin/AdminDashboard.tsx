@@ -12,15 +12,28 @@ import {
   Loader2,
   LogOut,
   MessageCircle,
+  Trophy,
+  Award,
+  Layers,
+  TrendingUp,
+  User,
+  Users,
 } from "lucide-react";
-import { approvePedido, rejectPedido, type DashboardData } from "@/app/actions/admin-pedidos";
-import { logoutAdmin } from "@/app/actions/admin-auth";
+import {
+  approvePedido,
+  rejectPedido,
+  type DashboardData,
+  type EtapaStat,
+  type VendedorLeaderboard,
+} from "@/app/actions/admin-pedidos";
+import { logoutAdmin, clearOperator } from "@/app/actions/admin-auth";
 import type { Pedido, Vale } from "@/types/database";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type PedidoConVales = Pedido & { vales: Vale[] };
 type Filter = "Todos" | "Pendiente" | "Aprobado" | "Rechazado";
+type AdminTab = "pedidos" | "estadisticas";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -140,9 +153,9 @@ function RejectModal({
 
 function MetricCard({ label, value, color }: { label: string; value: string; color: string }) {
   return (
-    <div className={`rounded-2xl border-l-4 bg-white px-5 py-4 shadow-sm ${color}`}>
-      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</p>
-      <p className="mt-1 text-2xl font-bold text-gray-900">{value}</p>
+    <div className={`rounded-2xl border-l-4 bg-white px-5 py-4 shadow-xs ${color}`}>
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-1 text-2xl font-extrabold text-slate-900">{value}</p>
     </div>
   );
 }
@@ -151,12 +164,12 @@ function MetricCard({ label, value, color }: { label: string; value: string; col
 
 function EstadoBadge({ estado }: { estado: string }) {
   const styles: Record<string, string> = {
-    Pendiente: "bg-amber-100 text-amber-700 border-amber-200",
-    Aprobado: "bg-green-100 text-green-700 border-green-200",
-    Rechazado: "bg-red-100 text-red-700 border-red-200",
+    Pendiente: "bg-amber-100 text-amber-800 border-amber-200",
+    Aprobado: "bg-emerald-100 text-emerald-800 border-emerald-200",
+    Rechazado: "bg-rose-100 text-rose-800 border-rose-200",
   };
   return (
-    <span className={`inline-block rounded-full border px-2.5 py-0.5 text-xs font-semibold ${styles[estado] ?? "bg-gray-100 text-gray-600"}`}>
+    <span className={`inline-block rounded-full border px-2.5 py-0.5 text-xs font-semibold ${styles[estado] ?? "bg-slate-100 text-slate-600"}`}>
       {estado}
     </span>
   );
@@ -200,9 +213,9 @@ function PedidoRow({
           onConfirm={confirmReject}
         />
       )}
-      <tr className="border-t border-gray-100 hover:bg-gray-50 transition-colors text-sm">
+      <tr className="border-t border-slate-100 hover:bg-slate-50/80 transition-colors text-sm">
         {/* Fecha */}
-        <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{formatDate(pedido.created_at)}</td>
+        <td className="px-4 py-3 text-slate-500 whitespace-nowrap">{formatDate(pedido.created_at)}</td>
 
         {/* Vendedor / Responsable */}
         <td className="px-4 py-3">
@@ -236,13 +249,13 @@ function PedidoRow({
         <td className="px-4 py-3">
           <div className="flex flex-wrap gap-1">
             {pedido.comprobantes_urls.length === 0 ? (
-              <span className="text-xs text-gray-400">—</span>
+              <span className="text-xs text-slate-400">—</span>
             ) : (
               pedido.comprobantes_urls.map((url, i) => (
                 <button
                   key={i}
                   onClick={() => onImageClick(url)}
-                  className="rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                  className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-medium text-slate-700 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-800 transition-colors"
                 >
                   Ver {i + 1}
                 </button>
@@ -255,42 +268,58 @@ function PedidoRow({
         <td className="px-4 py-3">
           <EstadoBadge estado={pedido.estado_pago} />
           {pedido.aprobado_por && (
-            <p className="mt-1 text-[10px] text-gray-400">{pedido.aprobado_por}</p>
+            <p className="mt-1 text-[10px] text-slate-400 max-w-[140px] truncate" title={pedido.aprobado_por}>
+              {pedido.aprobado_por}
+            </p>
           )}
         </td>
 
         {/* Acciones */}
         <td className="px-4 py-3">
-          <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-1.5">
             {pedido.estado_pago === "Pendiente" && (
               <>
                 <button
                   onClick={approve}
                   disabled={isPending}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-[#009B4D] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#007a3d] disabled:opacity-50 transition-colors"
+                  title="Aprobar pedido"
+                  className="rounded-lg bg-[#009B4D] p-1.5 text-white hover:bg-[#007a3d] disabled:opacity-50 transition-colors"
                 >
-                  {isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle className="h-3 w-3" />}
-                  Aprobar
+                  {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
                 </button>
                 <button
                   onClick={() => setRejectingId(pedido.id)}
                   disabled={isPending}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+                  title="Rechazar pedido"
+                  className="rounded-lg bg-rose-600 p-1.5 text-white hover:bg-rose-700 disabled:opacity-50 transition-colors"
                 >
-                  <XCircle className="h-3 w-3" />
-                  Rechazar
+                  <XCircle className="h-4 w-4" />
                 </button>
               </>
             )}
-            <a
-              href={waLink(pedido.whatsapp, pedido, appUrl)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-green-300 bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-100 transition-colors"
-            >
-              <ExternalLink className="h-3 w-3" />
-              WhatsApp
-            </a>
+            {pedido.estado_pago === "Aprobado" && (
+              <a
+                href={waLink(pedido.whatsapp, pedido, appUrl)}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Reenviar vales por WhatsApp"
+                className="inline-flex items-center gap-1 rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 transition-colors"
+              >
+                <MessageCircle className="h-3 w-3" />
+                WhatsApp
+              </a>
+            )}
+            {pedido.vales && pedido.vales.length > 0 && (
+              <a
+                href={`/vale/${pedido.vales[0].codigo}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Abrir primer vale"
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+              >
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            )}
           </div>
         </td>
       </tr>
@@ -307,6 +336,7 @@ export default function AdminDashboard({
   data: DashboardData;
   operator: string;
 }) {
+  const [activeTab, setActiveTab] = useState<AdminTab>("pedidos");
   const [filter, setFilter] = useState<Filter>("Todos");
   const [search, setSearch] = useState("");
   const [modalUrl, setModalUrl] = useState<string | null>(null);
@@ -314,7 +344,7 @@ export default function AdminDashboard({
   const router = useRouter();
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
 
-  const { metrics } = data;
+  const { metrics, rankingEtapas, leaderboardVendedores } = data;
 
   const filtered = useMemo(() => {
     return data.pedidos.filter((p) => {
@@ -338,6 +368,13 @@ export default function AdminDashboard({
     });
   };
 
+  const handleChangeOperator = () => {
+    startTransition(async () => {
+      await clearOperator();
+      router.refresh();
+    });
+  };
+
   const FILTERS: Filter[] = ["Todos", "Pendiente", "Aprobado", "Rechazado"];
 
   return (
@@ -345,27 +382,78 @@ export default function AdminDashboard({
       {modalUrl && <ImageModal url={modalUrl} onClose={() => setModalUrl(null)} />}
 
       {/* Top bar */}
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3 shadow-sm">
+      <header className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:px-6 shadow-xs">
         <div className="flex items-center gap-3">
           <Image src="/logo.png" alt="Logo" width={36} height={36} className="rounded-xl shadow-xs" />
           <div>
             <h1 className="text-base font-bold text-slate-900">Panel Camrevoc</h1>
-            <p className="text-xs text-slate-500">Operando como: <strong className="text-slate-800">{operator}</strong></p>
+            <div className="flex items-center gap-1.5 text-xs text-slate-500">
+              <span>
+                Operando: <strong className="font-semibold text-slate-900">{operator}</strong>
+              </span>
+              <span>·</span>
+              <button
+                type="button"
+                onClick={handleChangeOperator}
+                disabled={isPending}
+                className="font-semibold text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
+                title="Cambiar quién está operando"
+              >
+                Cambiar
+              </button>
+            </div>
           </div>
         </div>
-        <button
-          onClick={handleLogout}
-          disabled={isPending}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 shadow-xs transition-colors"
-        >
-          <LogOut className="h-3.5 w-3.5" />
-          Salir
-        </button>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleLogout}
+            disabled={isPending}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 shadow-xs transition-colors"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            Salir
+          </button>
+        </div>
       </header>
 
-      <main className="p-6 space-y-6">
-        {/* Metrics */}
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      {/* Tabs Navigation */}
+      <div className="flex border-b border-slate-200 bg-white px-4 sm:px-6">
+        <button
+          type="button"
+          onClick={() => setActiveTab("pedidos")}
+          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition-all cursor-pointer ${
+            activeTab === "pedidos"
+              ? "border-[#009B4D] text-[#009B4D]"
+              : "border-transparent text-slate-500 hover:text-slate-800"
+          }`}
+        >
+          <Layers className="h-4 w-4" />
+          <span>Gestión de Pedidos</span>
+          {metrics.pendientesRevision > 0 && (
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">
+              {metrics.pendientesRevision}
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab("estadisticas")}
+          className={`flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-bold transition-all cursor-pointer ${
+            activeTab === "estadisticas"
+              ? "border-[#009B4D] text-[#009B4D]"
+              : "border-transparent text-slate-500 hover:text-slate-800"
+          }`}
+        >
+          <Trophy className="h-4 w-4" />
+          <span>Estadísticas & Rankings</span>
+        </button>
+      </div>
+
+      <main className="p-4 sm:p-6 space-y-6">
+        {/* Metric Cards (Globales) */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-4">
           <MetricCard
             label="Pollos solicitados"
             value={String(metrics.totalSolicitados)}
@@ -388,71 +476,249 @@ export default function AdminDashboard({
           />
         </div>
 
-        {/* Filters + search */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex gap-2">
-            {FILTERS.map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
-                  filter === f
-                    ? "bg-[#009B4D] text-white shadow-xs"
-                    : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Buscar por nombre o WhatsApp…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-4 text-sm text-slate-900 shadow-xs focus:border-[#009B4D] focus:outline-none focus:ring-2 focus:ring-[#009B4D]/20 sm:w-72"
-            />
-          </div>
-        </div>
-
-        {/* Table */}
-        <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-sm">
-          {filtered.length === 0 ? (
-            <p className="px-6 py-10 text-center text-sm text-gray-400">
-              No hay pedidos que coincidan con los filtros.
-            </p>
-          ) : (
-            <table className="min-w-full text-left">
-              <thead className="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                <tr>
-                  {["Fecha", "Vendedor / Responsable", "WhatsApp", "Pollos", "Comprobantes", "Estado", "Acciones"].map(
-                    (h) => (
-                      <th key={h} className="px-4 py-3">
-                        {h}
-                      </th>
-                    ),
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((pedido) => (
-                  <PedidoRow
-                    key={pedido.id}
-                    pedido={pedido}
-                    appUrl={appUrl}
-                    onImageClick={setModalUrl}
-                  />
+        {/* ─── PESTAÑA 1: PEDIDOS ─────────────────────────────────────────── */}
+        {activeTab === "pedidos" && (
+          <div className="space-y-4 animate-in fade-in duration-200">
+            {/* Filters + search */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-wrap gap-2">
+                {FILTERS.map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setFilter(f)}
+                    className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
+                      filter === f
+                        ? "bg-[#009B4D] text-white shadow-xs"
+                        : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-100"
+                    }`}
+                  >
+                    {f}
+                  </button>
                 ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+              </div>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar por vendedor, WhatsApp, etapa…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-4 text-sm text-slate-900 shadow-xs focus:border-[#009B4D] focus:outline-none focus:ring-2 focus:ring-[#009B4D]/20 sm:w-80"
+                />
+              </div>
+            </div>
 
-        <p className="text-center text-xs text-gray-400">
-          {filtered.length} pedido{filtered.length !== 1 ? "s" : ""} mostrado{filtered.length !== 1 ? "s" : ""}
-        </p>
+            {/* Table */}
+            <div className="overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-sm">
+              {filtered.length === 0 ? (
+                <p className="px-6 py-12 text-center text-sm text-slate-400">
+                  No hay pedidos que coincidan con los filtros.
+                </p>
+              ) : (
+                <table className="min-w-full text-left">
+                  <thead className="bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                    <tr>
+                      {["Fecha", "Vendedor / Responsable", "WhatsApp", "Pollos", "Comprobantes", "Estado", "Acciones"].map(
+                        (h) => (
+                          <th key={h} className="px-4 py-3">
+                            {h}
+                          </th>
+                        ),
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.map((pedido) => (
+                      <PedidoRow
+                        key={pedido.id}
+                        pedido={pedido}
+                        appUrl={appUrl}
+                        onImageClick={setModalUrl}
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            <p className="text-center text-xs text-slate-400">
+              {filtered.length} pedido{filtered.length !== 1 ? "s" : ""} mostrado{filtered.length !== 1 ? "s" : ""}
+            </p>
+          </div>
+        )}
+
+        {/* ─── PESTAÑA 2: ESTADÍSTICAS & RANKINGS ─────────────────────────── */}
+        {activeTab === "estadisticas" && (
+          <div className="space-y-8 animate-in fade-in duration-200">
+            {/* 1. Ranking por Etapas */}
+            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-100 pb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-[#009B4D]" />
+                    <h2 className="text-lg font-bold text-slate-900">Ranking por Etapas</h2>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Competencia sana y seguimiento de objetivos grupales por etapa.
+                  </p>
+                </div>
+                {rankingEtapas.length > 0 && rankingEtapas[0].aprobados > 0 && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs font-bold text-emerald-800">
+                    👑 Etapa líder: {rankingEtapas[0].etapa} ({rankingEtapas[0].aprobados} pollos)
+                  </span>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                {rankingEtapas.map((stat) => (
+                  <div key={stat.etapa} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <span className={`font-bold ${stat.esLider ? "text-emerald-950" : "text-slate-800"}`}>
+                          {stat.etapa}
+                        </span>
+                        {stat.esLider && stat.aprobados > 0 && (
+                          <span className="rounded-md bg-emerald-500 px-1.5 py-0.5 text-[10px] font-extrabold text-white tracking-wide">
+                            LÍDER
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="font-extrabold text-slate-900 text-sm">
+                          {stat.aprobados} pollos
+                        </span>
+                        {stat.pendientes > 0 && (
+                          <span className="text-amber-700 font-medium">
+                            (+{stat.pendientes} en rev.)
+                          </span>
+                        )}
+                        <span className="text-slate-400 font-mono hidden sm:inline">
+                          {formatARS(stat.recaudado)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Barra de progreso */}
+                    <div className="h-3 w-full rounded-full bg-slate-100 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-700 ${
+                          stat.esLider
+                            ? "bg-[#009B4D] shadow-xs"
+                            : "bg-slate-700"
+                        }`}
+                        style={{ width: `${Math.max(stat.porcentajeLider, 3)}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* 2. Leaderboard de Vendedores (Top 10) */}
+            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-100 pb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Trophy className="h-5 w-5 text-amber-500" />
+                    <h2 className="text-lg font-bold text-slate-900">Leaderboard de Vendedores (Top 10)</h2>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Los chicos y animadores con mayor cantidad de pollos confirmados.
+                  </p>
+                </div>
+              </div>
+
+              {leaderboardVendedores.length === 0 ? (
+                <p className="py-8 text-center text-sm text-slate-400">
+                  Aún no hay ventas confirmadas registradas.
+                </p>
+              ) : (
+                <>
+                  {/* Podio visual (Top 3) */}
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    {leaderboardVendedores.slice(0, 3).map((v) => {
+                      const isFirst = v.posicion === 1;
+                      const isSecond = v.posicion === 2;
+                      const isThird = v.posicion === 3;
+
+                      const medal = isFirst ? "🥇" : isSecond ? "🥈" : "🥉";
+                      const cardStyle = isFirst
+                        ? "border-emerald-300 bg-emerald-50/50 shadow-sm"
+                        : isSecond
+                        ? "border-slate-300 bg-slate-50/70"
+                        : "border-amber-200 bg-amber-50/40";
+
+                      return (
+                        <div
+                          key={v.nombre}
+                          className={`rounded-2xl border p-4 flex flex-col justify-between space-y-3 ${cardStyle}`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <span className="text-3xl">{medal}</span>
+                            <span className="rounded-full bg-white/90 px-2.5 py-0.5 text-xs font-bold text-slate-700 shadow-2xs border border-slate-200/60">
+                              #{v.posicion}
+                            </span>
+                          </div>
+
+                          <div>
+                            <h3 className="font-bold text-slate-900 text-base leading-tight truncate" title={v.nombre}>
+                              {v.nombre}
+                            </h3>
+                            <p className="text-xs text-slate-500 mt-0.5">{v.etapa}</p>
+                          </div>
+
+                          <div className="border-t border-slate-200/60 pt-2 flex items-baseline justify-between">
+                            <div>
+                              <p className="text-2xl font-extrabold text-slate-900 leading-none">
+                                {v.pollosAprobados}
+                              </p>
+                              <p className="text-[11px] text-slate-500 font-medium">pollos confirmados</p>
+                            </div>
+                            <span className="text-xs font-semibold text-emerald-800 font-mono">
+                              {formatARS(v.recaudado)}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Tabla para puestos #4 al #10 */}
+                  {leaderboardVendedores.length > 3 && (
+                    <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+                      <table className="min-w-full text-left text-sm">
+                        <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                          <tr>
+                            <th className="px-4 py-2.5 w-16 text-center">Puesto</th>
+                            <th className="px-4 py-2.5">Vendedor</th>
+                            <th className="px-4 py-2.5">Etapa</th>
+                            <th className="px-4 py-2.5 text-center">Pollos</th>
+                            <th className="px-4 py-2.5 text-right">Recaudado</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {leaderboardVendedores.slice(3).map((v) => (
+                            <tr key={v.nombre} className="border-t border-slate-100 hover:bg-slate-50/60">
+                              <td className="px-4 py-2.5 text-center font-bold text-slate-500">#{v.posicion}</td>
+                              <td className="px-4 py-2.5 font-semibold text-slate-900">{v.nombre}</td>
+                              <td className="px-4 py-2.5 text-slate-600">{v.etapa}</td>
+                              <td className="px-4 py-2.5 text-center font-bold text-slate-900">
+                                {v.pollosAprobados}
+                              </td>
+                              <td className="px-4 py-2.5 text-right font-mono text-xs text-slate-600">
+                                {formatARS(v.recaudado)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </>
+              )}
+            </section>
+          </div>
+        )}
       </main>
     </>
   );

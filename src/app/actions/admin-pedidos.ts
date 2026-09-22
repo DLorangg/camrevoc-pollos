@@ -109,7 +109,29 @@ export async function rejectPedido(
   return { ok: true };
 }
 
+import { PRECIO_POLLO, ETAPAS } from "@/config/constants";
+
 // ─── Get dashboard data ───────────────────────────────────────────────────────
+
+export interface EtapaStat {
+  etapa: string;
+  aprobados: number;
+  pendientes: number;
+  total: number;
+  recaudado: number;
+  porcentajeLider: number;
+  esLider: boolean;
+}
+
+export interface VendedorLeaderboard {
+  posicion: number;
+  nombre: string;
+  etapa: string;
+  pollosAprobados: number;
+  pollosPendientes: number;
+  pedidosCount: number;
+  recaudado: number;
+}
 
 export interface DashboardData {
   pedidos: (Pedido & { vales: Vale[] })[];
@@ -119,6 +141,8 @@ export interface DashboardData {
     recaudacionAprobada: number;
     pendientesRevision: number;
   };
+  rankingEtapas: EtapaStat[];
+  leaderboardVendedores: VendedorLeaderboard[];
 }
 
 export async function getDashboardData(): Promise<DashboardData> {
@@ -136,7 +160,106 @@ export async function getDashboardData(): Promise<DashboardData> {
   }
 
   const aprobados = pedidos.filter((p) => p.estado_pago === "Aprobado");
-  const PRECIO_POLLO = 8_000;
+
+  // 1. Agrupación por Etapas (Meta grupal)
+  const etapasMap = new Map<string, { aprobados: number; pendientes: number }>();
+  for (const e of ETAPAS) {
+    etapasMap.set(e, { aprobados: 0, pendientes: 0 });
+  }
+
+  for (const p of pedidos) {
+    const e = p.etapa?.trim() || "Otra";
+    const current = etapasMap.get(e) ?? { aprobados: 0, pendientes: 0 };
+    if (p.estado_pago === "Aprobado") {
+      current.aprobados += p.cantidad_total;
+    } else if (p.estado_pago === "Pendiente") {
+      current.pendientes += p.cantidad_total;
+    }
+    etapasMap.set(e, current);
+  }
+
+  let maxAprobados = 0;
+  for (const val of etapasMap.values()) {
+    if (val.aprobados > maxAprobados) maxAprobados = val.aprobados;
+  }
+  if (maxAprobados === 0) {
+    for (const val of etapasMap.values()) {
+      const t = val.aprobados + val.pendientes;
+      if (t > maxAprobados) maxAprobados = t;
+    }
+  }
+
+  const rankingEtapas: EtapaStat[] = Array.from(etapasMap.entries())
+    .map(([etapa, stat]) => {
+      const total = stat.aprobados + stat.pendientes;
+      const base = maxAprobados > 0 ? (stat.aprobados > 0 ? stat.aprobados : total) : 0;
+      const porcentaje = maxAprobados > 0 ? Math.round((base / maxAprobados) * 100) : 0;
+      return {
+        etapa,
+        aprobados: stat.aprobados,
+        pendientes: stat.pendientes,
+        total,
+        recaudado: stat.aprobados * PRECIO_POLLO,
+        porcentajeLider: Math.min(100, Math.max(0, porcentaje)),
+        esLider: false,
+      };
+    })
+    .sort((a, b) => b.aprobados - a.aprobados || b.total - a.total);
+
+  if (rankingEtapas.length > 0 && (rankingEtapas[0].aprobados > 0 || rankingEtapas[0].total > 0)) {
+    rankingEtapas[0].esLider = true;
+  }
+
+  // 2. Leaderboard de Vendedores (Top 10)
+  const vendedoresMap = new Map<
+    string,
+    {
+      nombre: string;
+      etapa: string;
+      pollosAprobados: number;
+      pollosPendientes: number;
+      pedidosCount: number;
+    }
+  >();
+
+  for (const p of pedidos) {
+    const rawNombre = p.animador_vendedor || p.nombre_comprador || "Sin nombre";
+    const key = rawNombre.trim().toLowerCase();
+    const existing = vendedoresMap.get(key) ?? {
+      nombre: rawNombre.trim(),
+      etapa: p.etapa?.trim() || "—",
+      pollosAprobados: 0,
+      pollosPendientes: 0,
+      pedidosCount: 0,
+    };
+
+    if (p.estado_pago === "Aprobado") {
+      existing.pollosAprobados += p.cantidad_total;
+      existing.pedidosCount += 1;
+    } else if (p.estado_pago === "Pendiente") {
+      existing.pollosPendientes += p.cantidad_total;
+    }
+
+    if (p.etapa?.trim()) {
+      existing.etapa = p.etapa.trim();
+    }
+
+    vendedoresMap.set(key, existing);
+  }
+
+  const leaderboardVendedores: VendedorLeaderboard[] = Array.from(vendedoresMap.values())
+    .filter((v) => v.pollosAprobados > 0 || v.pollosPendientes > 0)
+    .sort((a, b) => b.pollosAprobados - a.pollosAprobados || b.pollosPendientes - a.pollosPendientes)
+    .slice(0, 10)
+    .map((v, idx) => ({
+      posicion: idx + 1,
+      nombre: v.nombre,
+      etapa: v.etapa,
+      pollosAprobados: v.pollosAprobados,
+      pollosPendientes: v.pollosPendientes,
+      pedidosCount: v.pedidosCount,
+      recaudado: v.pollosAprobados * PRECIO_POLLO,
+    }));
 
   return {
     pedidos,
@@ -145,8 +268,9 @@ export async function getDashboardData(): Promise<DashboardData> {
       totalAprobados: aprobados.reduce((s, p) => s + p.cantidad_total, 0),
       recaudacionAprobada:
         aprobados.reduce((s, p) => s + p.cantidad_total, 0) * PRECIO_POLLO,
-      pendientesRevision: pedidos.filter((p) => p.estado_pago === "Pendiente")
-        .length,
+      pendientesRevision: pedidos.filter((p) => p.estado_pago === "Pendiente").length,
     },
+    rankingEtapas,
+    leaderboardVendedores,
   };
 }
