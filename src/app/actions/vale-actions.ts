@@ -25,20 +25,33 @@ export async function getVale(codigo: string): Promise<ValeConPedido | null> {
 
 export async function confirmarEntrega(
   valeId: string,
+  codigo: string,
 ): Promise<{ ok: boolean; error?: string }> {
-  const supabase = createServiceClient();
+  try {
+    const supabase = createServiceClient();
 
-  const { error } = await supabase
-    .from("vales")
-    .update({
-      estado_entrega: "Entregado",
-      entregado_at: new Date().toISOString(),
-    })
-    .eq("id", valeId)
-    .eq("estado_entrega", "Pendiente"); // seguridad: solo si aún está pendiente
+    const { error } = await supabase
+      .from("vales")
+      .update({
+        estado_entrega: "Entregado",
+        entregado_at: new Date().toISOString(),
+      })
+      .eq("id", valeId)
+      .eq("estado_entrega", "Pendiente"); // seguridad: solo si aún está pendiente
 
-  if (error) return { ok: false, error: error.message };
+    if (error) {
+      console.error("Error al confirmar entrega en Supabase:", error);
+      return { ok: false, error: error.message };
+    }
 
-  revalidatePath(`/vale/${valeId}`);
-  return { ok: true };
+    revalidatePath(`/vale/${codigo}`);
+    revalidatePath("/admin");
+    return { ok: true };
+  } catch (err: unknown) {
+    console.error("Error inesperado en confirmarEntrega:", err);
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error inesperado al confirmar entrega.",
+    };
+  }
 }

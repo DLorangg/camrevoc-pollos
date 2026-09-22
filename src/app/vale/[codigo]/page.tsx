@@ -111,7 +111,7 @@ export default async function ValePage({ params }: Props) {
             </div>
 
             <p className="text-xs text-white/60">
-              Si creés que esto es un error, contactá a tu animador/vendedor.
+              Si creés que esto es un error, contactá al coordinador de tu etapa.
             </p>
           </div>
         </div>
@@ -174,8 +174,20 @@ export default async function ValePage({ params }: Props) {
           {/* QR */}
           <ValeQR url={valeUrl} />
 
+          {/* Aviso para quien retira */}
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-900 leading-relaxed text-left shadow-xs">
+            <p>
+              ⚠️ <strong>Aviso para quien retira:</strong> Presentá esta pantalla o mostrá el código QR el sábado 10 de octubre. <strong>NO toques el botón de abajo</strong>; es de uso exclusivo para el equipo de entrega de CamReVoc.
+            </p>
+          </div>
+
           {/* Confirm delivery button */}
-          <ConfirmarEntregaButton valeId={vale.id} />
+          <ConfirmarEntregaButton
+            valeId={vale.id}
+            codigo={vale.codigo}
+            cantidadPollos={vale.cantidad_pollos}
+            destinatario={vale.destinatario || vale.pedidos.nombre_comprador || "Comprador"}
+          />
 
           <p className="text-xs text-white/60">
             Solo presionar al entregar físicamente los pollos.

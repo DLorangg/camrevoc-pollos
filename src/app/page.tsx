@@ -56,7 +56,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="mt-10 pb-8 text-center space-y-2">
         <p className="text-xs text-slate-500">
-          Cualquier consulta por WhatsApp con tu animador/vendedor.
+          Cualquier consulta por WhatsApp con el coordinador de tu etapa .
         </p>
         <p className="text-xs text-slate-400">
           Diseñado con ❤️ por Dami Lorang
