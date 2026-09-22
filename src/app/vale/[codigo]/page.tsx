@@ -99,7 +99,10 @@ export default async function ValePage({ params }: Props) {
               <p className="text-sm opacity-90">
                 <span className="font-semibold">{vale.cantidad_pollos}</span> pollo
                 {vale.cantidad_pollos !== 1 ? "s" : ""}
-                {vale.destinatario ? ` · ${vale.destinatario}` : ""}
+                {vale.destinatario ? ` · Retira: ${vale.destinatario}` : ""}
+              </p>
+              <p className="text-xs opacity-80">
+                Vendido por: <strong>{vale.pedidos.animador_vendedor || vale.pedidos.nombre_comprador}</strong> ({vale.pedidos.etapa})
               </p>
               <div className="mt-2 border-t border-white/20 pt-2">
                 <p className="text-xs opacity-75">Entregado a las</p>
@@ -151,22 +154,17 @@ export default async function ValePage({ params }: Props) {
               </span>
             </p>
 
-            <div className="border-t border-white/20 pt-3 space-y-1 text-sm text-left">
+            <div className="border-t border-white/20 pt-3 space-y-1.5 text-sm text-left">
               <p>
-                <span className="opacity-70">Retira:</span>{" "}
+                <span className="opacity-75">Retira:</span>{" "}
                 <strong className="text-base">{vale.destinatario || vale.pedidos.nombre_comprador}</strong>
               </p>
               <p>
-                <span className="opacity-70">Comprador:</span>{" "}
-                {vale.pedidos.nombre_comprador}
-              </p>
-              <p>
-                <span className="opacity-70">Etapa:</span>{" "}
-                {vale.pedidos.etapa}
-              </p>
-              <p>
-                <span className="opacity-70">Vendedor:</span>{" "}
-                {vale.pedidos.animador_vendedor}
+                <span className="opacity-75">Vendido por:</span>{" "}
+                <strong>
+                  {vale.pedidos.animador_vendedor || vale.pedidos.nombre_comprador}{" "}
+                  <span className="font-normal opacity-90">({vale.pedidos.etapa})</span>
+                </strong>
               </p>
             </div>
 

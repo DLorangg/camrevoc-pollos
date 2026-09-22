@@ -17,7 +17,7 @@ export interface CreateOrderInput {
   whatsapp: string;
   email: string;
   etapa: string;
-  animador_vendedor: string;
+  animador_vendedor?: string;
   cantidad_total: number;
   comprobantes_urls: string[];
   vales: ValeInput[];
@@ -53,16 +53,18 @@ export async function createOrder(
   }
 
   const supabase = createServiceClient();
+  const nombreUnificado = input.nombre_comprador.trim();
+  const animadorUnificado = (input.animador_vendedor || input.nombre_comprador).trim();
 
-  // 1. Insertar pedido
+  // 1. Insertar pedido (mapeando el nombre único a ambas columnas)
   const { data: pedido, error: pedidoError } = await supabase
     .from("pedidos")
     .insert({
-      nombre_comprador: input.nombre_comprador.trim(),
+      nombre_comprador: nombreUnificado,
       whatsapp: input.whatsapp.trim(),
       email: input.email.trim().toLowerCase(),
       etapa: input.etapa.trim(),
-      animador_vendedor: input.animador_vendedor.trim(),
+      animador_vendedor: animadorUnificado,
       cantidad_total: input.cantidad_total,
       comprobantes_urls: input.comprobantes_urls,
       estado_pago: "Pendiente",

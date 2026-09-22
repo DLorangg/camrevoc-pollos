@@ -47,8 +47,9 @@ function formatDate(iso: string) {
 function waLink(whatsapp: string, pedido: PedidoConVales, appUrl: string) {
   const num = whatsapp.replace(/\D/g, "");
   const codigos = pedido.vales.map((v) => v.codigo).join(", ");
+  const nombre = pedido.animador_vendedor || pedido.nombre_comprador;
   const text = encodeURIComponent(
-    `Hola ${pedido.nombre_comprador} 👋, te confirmamos tu pedido de ${pedido.cantidad_total} pollo${pedido.cantidad_total !== 1 ? "s" : ""} de Camrevoc.\n\nTus códigos de vale: ${codigos}\n\nPodés verlos en:\n${pedido.vales.map((v) => `${appUrl}/vale/${v.codigo}`).join("\n")}`,
+    `Hola ${nombre} 👋, te confirmamos tu pedido de ${pedido.cantidad_total} pollo${pedido.cantidad_total !== 1 ? "s" : ""} de CamReVoc.\n\nTus códigos de vale: ${codigos}\n\nPodés verlos en:\n${pedido.vales.map((v) => `${appUrl}/vale/${v.codigo}`).join("\n")}`,
   );
   return `https://wa.me/${num}?text=${text}`;
 }
@@ -203,10 +204,16 @@ function PedidoRow({
         {/* Fecha */}
         <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{formatDate(pedido.created_at)}</td>
 
-        {/* Comprador */}
+        {/* Vendedor / Responsable */}
         <td className="px-4 py-3">
-          <p className="font-medium text-gray-900">{pedido.nombre_comprador}</p>
-          <p className="text-xs text-gray-500">{pedido.email}</p>
+          <p className="font-semibold text-slate-900">{pedido.animador_vendedor || pedido.nombre_comprador}</p>
+          <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-slate-500">
+            <span className="inline-block rounded-md bg-emerald-50 px-1.5 py-0.5 font-medium text-emerald-800 border border-emerald-200/60">
+              {pedido.etapa}
+            </span>
+            <span>·</span>
+            <span>{pedido.email}</span>
+          </div>
         </td>
 
         {/* WhatsApp */}
@@ -215,21 +222,15 @@ function PedidoRow({
             href={`https://wa.me/${pedido.whatsapp.replace(/\D/g, "")}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-green-700 hover:underline font-mono text-xs"
+            className="inline-flex items-center gap-1 text-emerald-700 hover:underline font-mono text-xs font-medium"
           >
             <MessageCircle className="h-3.5 w-3.5" />
             {pedido.whatsapp}
           </a>
         </td>
 
-        {/* Etapa / Animador */}
-        <td className="px-4 py-3">
-          <p className="text-gray-700">{pedido.etapa}</p>
-          <p className="text-xs text-gray-400">{pedido.animador_vendedor}</p>
-        </td>
-
         {/* Pollos */}
-        <td className="px-4 py-3 text-center font-bold text-gray-900">{pedido.cantidad_total}</td>
+        <td className="px-4 py-3 text-center font-bold text-slate-900">{pedido.cantidad_total}</td>
 
         {/* Comprobantes */}
         <td className="px-4 py-3">
@@ -322,6 +323,8 @@ export default function AdminDashboard({
       const matchSearch =
         !q ||
         p.nombre_comprador.toLowerCase().includes(q) ||
+        (p.animador_vendedor && p.animador_vendedor.toLowerCase().includes(q)) ||
+        p.etapa.toLowerCase().includes(q) ||
         p.whatsapp.includes(q) ||
         p.email.toLowerCase().includes(q);
       return matchFilter && matchSearch;
@@ -424,7 +427,7 @@ export default function AdminDashboard({
             <table className="min-w-full text-left">
               <thead className="bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
                 <tr>
-                  {["Fecha", "Comprador", "WhatsApp", "Etapa / Animador", "Pollos", "Comprobantes", "Estado", "Acciones"].map(
+                  {["Fecha", "Vendedor / Responsable", "WhatsApp", "Pollos", "Comprobantes", "Estado", "Acciones"].map(
                     (h) => (
                       <th key={h} className="px-4 py-3">
                         {h}

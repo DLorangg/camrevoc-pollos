@@ -485,7 +485,6 @@ interface FormErrors {
   whatsapp?: string;
   email?: string;
   etapa?: string;
-  animador_vendedor?: string;
   cantidad_total?: string;
   comprobantes?: string;
 }
@@ -499,7 +498,6 @@ export default function OrderForm() {
   const [whatsapp, setWhatsapp] = useState("");
   const [email, setEmail] = useState("");
   const [etapa, setEtapa] = useState("");
-  const [animadorVendedor, setAnimadorVendedor] = useState("");
   const [cantidadTotal, setCantidadTotal] = useState(1);
 
   // Vales distribution
@@ -570,7 +568,6 @@ export default function OrderForm() {
       errs.email = "Ingresá un email válido.";
     }
     if (!etapa) errs.etapa = "La etapa es obligatoria.";
-    if (!animadorVendedor.trim()) errs.animador_vendedor = "El animador/vendedor es obligatorio.";
     if (cantidadTotal < 1) errs.cantidad_total = "Mínimo 1 pollo.";
     if (archivos.length === 0)
       errs.comprobantes = "Adjuntá al menos un comprobante de pago.";
@@ -629,7 +626,7 @@ export default function OrderForm() {
         whatsapp,
         email,
         etapa,
-        animador_vendedor: animadorVendedor,
+        animador_vendedor: nombreComprador,
         cantidad_total: cantidadTotal,
         comprobantes_urls: urls,
         vales: valesInput,
@@ -661,10 +658,14 @@ export default function OrderForm() {
       <section className="space-y-4">
         <SectionHeading emoji="🧑" label="Tus datos" />
 
-        <Field label="Nombre y Apellido" required error={errors.nombre_comprador}>
+        <Field
+          label="Tu Nombre y Apellido (Vendedor / Animador)"
+          required
+          error={errors.nombre_comprador}
+        >
           <input
             type="text"
-            placeholder="Ej: María González"
+            placeholder="Ej: Juan Pérez"
             value={nombreComprador}
             onChange={(e) => handleNombreChange(e.target.value)}
             disabled={isBusy}
@@ -695,37 +696,24 @@ export default function OrderForm() {
           </Field>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {/* Etapa — select cerrado */}
-          <Field label="Etapa" required error={errors.etapa}>
-            <select
-              value={etapa}
-              onChange={(e) => setEtapa(e.target.value)}
-              disabled={isBusy}
-              className={inputCls}
-            >
-              <option value="" disabled>
-                Seleccioná tu etapa…
+        {/* Etapa — select cerrado */}
+        <Field label="Etapa" required error={errors.etapa}>
+          <select
+            value={etapa}
+            onChange={(e) => setEtapa(e.target.value)}
+            disabled={isBusy}
+            className={inputCls}
+          >
+            <option value="" disabled>
+              Seleccioná tu etapa…
+            </option>
+            {ETAPAS.map((e) => (
+              <option key={e} value={e}>
+                {e}
               </option>
-              {ETAPAS.map((e) => (
-                <option key={e} value={e}>
-                  {e}
-                </option>
-              ))}
-            </select>
-          </Field>
-
-          <Field label="Animador / Vendedor" required error={errors.animador_vendedor}>
-            <input
-              type="text"
-              placeholder="Nombre de quien te vendió"
-              value={animadorVendedor}
-              onChange={(e) => setAnimadorVendedor(e.target.value)}
-              disabled={isBusy}
-              className={inputCls}
-            />
-          </Field>
-        </div>
+            ))}
+          </select>
+        </Field>
       </section>
 
       <Divider />
