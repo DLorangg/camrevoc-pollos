@@ -34,6 +34,8 @@ export async function loginAdmin(
 
 export async function logoutAdmin(): Promise<void> {
   const jar = await cookies();
+  jar.set(ADMIN_SESSION_COOKIE, "", { path: "/", maxAge: 0 });
+  jar.set(OPERATOR_COOKIE, "", { path: "/", maxAge: 0 });
   jar.delete(ADMIN_SESSION_COOKIE);
   jar.delete(OPERATOR_COOKIE);
 }

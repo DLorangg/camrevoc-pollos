@@ -18,7 +18,13 @@ export default function AdminLoginPage() {
     startTransition(async () => {
       const result = await loginAdmin(password);
       if (result.ok) {
-        router.push("/admin");
+        const searchParams = new URLSearchParams(window.location.search);
+        const from = searchParams.get("from");
+        const destination =
+          from && from.startsWith("/admin") && !from.startsWith("/admin/login")
+            ? from
+            : "/admin";
+        router.push(destination);
         router.refresh();
       } else {
         setError(result.error ?? "Error de autenticación.");
