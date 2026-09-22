@@ -14,8 +14,8 @@ interface Props {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { codigo } = await params;
   return {
-    title: `Vale ${codigo} | Pollada Solidaria · Camrevoc`,
-    description: `Vale digital para retiro de pollos de Camrevoc. Código: ${codigo}`,
+    title: `Vale ${codigo} | Gran Pollada · CamReVoc`,
+    description: `Vale digital para retiro de pollos de CamReVoc. Código: ${codigo}`,
     icons: {
       icon: "/logo.png",
       apple: "/logo.png",
