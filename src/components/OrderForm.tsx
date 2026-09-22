@@ -388,9 +388,9 @@ function SuccessScreen({
         {vales.map((vale) => {
           const valeUrl = `${appUrl}/vale/${vale.codigo}`;
           const waText = encodeURIComponent(
-            `¡Hola! 🐔 Te comparto tu vale para retirar ${vale.cantidad_pollos} pollo${
+            `¡Hola! \u{1F414} Te comparto tu vale para retirar ${vale.cantidad_pollos} pollo${
               vale.cantidad_pollos !== 1 ? "s" : ""
-            } de Camrevoc.\n\n` +
+            } de CamReVoc.\n\n` +
               (vale.destinatario ? `Retira: *${vale.destinatario}*\n` : "") +
               `Código: *${vale.codigo}*\n\nVer vale: ${valeUrl}`,
           );
