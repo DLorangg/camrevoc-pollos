@@ -1,5 +1,6 @@
 import Image from "next/image";
 import OrderForm from "@/components/OrderForm";
+import HowItWorksModal from "@/components/HowItWorksModal";
 
 export default function HomePage() {
   return (
@@ -34,12 +35,17 @@ export default function HomePage() {
         </div>
 
         <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-          Gran Pollada | CamReVoc
+          Gran Pollada 🍗
         </h1>
         <p className="mt-2 text-sm text-slate-600">
           Casa Salesiana Don Bosco Neuquén ·{" "}
           <strong className="font-semibold text-slate-900">CamReVoc</strong>
         </p>
+
+        {/* Botón de instrucciones */}
+        <div className="mt-5 flex justify-center">
+          <HowItWorksModal />
+        </div>
       </header>
 
       {/* Main Card */}

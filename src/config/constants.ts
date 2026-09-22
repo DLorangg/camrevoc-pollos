@@ -3,6 +3,10 @@
 /** Precio unitario por pollo en pesos argentinos (ARS). Fácil de cambiar. */
 export const PRECIO_POLLO = 8_000;
 
+// ─── Motivo de transferencia sugerido ─────────────────────────────────────────
+
+export const MOTIVO_TRANSFERENCIA = "POLLADACRV";
+
 // ─── Datos bancarios para transferencia ──────────────────────────────────────
 
 export const DATOS_BANCARIOS = {
@@ -11,6 +15,7 @@ export const DATOS_BANCARIOS = {
   cuit: "30610171601",
   cbu: "0720124620000002236168",
   alias: "GRUPOSDBNQN",
+  motivo: MOTIVO_TRANSFERENCIA,
 } as const;
 
 // ─── Etapas (select cerrado) ──────────────────────────────────────────────────

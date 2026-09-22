@@ -115,6 +115,19 @@ function BankCard() {
           </div>
           <CopyButton value={DATOS_BANCARIOS.alias} label="Alias" highlight />
         </div>
+
+        {/* Motivo sugerido */}
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-200/70 bg-white/70 px-3.5 py-2.5">
+          <div className="flex flex-col">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-emerald-800">
+              Motivo / Referencia (opcional)
+            </span>
+            <span className="font-mono text-xs font-bold text-slate-900 sm:text-sm">
+              {DATOS_BANCARIOS.motivo}
+            </span>
+          </div>
+          <CopyButton value={DATOS_BANCARIOS.motivo} label="Motivo" />
+        </div>
       </div>
     </div>
   );
