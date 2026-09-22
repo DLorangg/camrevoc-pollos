@@ -13,16 +13,17 @@ export const DATOS_BANCARIOS = {
   alias: "GRUPOSDBNQN",
 } as const;
 
-// ─── Etapas sugeridas ─────────────────────────────────────────────────────────
+// ─── Etapas (select cerrado) ──────────────────────────────────────────────────
 
-export const ETAPAS_SUGERIDAS = [
-  "Huellas",
-  "Caminantes",
-  "Exploradores",
-  "Guías y Scouts",
-  "Clan Rover",
-  "Comunidad Educativa",
-  "Otra",
+export const ETAPAS = [
+  "1ra Etapa",
+  "2da Etapa",
+  "3ra Etapa",
+  "4ta Etapa",
+  "5ta Etapa",
+  "6ta Etapa",
+  "7ma Etapa",
+  "Guía",
 ] as const;
 
-export type EtapaSugerida = (typeof ETAPAS_SUGERIDAS)[number];
+export type Etapa = (typeof ETAPAS)[number];

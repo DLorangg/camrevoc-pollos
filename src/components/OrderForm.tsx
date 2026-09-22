@@ -1,11 +1,224 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import { PRECIO_POLLO, DATOS_BANCARIOS, ETAPAS_SUGERIDAS } from "@/config/constants";
+import { PRECIO_POLLO, DATOS_BANCARIOS, ETAPAS } from "@/config/constants";
 import { createClient } from "@/lib/supabase/client";
 import { createOrder, type ValeInput, type ValeCreado } from "@/app/actions/create-order";
 import { nanoid } from "nanoid";
-import { CheckCircle, Copy, Check, Loader2, Plus, Trash2, X, Share2, AlertCircle } from "lucide-react";
+import {
+  CheckCircle,
+  Copy,
+  Check,
+  Loader2,
+  Plus,
+  Trash2,
+  X,
+  Share2,
+  AlertCircle,
+} from "lucide-react";
+
+// ─── Theme system ─────────────────────────────────────────────────────────────
+
+export type Theme = "minimal" | "calido" | "dark";
+
+interface ThemeTokens {
+  // Page
+  pageBg: string;
+  // Card (the white container)
+  cardBg: string;
+  cardBorder: string;
+  cardShadow: string;
+  cardRounded: string;
+  // Section headings
+  sectionHeading: string;
+  // Labels / body text
+  labelText: string;
+  bodyText: string;
+  mutedText: string;
+  // Inputs
+  inputBg: string;
+  inputBorder: string;
+  inputText: string;
+  inputPlaceholder: string;
+  inputFocus: string;
+  inputDisabled: string;
+  // Primary button
+  btnPrimary: string;
+  btnPrimaryHover: string;
+  btnPrimaryText: string;
+  // Accent / copy button
+  copyBtn: string;
+  copyBtnHover: string;
+  copyBtnText: string;
+  copyBtnBorder: string;
+  // Bank card
+  bankCardBg: string;
+  bankCardBorder: string;
+  bankCardTitle: string;
+  bankCardText: string;
+  bankCardMono: string;
+  // Vale distributor
+  valeCollapsedBg: string;
+  valeCollapsedBorder: string;
+  valeExpandedBg: string;
+  valeExpandedBorder: string;
+  valeNumBg: string;
+  valeNumText: string;
+  valeAddBtn: string;
+  valeExpandLink: string;
+  // File drop zone
+  dropZoneBg: string;
+  dropZoneBorder: string;
+  dropZoneHover: string;
+  dropZoneText: string;
+  dropZoneAccent: string;
+  // Success
+  successAccent: string;
+  // Footer text
+  footerText: string;
+  // Header subtitle
+  headerSubtitle: string;
+}
+
+export const THEMES: Record<Theme, ThemeTokens> = {
+  minimal: {
+    pageBg: "bg-slate-50",
+    cardBg: "bg-white",
+    cardBorder: "border border-slate-200",
+    cardShadow: "shadow-xl shadow-slate-200/60",
+    cardRounded: "rounded-3xl",
+    sectionHeading: "text-[#1E293B]",
+    labelText: "text-slate-700",
+    bodyText: "text-slate-800",
+    mutedText: "text-slate-500",
+    inputBg: "bg-white",
+    inputBorder: "border-slate-300",
+    inputText: "text-slate-900",
+    inputPlaceholder: "placeholder-slate-400",
+    inputFocus: "focus:border-[#009B4D] focus:ring-[#009B4D]/20",
+    inputDisabled: "disabled:bg-slate-50",
+    btnPrimary: "bg-[#009B4D]",
+    btnPrimaryHover: "hover:bg-[#007a3d]",
+    btnPrimaryText: "text-white",
+    copyBtn: "bg-slate-50",
+    copyBtnHover: "hover:bg-[#009B4D]/10",
+    copyBtnText: "text-slate-700",
+    copyBtnBorder: "border-slate-300",
+    bankCardBg: "bg-gradient-to-br from-emerald-50 to-teal-50",
+    bankCardBorder: "border-emerald-200",
+    bankCardTitle: "text-emerald-800",
+    bankCardText: "text-slate-700",
+    bankCardMono: "text-slate-900",
+    valeCollapsedBg: "bg-slate-50",
+    valeCollapsedBorder: "border-slate-300",
+    valeExpandedBg: "bg-white",
+    valeExpandedBorder: "border-slate-200",
+    valeNumBg: "bg-emerald-100",
+    valeNumText: "text-emerald-800",
+    valeAddBtn: "border-[#009B4D]/40 text-[#009B4D] hover:bg-[#009B4D]/5",
+    valeExpandLink: "text-[#009B4D] hover:text-[#007a3d]",
+    dropZoneBg: "bg-slate-50",
+    dropZoneBorder: "border-slate-300",
+    dropZoneHover: "hover:border-[#009B4D] hover:bg-emerald-50/50",
+    dropZoneText: "text-slate-600",
+    dropZoneAccent: "text-[#009B4D]",
+    successAccent: "text-[#009B4D]",
+    footerText: "text-slate-500",
+    headerSubtitle: "text-slate-500",
+  },
+
+  calido: {
+    pageBg: "bg-[#FBF9F5]",
+    cardBg: "bg-white/95",
+    cardBorder: "border border-stone-200",
+    cardShadow: "shadow-2xl shadow-stone-300/40",
+    cardRounded: "rounded-3xl",
+    sectionHeading: "text-stone-800",
+    labelText: "text-stone-700",
+    bodyText: "text-stone-800",
+    mutedText: "text-stone-500",
+    inputBg: "bg-stone-50",
+    inputBorder: "border-stone-300",
+    inputText: "text-stone-900",
+    inputPlaceholder: "placeholder-stone-400",
+    inputFocus: "focus:border-[#E52427] focus:ring-[#E52427]/20",
+    inputDisabled: "disabled:bg-stone-100",
+    btnPrimary: "bg-[#E52427]",
+    btnPrimaryHover: "hover:bg-[#c41f22]",
+    btnPrimaryText: "text-white",
+    copyBtn: "bg-stone-100",
+    copyBtnHover: "hover:bg-[#009B4D]/10",
+    copyBtnText: "text-stone-700",
+    copyBtnBorder: "border-stone-300",
+    bankCardBg: "bg-gradient-to-br from-amber-50 to-orange-50",
+    bankCardBorder: "border-amber-200",
+    bankCardTitle: "text-amber-800",
+    bankCardText: "text-stone-700",
+    bankCardMono: "text-stone-900",
+    valeCollapsedBg: "bg-stone-50",
+    valeCollapsedBorder: "border-stone-300",
+    valeExpandedBg: "bg-white",
+    valeExpandedBorder: "border-stone-200",
+    valeNumBg: "bg-red-100",
+    valeNumText: "text-[#E52427]",
+    valeAddBtn: "border-[#E52427]/40 text-[#E52427] hover:bg-[#E52427]/5",
+    valeExpandLink: "text-[#E52427] hover:text-[#c41f22]",
+    dropZoneBg: "bg-stone-50",
+    dropZoneBorder: "border-stone-300",
+    dropZoneHover: "hover:border-[#009B4D] hover:bg-green-50/50",
+    dropZoneText: "text-stone-600",
+    dropZoneAccent: "text-[#009B4D]",
+    successAccent: "text-[#009B4D]",
+    footerText: "text-stone-500",
+    headerSubtitle: "text-amber-700",
+  },
+
+  dark: {
+    pageBg: "bg-[#0B0F17]",
+    cardBg: "bg-[#151B28]",
+    cardBorder: "border border-slate-800",
+    cardShadow: "shadow-2xl shadow-black/60",
+    cardRounded: "rounded-3xl",
+    sectionHeading: "text-slate-100",
+    labelText: "text-slate-300",
+    bodyText: "text-slate-200",
+    mutedText: "text-slate-500",
+    inputBg: "bg-[#1E2635]",
+    inputBorder: "border-slate-700",
+    inputText: "text-slate-100",
+    inputPlaceholder: "placeholder-slate-600",
+    inputFocus: "focus:border-emerald-500 focus:ring-emerald-500/20",
+    inputDisabled: "disabled:bg-[#1a2030]",
+    btnPrimary: "bg-emerald-600",
+    btnPrimaryHover: "hover:bg-emerald-500",
+    btnPrimaryText: "text-white",
+    copyBtn: "bg-slate-800",
+    copyBtnHover: "hover:bg-emerald-900/50",
+    copyBtnText: "text-slate-300",
+    copyBtnBorder: "border-slate-700",
+    bankCardBg: "bg-gradient-to-br from-slate-800 to-slate-900",
+    bankCardBorder: "border-slate-700",
+    bankCardTitle: "text-emerald-400",
+    bankCardText: "text-slate-300",
+    bankCardMono: "text-slate-100",
+    valeCollapsedBg: "bg-[#1E2635]",
+    valeCollapsedBorder: "border-slate-700",
+    valeExpandedBg: "bg-[#1E2635]",
+    valeExpandedBorder: "border-slate-700",
+    valeNumBg: "bg-emerald-900/50",
+    valeNumText: "text-emerald-400",
+    valeAddBtn: "border-emerald-700/60 text-emerald-400 hover:bg-emerald-900/30",
+    valeExpandLink: "text-emerald-400 hover:text-emerald-300",
+    dropZoneBg: "bg-[#1E2635]",
+    dropZoneBorder: "border-slate-700",
+    dropZoneHover: "hover:border-emerald-600 hover:bg-emerald-900/20",
+    dropZoneText: "text-slate-400",
+    dropZoneAccent: "text-emerald-400",
+    successAccent: "text-emerald-400",
+    footerText: "text-slate-600",
+    headerSubtitle: "text-slate-400",
+  },
+};
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -17,9 +230,19 @@ function formatARS(amount: number) {
   }).format(amount);
 }
 
-// ─── Sub-components ──────────────────────────────────────────────────────────
+// ─── CopyButton ───────────────────────────────────────────────────────────────
 
-function CopyButton({ value, label }: { value: string; label: string }) {
+function CopyButton({
+  value,
+  label,
+  t,
+  highlight,
+}: {
+  value: string;
+  label: string;
+  t: ThemeTokens;
+  highlight?: boolean;
+}) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -32,10 +255,13 @@ function CopyButton({ value, label }: { value: string; label: string }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="inline-flex items-center gap-1.5 rounded-lg bg-navy-50 px-3 py-1.5 text-xs font-medium text-navy-700 transition-colors hover:bg-navy-100 border border-navy-200"
+      className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all
+        ${copied ? "border-green-400 bg-green-500/10 text-green-600" : `${t.copyBtn} ${t.copyBtnHover} ${t.copyBtnText} ${t.copyBtnBorder}`}
+        ${highlight ? "font-semibold" : ""}
+      `}
     >
       {copied ? (
-        <Check className="h-3.5 w-3.5 text-green-600" />
+        <Check className="h-3.5 w-3.5 text-green-500" />
       ) : (
         <Copy className="h-3.5 w-3.5" />
       )}
@@ -44,38 +270,50 @@ function CopyButton({ value, label }: { value: string; label: string }) {
   );
 }
 
-function BankCard() {
+// ─── BankCard ─────────────────────────────────────────────────────────────────
+
+function BankCard({ t }: { t: ThemeTokens }) {
   return (
-    <div className="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-5 shadow-sm">
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-blue-700">
+    <div className={`rounded-2xl border p-5 ${t.bankCardBg} ${t.bankCardBorder}`}>
+      <h2 className={`mb-4 text-sm font-bold uppercase tracking-wider ${t.bankCardTitle}`}>
         💳 Datos para transferencia
       </h2>
-      <div className="space-y-2 text-sm text-gray-700">
+      <div className={`space-y-2.5 text-sm ${t.bankCardText}`}>
         <p>
-          <span className="font-medium text-gray-900">Banco:</span>{" "}
+          <span className={`font-semibold ${t.bankCardMono}`}>Banco:</span>{" "}
           {DATOS_BANCARIOS.banco}
         </p>
         <p>
-          <span className="font-medium text-gray-900">Titular:</span>{" "}
+          <span className={`font-semibold ${t.bankCardMono}`}>Titular:</span>{" "}
           {DATOS_BANCARIOS.titular}
         </p>
         <p>
-          <span className="font-medium text-gray-900">CUIT:</span>{" "}
+          <span className={`font-semibold ${t.bankCardMono}`}>CUIT:</span>{" "}
           {DATOS_BANCARIOS.cuit}
         </p>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <div>
-            <span className="font-medium text-gray-900">CBU:</span>{" "}
-            <span className="font-mono text-xs">{DATOS_BANCARIOS.cbu}</span>
+
+        {/* CBU row */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 pt-1">
+          <div className="flex flex-col">
+            <span className={`text-xs font-semibold uppercase tracking-wide ${t.bankCardTitle}`}>
+              CBU
+            </span>
+            <span className={`font-mono text-xs ${t.bankCardMono}`}>{DATOS_BANCARIOS.cbu}</span>
           </div>
-          <CopyButton value={DATOS_BANCARIOS.cbu} label="CBU" />
+          <CopyButton value={DATOS_BANCARIOS.cbu} label="CBU" t={t} />
         </div>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <div>
-            <span className="font-medium text-gray-900">Alias:</span>{" "}
-            <span className="font-mono">{DATOS_BANCARIOS.alias}</span>
+
+        {/* Alias row — highlighted */}
+        <div className={`flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border p-3 ${t.bankCardBg} ${t.bankCardBorder}`}>
+          <div className="flex flex-col">
+            <span className={`text-xs font-bold uppercase tracking-wide ${t.bankCardTitle}`}>
+              🏷️ Alias (recomendado)
+            </span>
+            <span className={`font-mono text-lg font-extrabold tracking-widest ${t.bankCardMono}`}>
+              {DATOS_BANCARIOS.alias}
+            </span>
           </div>
-          <CopyButton value={DATOS_BANCARIOS.alias} label="Alias" />
+          <CopyButton value={DATOS_BANCARIOS.alias} label="Alias" t={t} highlight />
         </div>
       </div>
     </div>
@@ -95,11 +333,15 @@ function ValesDistributor({
   nombreComprador,
   vales,
   onChange,
+  t,
+  isBusy,
 }: {
   totalPollos: number;
   nombreComprador: string;
   vales: ValeRow[];
   onChange: (v: ValeRow[]) => void;
+  t: ThemeTokens;
+  isBusy: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -121,10 +363,15 @@ function ValesDistributor({
     onChange(vales.map((v) => (v.id === id ? { ...v, [field]: value } : v)));
   };
 
+  const inputCls = `w-full rounded-lg border px-2 py-1.5 text-sm transition-colors focus:outline-none focus:ring-2
+    ${t.inputBg} ${t.inputBorder} ${t.inputText} ${t.inputFocus} ${t.inputDisabled}`;
+
   if (!expanded) {
     return (
-      <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-center">
-        <p className="mb-2 text-sm text-gray-600">
+      <div
+        className={`rounded-xl border border-dashed p-4 text-center ${t.valeCollapsedBg} ${t.valeCollapsedBorder}`}
+      >
+        <p className={`mb-2 text-sm ${t.bodyText}`}>
           Se generará <strong>1 vale</strong> por los {totalPollos} pollo
           {totalPollos !== 1 ? "s" : ""} a nombre de{" "}
           <strong>{nombreComprador || "vos"}</strong>.
@@ -132,7 +379,7 @@ function ValesDistributor({
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-700 hover:text-blue-900"
+          className={`inline-flex items-center gap-1.5 text-sm font-medium ${t.valeExpandLink}`}
         >
           <Plus className="h-4 w-4" />
           Dividir en varios vales / QRs
@@ -144,12 +391,11 @@ function ValesDistributor({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-gray-800">Distribución de vales</h3>
+        <h3 className={`text-sm font-semibold ${t.sectionHeading}`}>Distribución de vales</h3>
         <button
           type="button"
           onClick={() => {
             setExpanded(false);
-            // Reset to single vale
             onChange([
               {
                 id: nanoid(6),
@@ -158,7 +404,7 @@ function ValesDistributor({
               },
             ]);
           }}
-          className="text-xs text-gray-500 hover:text-gray-700 underline"
+          className={`text-xs underline ${t.mutedText} hover:${t.bodyText}`}
         >
           Volver a 1 solo vale
         </button>
@@ -167,10 +413,10 @@ function ValesDistributor({
       {/* Balance indicator */}
       {diferencia !== 0 && (
         <div
-          className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm ${
+          className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
             diferencia > 0
-              ? "bg-amber-50 text-amber-700 border border-amber-200"
-              : "bg-red-50 text-red-700 border border-red-200"
+              ? "border-amber-300 bg-amber-50 text-amber-700"
+              : "border-red-300 bg-red-50 text-red-700"
           }`}
         >
           <AlertCircle className="h-4 w-4 flex-shrink-0" />
@@ -180,7 +426,7 @@ function ValesDistributor({
         </div>
       )}
       {diferencia === 0 && sumaActual > 0 && (
-        <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+        <div className="flex items-center gap-2 rounded-lg border border-green-300 bg-green-50 px-3 py-2 text-sm text-green-700">
           <Check className="h-4 w-4 flex-shrink-0" />
           ¡La distribución está completa!
         </div>
@@ -188,13 +434,18 @@ function ValesDistributor({
 
       <div className="space-y-2">
         {vales.map((vale, idx) => (
-          <div key={vale.id} className="flex gap-2 rounded-xl border border-gray-200 bg-white p-3">
-            <span className="mt-2.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
+          <div
+            key={vale.id}
+            className={`flex gap-2 rounded-xl border p-3 ${t.valeExpandedBg} ${t.valeExpandedBorder}`}
+          >
+            <span
+              className={`mt-2.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold ${t.valeNumBg} ${t.valeNumText}`}
+            >
               {idx + 1}
             </span>
             <div className="flex flex-1 flex-col gap-2 sm:flex-row">
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-gray-600">Pollos</label>
+                <label className={`text-xs font-medium ${t.labelText}`}>Pollos</label>
                 <input
                   type="number"
                   min={1}
@@ -202,11 +453,12 @@ function ValesDistributor({
                   onChange={(e) =>
                     updateVale(vale.id, "cantidad_pollos", Math.max(1, parseInt(e.target.value) || 1))
                   }
-                  className="w-20 rounded-lg border border-gray-300 px-2 py-1.5 text-center text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  disabled={isBusy}
+                  className={`${inputCls} w-20 text-center`}
                 />
               </div>
               <div className="flex flex-1 flex-col gap-1">
-                <label className="text-xs font-medium text-gray-600">
+                <label className={`text-xs font-medium ${t.labelText}`}>
                   ¿A nombre de quién retira?
                 </label>
                 <input
@@ -214,7 +466,8 @@ function ValesDistributor({
                   placeholder="Ej: Tío Juan"
                   value={vale.destinatario}
                   onChange={(e) => updateVale(vale.id, "destinatario", e.target.value)}
-                  className="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  disabled={isBusy}
+                  className={inputCls}
                 />
               </div>
             </div>
@@ -222,7 +475,7 @@ function ValesDistributor({
               <button
                 type="button"
                 onClick={() => removeVale(vale.id)}
-                className="mt-2 self-start rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                className="mt-2 self-start rounded-lg p-1.5 text-slate-400 hover:bg-red-500/10 hover:text-red-500 transition-colors"
               >
                 <Trash2 className="h-4 w-4" />
               </button>
@@ -234,7 +487,7 @@ function ValesDistributor({
       <button
         type="button"
         onClick={addVale}
-        className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-blue-300 py-2.5 text-sm font-medium text-blue-600 hover:bg-blue-50 transition-colors"
+        className={`flex w-full items-center justify-center gap-2 rounded-xl border border-dashed py-2.5 text-sm font-medium transition-colors ${t.valeAddBtn}`}
       >
         <Plus className="h-4 w-4" />
         Agregar otro vale
@@ -263,7 +516,7 @@ function FilePreview({
         return (
           <div
             key={i}
-            className="relative flex h-20 w-20 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 overflow-hidden"
+            className="relative flex h-20 w-20 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 overflow-hidden"
           >
             {url ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -276,13 +529,13 @@ function FilePreview({
             ) : (
               <div className="flex flex-col items-center p-1 text-center">
                 <span className="text-2xl">📄</span>
-                <span className="mt-1 line-clamp-2 text-[10px] text-gray-600">{file.name}</span>
+                <span className="mt-1 line-clamp-2 text-[10px] text-slate-600">{file.name}</span>
               </div>
             )}
             <button
               type="button"
               onClick={() => onRemove(i)}
-              className="absolute right-0.5 top-0.5 rounded-full bg-white/80 p-0.5 text-gray-600 backdrop-blur hover:text-red-500 shadow"
+              className="absolute right-0.5 top-0.5 rounded-full bg-white/90 p-0.5 text-slate-600 backdrop-blur hover:text-red-500 shadow"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -298,9 +551,11 @@ function FilePreview({
 function SuccessScreen({
   vales,
   email,
+  t,
 }: {
   vales: ValeCreado[];
   email: string;
+  t: ThemeTokens;
 }) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
 
@@ -311,16 +566,16 @@ function SuccessScreen({
       </div>
 
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">¡Pedido recibido con éxito!</h2>
-        <p className="mt-2 text-gray-600 max-w-md mx-auto">
+        <h2 className={`text-2xl font-bold ${t.sectionHeading}`}>¡Pedido recibido con éxito!</h2>
+        <p className={`mt-2 max-w-md mx-auto ${t.bodyText}`}>
           Estamos revisando tu transferencia. Apenas la confirmemos, te enviaremos los vales
           definitivos a{" "}
-          <span className="font-medium text-blue-700">{email}</span>.
+          <span className={`font-medium ${t.successAccent}`}>{email}</span>.
         </p>
       </div>
 
       <div className="w-full max-w-md space-y-3">
-        <h3 className="text-left text-sm font-semibold uppercase tracking-wide text-gray-500">
+        <h3 className={`text-left text-sm font-semibold uppercase tracking-wide ${t.mutedText}`}>
           Tus vales generados
         </h3>
         {vales.map((vale) => {
@@ -343,7 +598,7 @@ function SuccessScreen({
                   <p className="font-mono text-lg font-bold tracking-wider text-green-800">
                     {vale.codigo}
                   </p>
-                  <p className="text-sm text-gray-700">
+                  <p className="text-sm text-slate-700">
                     <span className="font-medium">{vale.cantidad_pollos}</span> pollo
                     {vale.cantidad_pollos !== 1 ? "s" : ""}
                     {vale.destinatario && (
@@ -372,33 +627,51 @@ function SuccessScreen({
   );
 }
 
-// ─── Input + Label helper ─────────────────────────────────────────────────────
+// ─── Field wrapper ────────────────────────────────────────────────────────────
 
 function Field({
   label,
   required,
   error,
+  t,
   children,
 }: {
   label: string;
   required?: boolean;
   error?: string;
+  t: ThemeTokens;
   children: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-medium text-gray-700">
-        {label}
-        {required && <span className="ml-0.5 text-red-500">*</span>}
-      </label>
+      {label && (
+        <label className={`text-sm font-medium ${t.labelText}`}>
+          {label}
+          {required && <span className="ml-0.5 text-red-500">*</span>}
+        </label>
+      )}
       {children}
-      {error && <p className="text-xs text-red-600">{error}</p>}
+      {error && <p className="text-xs text-red-500">{error}</p>}
     </div>
   );
 }
 
-const inputClass =
-  "w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm shadow-sm placeholder-gray-400 transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:bg-gray-100";
+// ─── Section heading ─────────────────────────────────────────────────────────
+
+function SectionHeading({ emoji, label, t }: { emoji: string; label: string; t: ThemeTokens }) {
+  return (
+    <h2 className={`flex items-center gap-2 text-base font-bold ${t.sectionHeading}`}>
+      <span>{emoji}</span>
+      {label}
+    </h2>
+  );
+}
+
+// ─── Divider ─────────────────────────────────────────────────────────────────
+
+function Divider({ t }: { t: ThemeTokens }) {
+  return <hr className={`border-t ${t.cardBorder}`} />;
+}
 
 // ─── Main form ────────────────────────────────────────────────────────────────
 
@@ -412,7 +685,9 @@ interface FormErrors {
   comprobantes?: string;
 }
 
-export default function OrderForm() {
+export default function OrderForm({ theme }: { theme: Theme }) {
+  const t = THEMES[theme];
+
   // Fields
   const [nombreComprador, setNombreComprador] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
@@ -440,7 +715,7 @@ export default function OrderForm() {
     email: string;
   } | null>(null);
 
-  // ── Sync single vale when cantidad changes (if not expanded) ────────────────
+  // ── Sync single vale ───────────────────────────────────────────────────────
   const syncSingleVale = useCallback(
     (qty: number, nombre: string) => {
       if (vales.length === 1) {
@@ -461,7 +736,7 @@ export default function OrderForm() {
     syncSingleVale(cantidadTotal, nombre);
   };
 
-  // ── File handling ────────────────────────────────────────────────────────────
+  // ── File handling ──────────────────────────────────────────────────────────
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const nuevos = Array.from(e.target.files ?? []);
     const combined = [...archivos, ...nuevos].slice(0, 4);
@@ -473,7 +748,7 @@ export default function OrderForm() {
     setArchivos((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // ── Validation ────────────────────────────────────────────────────────────────
+  // ── Validation ─────────────────────────────────────────────────────────────
   const validate = (): boolean => {
     const errs: FormErrors = {};
 
@@ -488,7 +763,7 @@ export default function OrderForm() {
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       errs.email = "Ingresá un email válido.";
     }
-    if (!etapa.trim()) errs.etapa = "La etapa es obligatoria.";
+    if (!etapa) errs.etapa = "La etapa es obligatoria.";
     if (!animadorVendedor.trim()) errs.animador_vendedor = "El animador/vendedor es obligatorio.";
     if (cantidadTotal < 1) errs.cantidad_total = "Mínimo 1 pollo.";
     if (archivos.length === 0)
@@ -498,20 +773,18 @@ export default function OrderForm() {
     return Object.keys(errs).length === 0;
   };
 
-  // ── Vale validation ───────────────────────────────────────────────────────────
+  // ── Vale validation ────────────────────────────────────────────────────────
   const sumaVales = vales.reduce((s, v) => s + (v.cantidad_pollos || 0), 0);
   const valesBalanced = sumaVales === cantidadTotal;
 
-  // ── Submit ────────────────────────────────────────────────────────────────────
+  // ── Submit ─────────────────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setGlobalError(null);
 
     if (!validate()) return;
     if (!valesBalanced) {
-      setGlobalError(
-        "La distribución de vales no coincide con el total de pollos.",
-      );
+      setGlobalError("La distribución de vales no coincide con el total de pollos.");
       return;
     }
 
@@ -519,7 +792,6 @@ export default function OrderForm() {
       setUploading(true);
       const supabase = createClient();
 
-      // Upload comprobantes
       const urls: string[] = [];
       for (const archivo of archivos) {
         const ext = archivo.name.split(".").pop() ?? "jpg";
@@ -540,7 +812,6 @@ export default function OrderForm() {
       }
       setUploading(false);
 
-      // Submit order
       setSubmitting(true);
       const valesInput: ValeInput[] = vales.map((v) => ({
         cantidad_pollos: v.cantidad_pollos,
@@ -558,15 +829,11 @@ export default function OrderForm() {
         vales: valesInput,
       });
 
-      if (!result.ok) {
-        throw new Error(result.error);
-      }
+      if (!result.ok) throw new Error(result.error);
 
       setSuccessData({ vales: result.vales, email });
     } catch (err) {
-      setGlobalError(
-        err instanceof Error ? err.message : "Ocurrió un error inesperado.",
-      );
+      setGlobalError(err instanceof Error ? err.message : "Ocurrió un error inesperado.");
     } finally {
       setUploading(false);
       setSubmitting(false);
@@ -575,139 +842,151 @@ export default function OrderForm() {
 
   const isBusy = uploading || submitting;
 
-  // ─── Success screen ──────────────────────────────────────────────────────────
+  // Shared input class built from theme tokens
+  const inputCls = `w-full rounded-xl border px-4 py-2.5 text-sm shadow-sm transition-colors focus:outline-none focus:ring-2
+    ${t.inputBg} ${t.inputBorder} ${t.inputText} ${t.inputPlaceholder} ${t.inputFocus} ${t.inputDisabled}`;
+
+  // ─── Success screen ────────────────────────────────────────────────────────
   if (successData) {
-    return <SuccessScreen vales={successData.vales} email={successData.email} />;
+    return <SuccessScreen vales={successData.vales} email={successData.email} t={t} />;
   }
 
-  // ─── Form ────────────────────────────────────────────────────────────────────
+  // ─── Form ──────────────────────────────────────────────────────────────────
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-8">
-      {/* Bank data */}
-      <BankCard />
 
-      {/* Buyer data */}
+      {/* ① TUS DATOS ──────────────────────────────────────────────────────── */}
       <section className="space-y-4">
-        <h2 className="text-base font-semibold text-gray-900">🧑 Tus datos</h2>
+        <SectionHeading emoji="🧑" label="Tus datos" t={t} />
 
-        <Field label="Nombre y Apellido" required error={errors.nombre_comprador}>
+        <Field label="Nombre y Apellido" required t={t} error={errors.nombre_comprador}>
           <input
             type="text"
             placeholder="Ej: María González"
             value={nombreComprador}
             onChange={(e) => handleNombreChange(e.target.value)}
             disabled={isBusy}
-            className={inputClass}
+            className={inputCls}
           />
         </Field>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Teléfono / WhatsApp" required error={errors.whatsapp}>
+          <Field label="Teléfono / WhatsApp" required t={t} error={errors.whatsapp}>
             <input
               type="tel"
               placeholder="Ej: +54 299 4123456"
               value={whatsapp}
               onChange={(e) => setWhatsapp(e.target.value)}
               disabled={isBusy}
-              className={inputClass}
+              className={inputCls}
             />
           </Field>
-          <Field label="Email" required error={errors.email}>
+          <Field label="Email" required t={t} error={errors.email}>
             <input
               type="email"
               placeholder="tu@correo.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isBusy}
-              className={inputClass}
+              className={inputCls}
             />
           </Field>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Field label="Etapa" required error={errors.etapa}>
-            <input
-              type="text"
-              placeholder="Ej: Caminantes"
+          {/* Etapa — select cerrado */}
+          <Field label="Etapa" required t={t} error={errors.etapa}>
+            <select
               value={etapa}
               onChange={(e) => setEtapa(e.target.value)}
-              list="etapas-list"
               disabled={isBusy}
-              className={inputClass}
-            />
-            <datalist id="etapas-list">
-              {ETAPAS_SUGERIDAS.map((e) => (
-                <option key={e} value={e} />
+              className={inputCls}
+            >
+              <option value="" disabled>
+                Seleccioná tu etapa…
+              </option>
+              {ETAPAS.map((e) => (
+                <option key={e} value={e}>
+                  {e}
+                </option>
               ))}
-            </datalist>
+            </select>
           </Field>
-          <Field label="Animador / Vendedor" required error={errors.animador_vendedor}>
+
+          <Field label="Animador / Vendedor" required t={t} error={errors.animador_vendedor}>
             <input
               type="text"
               placeholder="Nombre de quien te vendió"
               value={animadorVendedor}
               onChange={(e) => setAnimadorVendedor(e.target.value)}
               disabled={isBusy}
-              className={inputClass}
+              className={inputCls}
             />
           </Field>
         </div>
       </section>
 
-      {/* Quantity */}
-      <section className="space-y-3">
-        <h2 className="text-base font-semibold text-gray-900">🐔 Tu pedido</h2>
+      <Divider t={t} />
 
-        <Field label="Cantidad de pollos" required error={errors.cantidad_total}>
-          <div className="flex items-center gap-3">
+      {/* ② TU PEDIDO Y VALES ───────────────────────────────────────────────── */}
+      <section className="space-y-4">
+        <SectionHeading emoji="🐔" label="Tu pedido y vales" t={t} />
+
+        <Field label="Cantidad de pollos" required t={t} error={errors.cantidad_total}>
+          <div className="flex items-center gap-4">
             <input
               type="number"
               min={1}
               value={cantidadTotal}
               onChange={(e) => handleCantidadChange(parseInt(e.target.value) || 1)}
               disabled={isBusy}
-              className={`${inputClass} w-28 text-center`}
+              className={`${inputCls} w-28 text-center`}
             />
             <div className="flex flex-col">
-              <span className="text-2xl font-bold text-blue-800">
+              <span className={`text-2xl font-extrabold tabular-nums ${t.successAccent}`}>
                 {formatARS(cantidadTotal * PRECIO_POLLO)}
               </span>
-              <span className="text-xs text-gray-500">
-                {formatARS(PRECIO_POLLO)} c/u
-              </span>
+              <span className={`text-xs ${t.mutedText}`}>{formatARS(PRECIO_POLLO)} c/u</span>
             </div>
           </div>
         </Field>
-      </section>
 
-      {/* Vales distributor */}
-      <section className="space-y-3">
-        <h2 className="text-base font-semibold text-gray-900">🎟️ Distribución de vales</h2>
         <ValesDistributor
           totalPollos={cantidadTotal}
           nombreComprador={nombreComprador}
           vales={vales}
           onChange={setVales}
+          t={t}
+          isBusy={isBusy}
         />
       </section>
 
-      {/* File upload */}
+      <Divider t={t} />
+
+      {/* ③ DATOS PARA TRANSFERENCIA ────────────────────────────────────────── */}
+      <section>
+        <BankCard t={t} />
+      </section>
+
+      <Divider t={t} />
+
+      {/* ④ COMPROBANTE DE PAGO ─────────────────────────────────────────────── */}
       <section className="space-y-3">
-        <h2 className="text-base font-semibold text-gray-900">📎 Comprobante de pago</h2>
-        <p className="text-xs text-gray-500">
+        <SectionHeading emoji="📎" label="Comprobante de pago" t={t} />
+        <p className={`text-xs ${t.mutedText}`}>
           Adjuntá hasta 4 archivos (imagen PNG, JPG, WEBP o PDF).
         </p>
 
-        <Field label="" error={errors.comprobantes}>
+        <Field label="" t={t} error={errors.comprobantes}>
           <div
-            className="cursor-pointer rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center hover:border-blue-400 hover:bg-blue-50 transition-colors"
+            className={`cursor-pointer rounded-xl border-2 border-dashed px-4 py-6 text-center transition-colors ${t.dropZoneBg} ${t.dropZoneBorder} ${t.dropZoneHover}`}
             onClick={() => fileInputRef.current?.click()}
           >
-            <p className="text-sm text-gray-600">
-              <span className="font-medium text-blue-600">Seleccioná archivos</span> o arrastralos
-              acá
+            <p className={`text-sm ${t.dropZoneText}`}>
+              <span className={`font-semibold ${t.dropZoneAccent}`}>Seleccioná archivos</span> o
+              arrastralos acá
             </p>
-            <p className="mt-1 text-xs text-gray-400">
+            <p className={`mt-1 text-xs ${t.mutedText}`}>
               {archivos.length}/4 archivos seleccionados
             </p>
             <input
@@ -727,17 +1006,18 @@ export default function OrderForm() {
 
       {/* Global error */}
       {globalError && (
-        <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div className="flex items-start gap-2 rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-700">
           <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
           {globalError}
         </div>
       )}
 
-      {/* Submit */}
+      {/* ⑤ SUBMIT ─────────────────────────────────────────────────────────── */}
       <button
         type="submit"
         disabled={isBusy || !valesBalanced}
-        className="flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-700 px-6 py-4 text-base font-semibold text-white shadow-md transition-all hover:bg-blue-800 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+        className={`flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-4 text-base font-bold shadow-md transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60
+          ${t.btnPrimary} ${t.btnPrimaryHover} ${t.btnPrimaryText}`}
       >
         {isBusy ? (
           <>
