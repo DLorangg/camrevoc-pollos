@@ -32,7 +32,7 @@ import type { Pedido, Vale } from "@/types/database";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type PedidoConVales = Pedido & { vales: Vale[] };
-type Filter = "Todos" | "Pendiente" | "Aprobado" | "Rechazado";
+type Filter = "Todos" | "Pendiente" | "PorEntregar" | "Entregado" | "Rechazado";
 type AdminTab = "pedidos" | "estadisticas";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -422,28 +422,40 @@ function PedidoRow({
         <td className="px-4 py-3 text-center">
           <div className="flex flex-col items-center gap-1">
             <span className="font-bold text-slate-900">{pedido.cantidad_total}</span>
-            {hasVales && (
-              <button
-                onClick={() => setExpanded((prev) => !prev)}
-                className={`inline-flex items-center gap-0.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold transition-colors cursor-pointer ${
-                  expanded
-                    ? "border-emerald-300 bg-emerald-50 text-emerald-800"
-                    : "border-slate-200 bg-slate-50 text-slate-600 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800"
-                }`}
-              >
-                {expanded ? (
-                  <>
-                    <ChevronUp className="h-3 w-3" />
-                    {pedido.vales.length} vale{pedido.vales.length !== 1 ? "s" : ""}
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown className="h-3 w-3" />
-                    Ver {pedido.vales.length} vale{pedido.vales.length !== 1 ? "s" : ""}
-                  </>
-                )}
-              </button>
-            )}
+            {hasVales && (() => {
+              const entregados = pedido.vales.filter((v) => v.estado_entrega === "Entregado").length;
+              const total = pedido.vales.length;
+              const parcial = entregados > 0 && entregados < total;
+              return (
+                <>
+                  <button
+                    onClick={() => setExpanded((prev) => !prev)}
+                    className={`inline-flex items-center gap-0.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold transition-colors cursor-pointer ${
+                      expanded
+                        ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+                        : "border-slate-200 bg-slate-50 text-slate-600 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800"
+                    }`}
+                  >
+                    {expanded ? (
+                      <>
+                        <ChevronUp className="h-3 w-3" />
+                        {total} vale{total !== 1 ? "s" : ""}
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="h-3 w-3" />
+                        Ver {total} vale{total !== 1 ? "s" : ""}
+                      </>
+                    )}
+                  </button>
+                  {parcial && (
+                    <span className="inline-flex items-center rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-[10px] font-semibold text-orange-700">
+                      Entrega parcial ({entregados}/{total})
+                    </span>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </td>
 
@@ -558,9 +570,45 @@ export default function AdminDashboard({
 
   const { metrics, rankingEtapas, leaderboardVendedores } = data;
 
+  // ─── Clasificadores semánticos ────────────────────────────────────────────
+  const counts = useMemo(() => {
+    let pendiente = 0, porEntregar = 0, entregado = 0, rechazado = 0;
+    for (const p of data.pedidos) {
+      if (p.estado_pago === "Pendiente") pendiente++;
+      else if (p.estado_pago === "Rechazado") rechazado++;
+      else if (p.estado_pago === "Aprobado") {
+        const hasVales = p.vales.length > 0;
+        const allDone = hasVales && p.vales.every((v) => v.estado_entrega === "Entregado");
+        if (allDone) entregado++;
+        else porEntregar++;
+      }
+    }
+    return { pendiente, porEntregar, entregado, rechazado };
+  }, [data.pedidos]);
+
   const filtered = useMemo(() => {
     return data.pedidos.filter((p) => {
-      const matchFilter = filter === "Todos" || p.estado_pago === filter;
+      // Filtro semántico
+      let matchFilter = false;
+      if (filter === "Todos") {
+        matchFilter = true;
+      } else if (filter === "Pendiente") {
+        matchFilter = p.estado_pago === "Pendiente";
+      } else if (filter === "Rechazado") {
+        matchFilter = p.estado_pago === "Rechazado";
+      } else if (filter === "PorEntregar") {
+        // Aprobados que tienen al menos un vale pendiente (o sin vales: anomalía)
+        matchFilter =
+          p.estado_pago === "Aprobado" &&
+          (p.vales.length === 0 || p.vales.some((v) => v.estado_entrega !== "Entregado"));
+      } else if (filter === "Entregado") {
+        // Aprobados con TODOS los vales entregados
+        matchFilter =
+          p.estado_pago === "Aprobado" &&
+          p.vales.length > 0 &&
+          p.vales.every((v) => v.estado_entrega === "Entregado");
+      }
+
       const q = search.toLowerCase();
       const matchSearch =
         !q ||
@@ -587,7 +635,6 @@ export default function AdminDashboard({
     });
   };
 
-  const FILTERS: Filter[] = ["Todos", "Pendiente", "Aprobado", "Rechazado"];
 
   return (
     <>
@@ -699,19 +746,85 @@ export default function AdminDashboard({
             {/* Filters + search */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-wrap gap-2">
-                {FILTERS.map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => setFilter(f)}
-                    className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
-                      filter === f
-                        ? "bg-[#009B4D] text-white shadow-xs"
-                        : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-100"
-                    }`}
-                  >
-                    {f}
-                  </button>
-                ))}
+                {/* Todos */}
+                <button
+                  onClick={() => setFilter("Todos")}
+                  className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
+                    filter === "Todos"
+                      ? "bg-[#009B4D] text-white shadow-xs"
+                      : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-100"
+                  }`}
+                >
+                  Todos
+                </button>
+
+                {/* Pendientes de revisión */}
+                <button
+                  onClick={() => setFilter("Pendiente")}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
+                    filter === "Pendiente"
+                      ? "bg-amber-500 text-white shadow-xs"
+                      : "bg-white border border-amber-200 text-amber-700 hover:bg-amber-50"
+                  }`}
+                >
+                  Pendientes
+                  {counts.pendiente > 0 && (
+                    <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${filter === "Pendiente" ? "bg-white/30 text-white" : "bg-amber-100 text-amber-800"}`}>
+                      {counts.pendiente}
+                    </span>
+                  )}
+                </button>
+
+                {/* Aprobados / Por entregar */}
+                <button
+                  onClick={() => setFilter("PorEntregar")}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
+                    filter === "PorEntregar"
+                      ? "bg-[#009B4D] text-white shadow-xs"
+                      : "bg-white border border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                  }`}
+                >
+                  Aprobados / Por entregar
+                  {counts.porEntregar > 0 && (
+                    <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${filter === "PorEntregar" ? "bg-white/30 text-white" : "bg-emerald-100 text-emerald-800"}`}>
+                      {counts.porEntregar}
+                    </span>
+                  )}
+                </button>
+
+                {/* Entregados completos */}
+                <button
+                  onClick={() => setFilter("Entregado")}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
+                    filter === "Entregado"
+                      ? "bg-blue-600 text-white shadow-xs"
+                      : "bg-white border border-blue-200 text-blue-700 hover:bg-blue-50"
+                  }`}
+                >
+                  ✓ Entregados
+                  {counts.entregado > 0 && (
+                    <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${filter === "Entregado" ? "bg-white/30 text-white" : "bg-blue-100 text-blue-800"}`}>
+                      {counts.entregado}
+                    </span>
+                  )}
+                </button>
+
+                {/* Rechazados */}
+                <button
+                  onClick={() => setFilter("Rechazado")}
+                  className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
+                    filter === "Rechazado"
+                      ? "bg-rose-600 text-white shadow-xs"
+                      : "bg-white border border-rose-200 text-rose-700 hover:bg-rose-50"
+                  }`}
+                >
+                  Rechazados
+                  {counts.rechazado > 0 && (
+                    <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${filter === "Rechazado" ? "bg-white/30 text-white" : "bg-rose-100 text-rose-800"}`}>
+                      {counts.rechazado}
+                    </span>
+                  )}
+                </button>
               </div>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
