@@ -13,11 +13,10 @@ import {
   LogOut,
   MessageCircle,
   Trophy,
-  Award,
   Layers,
   TrendingUp,
-  User,
-  Users,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import {
   approvePedido,
@@ -26,6 +25,7 @@ import {
   type EtapaStat,
   type VendedorLeaderboard,
 } from "@/app/actions/admin-pedidos";
+import { confirmarEntrega } from "@/app/actions/vale-actions";
 import { logoutAdmin, clearOperator } from "@/app/actions/admin-auth";
 import type { Pedido, Vale } from "@/types/database";
 
@@ -57,12 +57,34 @@ function formatDate(iso: string) {
   });
 }
 
+function formatTime(iso: string) {
+  return new Date(iso).toLocaleTimeString("es-AR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function waLink(whatsapp: string, pedido: PedidoConVales, appUrl: string) {
   const num = whatsapp.replace(/\D/g, "");
   const codigos = pedido.vales.map((v) => v.codigo).join(", ");
   const nombre = pedido.animador_vendedor || pedido.nombre_comprador;
   const text = encodeURIComponent(
     `Hola ${nombre} 👋, te confirmamos tu pedido de ${pedido.cantidad_total} pollo${pedido.cantidad_total !== 1 ? "s" : ""} de CamReVoc.\n\nTus códigos de vale: ${codigos}\n\nPodés verlos en:\n${pedido.vales.map((v) => `${appUrl}/vale/${v.codigo}`).join("\n")}`,
+  );
+  return `https://wa.me/${num}?text=${text}`;
+}
+
+/** Link de WhatsApp prearmado para un vale pendiente específico */
+function waPendingValeLink(
+  whatsapp: string,
+  pedido: PedidoConVales,
+  vale: Vale,
+) {
+  const num = whatsapp.replace(/\D/g, "");
+  const nombre = pedido.animador_vendedor || pedido.nombre_comprador;
+  const destinatario = vale.destinatario || "el destinatario";
+  const text = encodeURIComponent(
+    `Hola ${nombre}! Te avisamos desde CamReVoc que el vale ${vale.codigo} a nombre de ${destinatario} por ${vale.cantidad_pollos} pollo${vale.cantidad_pollos !== 1 ? "s" : ""} todavía no fue retirado en el puesto de entrega.`,
   );
   return `https://wa.me/${num}?text=${text}`;
 }
@@ -175,6 +197,157 @@ function EstadoBadge({ estado }: { estado: string }) {
   );
 }
 
+// ─── Vale detail row (inside accordion) ──────────────────────────────────────
+
+function ValeDetailRow({
+  vale,
+  pedido,
+  appUrl,
+  onEntregado,
+}: {
+  vale: Vale;
+  pedido: PedidoConVales;
+  appUrl: string;
+  onEntregado: () => void;
+}) {
+  const [isPending, startTransition] = useTransition();
+
+  const handleMarcarEntregado = () => {
+    startTransition(async () => {
+      await confirmarEntrega(vale.id, vale.codigo);
+      onEntregado();
+    });
+  };
+
+  const entregado = vale.estado_entrega === "Entregado";
+
+  return (
+    <tr className="border-t border-slate-100 text-xs">
+      {/* Código */}
+      <td className="px-3 py-2">
+        <a
+          href={`${appUrl}/vale/${vale.codigo}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 font-mono font-semibold text-slate-700 hover:bg-emerald-100 hover:text-emerald-800 transition-colors"
+        >
+          {vale.codigo}
+          <ExternalLink className="h-3 w-3 opacity-60" />
+        </a>
+      </td>
+
+      {/* Retira */}
+      <td className="px-3 py-2 text-slate-700">
+        {vale.destinatario || <span className="italic text-slate-400">Comprador</span>}
+      </td>
+
+      {/* Cantidad */}
+      <td className="px-3 py-2 text-center font-bold text-slate-800">
+        {vale.cantidad_pollos} pollo{vale.cantidad_pollos !== 1 ? "s" : ""}
+      </td>
+
+      {/* Estado */}
+      <td className="px-3 py-2">
+        {entregado ? (
+          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
+            ✓ Entregado
+            {vale.entregado_at && (
+              <span className="font-normal opacity-70">{formatTime(vale.entregado_at)} hs</span>
+            )}
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
+            ⏳ Pendiente de retiro
+          </span>
+        )}
+      </td>
+
+      {/* Acciones */}
+      <td className="px-3 py-2">
+        {!entregado && (
+          <div className="flex items-center gap-1.5">
+            {/* Marcar Entregado */}
+            <button
+              onClick={handleMarcarEntregado}
+              disabled={isPending}
+              className="inline-flex items-center gap-1 rounded-lg border border-emerald-300 bg-white px-2 py-1 text-xs font-semibold text-emerald-800 hover:bg-emerald-50 disabled:opacity-50 transition-colors"
+            >
+              {isPending ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <CheckCircle className="h-3 w-3" />
+              )}
+              Marcar Entregado
+            </button>
+
+            {/* WhatsApp al vendedor */}
+            <a
+              href={waPendingValeLink(pedido.whatsapp, pedido, vale)}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Avisar al vendedor por WhatsApp"
+              className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-emerald-50 hover:border-emerald-300 hover:text-emerald-800 transition-colors"
+            >
+              <MessageCircle className="h-3 w-3" />
+              WA
+            </a>
+          </div>
+        )}
+      </td>
+    </tr>
+  );
+}
+
+// ─── Vales accordion (expanded row) ──────────────────────────────────────────
+
+function ValesAccordion({
+  pedido,
+  appUrl,
+  colSpan,
+  onRefresh,
+}: {
+  pedido: PedidoConVales;
+  appUrl: string;
+  colSpan: number;
+  onRefresh: () => void;
+}) {
+  return (
+    <tr>
+      <td colSpan={colSpan} className="p-0">
+        <div className="bg-slate-50/80 border-t border-slate-100 px-4 py-3">
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+            Detalle de vales &mdash; {pedido.vales.length} vale{pedido.vales.length !== 1 ? "s" : ""}
+          </p>
+          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+            <table className="min-w-full text-left">
+              <thead className="bg-slate-50 text-[10px] font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                <tr>
+                  <th className="px-3 py-2">Código</th>
+                  <th className="px-3 py-2">Retira</th>
+                  <th className="px-3 py-2 text-center">Cantidad</th>
+                  <th className="px-3 py-2">Estado</th>
+                  <th className="px-3 py-2">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pedido.vales.map((vale) => (
+                  <ValeDetailRow
+                    key={vale.id}
+                    vale={vale}
+                    pedido={pedido}
+                    appUrl={appUrl}
+                    onEntregado={onRefresh}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
 // ─── Row actions ─────────────────────────────────────────────────────────────
 
 function PedidoRow({
@@ -188,6 +361,7 @@ function PedidoRow({
 }) {
   const [isPending, startTransition] = useTransition();
   const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
   const router = useRouter();
 
   const approve = () =>
@@ -203,6 +377,8 @@ function PedidoRow({
       router.refresh();
     });
   };
+
+  const hasVales = pedido.vales && pedido.vales.length > 0;
 
   return (
     <>
@@ -242,8 +418,34 @@ function PedidoRow({
           </a>
         </td>
 
-        {/* Pollos */}
-        <td className="px-4 py-3 text-center font-bold text-slate-900">{pedido.cantidad_total}</td>
+        {/* Pollos + acordeón */}
+        <td className="px-4 py-3 text-center">
+          <div className="flex flex-col items-center gap-1">
+            <span className="font-bold text-slate-900">{pedido.cantidad_total}</span>
+            {hasVales && (
+              <button
+                onClick={() => setExpanded((prev) => !prev)}
+                className={`inline-flex items-center gap-0.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold transition-colors cursor-pointer ${
+                  expanded
+                    ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+                    : "border-slate-200 bg-slate-50 text-slate-600 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800"
+                }`}
+              >
+                {expanded ? (
+                  <>
+                    <ChevronUp className="h-3 w-3" />
+                    {pedido.vales.length} vale{pedido.vales.length !== 1 ? "s" : ""}
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-3 w-3" />
+                    Ver {pedido.vales.length} vale{pedido.vales.length !== 1 ? "s" : ""}
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        </td>
 
         {/* Comprobantes */}
         <td className="px-4 py-3">
@@ -309,7 +511,7 @@ function PedidoRow({
                 WhatsApp
               </a>
             )}
-            {pedido.vales && pedido.vales.length > 0 && (
+            {hasVales && (
               <a
                 href={`/vale/${pedido.vales[0].codigo}`}
                 target="_blank"
@@ -323,6 +525,16 @@ function PedidoRow({
           </div>
         </td>
       </tr>
+
+      {/* Acordeón de vales */}
+      {expanded && hasVales && (
+        <ValesAccordion
+          pedido={pedido}
+          appUrl={appUrl}
+          colSpan={7}
+          onRefresh={() => router.refresh()}
+        />
+      )}
     </>
   );
 }
@@ -447,13 +659,13 @@ export default function AdminDashboard({
           }`}
         >
           <Trophy className="h-4 w-4" />
-          <span>Estadísticas & Rankings</span>
+          <span>Estadísticas &amp; Rankings</span>
         </button>
       </div>
 
       <main className="p-4 sm:p-6 space-y-6">
         {/* Metric Cards (Globales) */}
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-5">
           <MetricCard
             label="Pollos solicitados"
             value={String(metrics.totalSolicitados)}
@@ -473,6 +685,11 @@ export default function AdminDashboard({
             label="Pendientes de revisión"
             value={String(metrics.pendientesRevision)}
             color="border-amber-400"
+          />
+          <MetricCard
+            label="Pollos entregados"
+            value={String(metrics.totalEntregados)}
+            color="border-blue-500"
           />
         </div>
 
@@ -518,7 +735,7 @@ export default function AdminDashboard({
                 <table className="min-w-full text-left">
                   <thead className="bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-200">
                     <tr>
-                      {["Fecha", "Vendedor / Responsable", "WhatsApp", "Pollos", "Comprobantes", "Estado", "Acciones"].map(
+                      {["Fecha", "Vendedor / Responsable", "WhatsApp", "Pollos / Vales", "Comprobantes", "Estado", "Acciones"].map(
                         (h) => (
                           <th key={h} className="px-4 py-3">
                             {h}

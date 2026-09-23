@@ -140,6 +140,7 @@ export interface DashboardData {
     totalAprobados: number;
     recaudacionAprobada: number;
     pendientesRevision: number;
+    totalEntregados: number;
   };
   rankingEtapas: EtapaStat[];
   leaderboardVendedores: VendedorLeaderboard[];
@@ -269,6 +270,14 @@ export async function getDashboardData(): Promise<DashboardData> {
       recaudacionAprobada:
         aprobados.reduce((s, p) => s + p.cantidad_total, 0) * PRECIO_POLLO,
       pendientesRevision: pedidos.filter((p) => p.estado_pago === "Pendiente").length,
+      totalEntregados: pedidos.reduce(
+        (s, p) =>
+          s +
+          p.vales
+            .filter((v) => v.estado_entrega === "Entregado")
+            .reduce((vs, v) => vs + v.cantidad_pollos, 0),
+        0,
+      ),
     },
     rankingEtapas,
     leaderboardVendedores,
