@@ -11,7 +11,7 @@ export default function HomePage() {
         <div className="mb-6 flex items-center justify-center gap-3 sm:gap-5">
           <div className="flex items-center justify-center rounded-2xl border border-slate-200/80 bg-white p-2 shadow-xs">
             <Image
-              src="/logo.png"
+              src="/pollos/logo.png"
               alt="Logo CamReVoc · Casa Salesiana Don Bosco Neuquén"
               width={64}
               height={64}
@@ -24,7 +24,7 @@ export default function HomePage() {
 
           <div className="flex items-center justify-center rounded-2xl border border-slate-200/80 bg-white p-2 shadow-xs">
             <Image
-              src="/salesianos.png"
+              src="/pollos/salesianos.png"
               alt="Logo Salesianos Don Bosco · Casa Don Bosco Neuquén"
               width={64}
               height={64}

@@ -38,7 +38,7 @@ export default function AdminLoginPage() {
         {/* Logo */}
         <div className="mb-6 flex flex-col items-center gap-3">
           <Image
-            src="/logo.png"
+            src="/pollos/logo.png"
             alt="Logo Camrevoc"
             width={72}
             height={72}

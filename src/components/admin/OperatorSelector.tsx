@@ -66,7 +66,7 @@ export default function OperatorSelector() {
       <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white px-8 py-10 shadow-xl shadow-slate-200/50">
         <div className="mb-6 flex flex-col items-center gap-3">
           <Image
-            src="/logo.png"
+            src="/pollos/logo.png"
             alt="Logo Camrevoc"
             width={64}
             height={64}

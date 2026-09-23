@@ -10,7 +10,7 @@ export interface SendTicketParams {
   vales: ValeCreado[];
 }
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://camrevoc.com.ar/pollos";
 const FECHA_ENTREGA = "Sábado 11 de Octubre de 2025";
 
 function buildHtml(params: SendTicketParams): string {
@@ -91,7 +91,7 @@ export async function sendTicketEmail(
 ): Promise<{ ok: boolean; error?: string }> {
   try {
     const { error } = await resend.emails.send({
-      from: "Camrevoc - Don Bosco <onboarding@resend.dev>",
+      from: "CamReVoc <pollada@camrevoc.com.ar>",
       to: params.to,
       subject: "¡Tus vales de pollos están confirmados! - Camrevoc",
       html: buildHtml(params),

@@ -30,7 +30,7 @@ export default async function ValePage({ params }: Props) {
 
   if (!vale) notFound();
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000/pollos";
   const valeUrl = `${appUrl}/vale/${codigo}`;
 
   const pedidoPendiente =
@@ -43,7 +43,7 @@ export default async function ValePage({ params }: Props) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-between bg-slate-50 px-4 py-12">
         <div className="my-auto w-full max-w-sm rounded-3xl border border-amber-200 bg-white p-8 shadow-xl text-center space-y-4">
-          <Image src="/logo.png" alt="Camrevoc" width={64} height={64} className="mx-auto rounded-2xl shadow-xs" />
+          <Image src="/pollos/logo.png" alt="Camrevoc" width={64} height={64} className="mx-auto rounded-2xl shadow-xs" />
           <span className="text-5xl">⏳</span>
           <h1 className="text-xl font-bold text-amber-800">Pago en revisión</h1>
           <p className="text-slate-600 text-sm">
@@ -81,7 +81,7 @@ export default async function ValePage({ params }: Props) {
         <div className="flex flex-1 flex-col items-center justify-center px-4 py-12 text-center">
           <div className="w-full max-w-sm space-y-6">
             <Image
-              src="/logo.png"
+              src="/pollos/logo.png"
               alt="Camrevoc"
               width={72}
               height={72}
@@ -130,7 +130,7 @@ export default async function ValePage({ params }: Props) {
         <div className="w-full max-w-sm space-y-6">
           {/* Logo */}
           <Image
-            src="/logo.png"
+            src="/pollos/logo.png"
             alt="Camrevoc"
             width={72}
             height={72}

@@ -596,7 +596,7 @@ export default function AdminDashboard({
       {/* Top bar */}
       <header className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:px-6 shadow-xs">
         <div className="flex items-center gap-3">
-          <Image src="/logo.png" alt="Logo" width={36} height={36} className="rounded-xl shadow-xs" />
+          <Image src="/pollos/logo.png" alt="Logo" width={36} height={36} className="rounded-xl shadow-xs" />
           <div>
             <h1 className="text-base font-bold text-slate-900">Panel Camrevoc</h1>
             <div className="flex items-center gap-1.5 text-xs text-slate-500">
