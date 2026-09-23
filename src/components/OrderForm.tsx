@@ -387,13 +387,15 @@ function SuccessScreen({
         </h3>
         {vales.map((vale) => {
           const valeUrl = `${appUrl}/vale/${vale.codigo}`;
+          const emojiPollo = "\u{1F414}";
           const waText = encodeURIComponent(
-            `¡Hola! \u{1F414} Te comparto tu vale para retirar ${vale.cantidad_pollos} pollo${
+            `\u00a1Hola! ${emojiPollo} Te comparto tu vale para retirar ${vale.cantidad_pollos} pollo${
               vale.cantidad_pollos !== 1 ? "s" : ""
             } de CamReVoc.\n\n` +
               (vale.destinatario ? `Retira: *${vale.destinatario}*\n` : "") +
-              `Código: *${vale.codigo}*\n\nVer vale: ${valeUrl}`,
+              `C\u00f3digo: *${vale.codigo}*\n\nVer vale: ${valeUrl}`,
           );
+          const waUrl = `https://api.whatsapp.com/send?text=${waText}`;
 
           return (
             <div
@@ -417,7 +419,7 @@ function SuccessScreen({
                   </p>
                 </div>
                 <a
-                  href={`https://wa.me/?text=${waText}`}
+                  href={waUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-xl bg-[#009B4D] px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-[#007a3d] transition-colors"
@@ -766,29 +768,44 @@ export default function OrderForm() {
           Adjuntá hasta 4 archivos (imagen PNG, JPG, WEBP o PDF).
         </p>
 
-        <Field label="" error={errors.comprobantes}>
-          <div
-            className="cursor-pointer rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center transition-colors hover:border-[#009B4D] hover:bg-emerald-50/40"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <p className="text-sm text-slate-600">
-              <span className="font-semibold text-[#009B4D]">Seleccioná archivos</span> o
-              arrastralos acá
-            </p>
-            <p className="mt-1 text-xs text-slate-400">
-              {archivos.length}/4 archivos seleccionados
-            </p>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/png,image/jpeg,image/webp,application/pdf"
-              multiple
-              className="hidden"
-              onChange={handleFileChange}
-              disabled={archivos.length >= 4 || isBusy}
-            />
+        <div
+          className={`cursor-pointer rounded-2xl border-2 border-dashed px-4 py-6 text-center transition-colors ${
+            errors.comprobantes
+              ? "border-rose-400 bg-rose-50 hover:border-rose-500"
+              : "border-slate-300 bg-slate-50 hover:border-[#009B4D] hover:bg-emerald-50/40"
+          }`}
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <p className="text-sm text-slate-600">
+            <span className={`font-semibold ${errors.comprobantes ? "text-rose-600" : "text-[#009B4D]"}`}>
+              Seleccioná archivos
+            </span>{" "}
+            o arrastralos acá
+          </p>
+          <p className="mt-1 text-xs text-slate-400">
+            {archivos.length}/4 archivos seleccionados
+          </p>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/webp,application/pdf"
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              handleFileChange(e);
+              // Limpiar error de comprobante al seleccionar
+              if (errors.comprobantes) setErrors((prev) => ({ ...prev, comprobantes: undefined }));
+            }}
+            disabled={archivos.length >= 4 || isBusy}
+          />
+        </div>
+
+        {errors.comprobantes && (
+          <div className="flex items-start gap-2 rounded-xl border border-rose-300 bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700">
+            <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+            <span>⚠️ Debés adjuntar el comprobante de transferencia para enviar el pedido.</span>
           </div>
-        </Field>
+        )}
 
         <FilePreview files={archivos} onRemove={removeFile} />
       </section>

@@ -52,6 +52,18 @@ export async function createOrder(
     };
   }
 
+  // Comprobante obligatorio
+  if (
+    !input.comprobantes_urls ||
+    input.comprobantes_urls.length === 0 ||
+    input.comprobantes_urls.every((u) => !u?.trim())
+  ) {
+    return {
+      ok: false,
+      error: "El comprobante de transferencia es obligatorio para registrar el pedido.",
+    };
+  }
+
   const supabase = createServiceClient();
   const nombreUnificado = input.nombre_comprador.trim();
   const animadorUnificado = (input.animador_vendedor || input.nombre_comprador).trim();

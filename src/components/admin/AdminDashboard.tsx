@@ -68,10 +68,11 @@ function waLink(whatsapp: string, pedido: PedidoConVales, appUrl: string) {
   const num = whatsapp.replace(/\D/g, "");
   const codigos = pedido.vales.map((v) => v.codigo).join(", ");
   const nombre = pedido.animador_vendedor || pedido.nombre_comprador;
+  const emojiWave = "\u{1F44B}";
   const text = encodeURIComponent(
-    `Hola ${nombre} 👋, te confirmamos tu pedido de ${pedido.cantidad_total} pollo${pedido.cantidad_total !== 1 ? "s" : ""} de CamReVoc.\n\nTus códigos de vale: ${codigos}\n\nPodés verlos en:\n${pedido.vales.map((v) => `${appUrl}/vale/${v.codigo}`).join("\n")}`,
+    `Hola ${nombre} ${emojiWave}, te confirmamos tu pedido de ${pedido.cantidad_total} pollo${pedido.cantidad_total !== 1 ? "s" : ""} de CamReVoc.\n\nTus c\u00f3digos de vale: ${codigos}\n\nPod\u00e9s verlos en:\n${pedido.vales.map((v) => `${appUrl}/vale/${v.codigo}`).join("\n")}`,
   );
-  return `https://wa.me/${num}?text=${text}`;
+  return `https://api.whatsapp.com/send?phone=${num}&text=${text}`;
 }
 
 /** Link de WhatsApp prearmado para un vale pendiente específico */
@@ -84,9 +85,9 @@ function waPendingValeLink(
   const nombre = pedido.animador_vendedor || pedido.nombre_comprador;
   const destinatario = vale.destinatario || "el destinatario";
   const text = encodeURIComponent(
-    `Hola ${nombre}! Te avisamos desde CamReVoc que el vale ${vale.codigo} a nombre de ${destinatario} por ${vale.cantidad_pollos} pollo${vale.cantidad_pollos !== 1 ? "s" : ""} todavía no fue retirado en el puesto de entrega.`,
+    `Hola ${nombre}! Te avisamos desde CamReVoc que el vale ${vale.codigo} a nombre de ${destinatario} por ${vale.cantidad_pollos} pollo${vale.cantidad_pollos !== 1 ? "s" : ""} todav\u00eda no fue retirado en el puesto de entrega.`,
   );
-  return `https://wa.me/${num}?text=${text}`;
+  return `https://api.whatsapp.com/send?phone=${num}&text=${text}`;
 }
 
 // ─── Image modal ──────────────────────────────────────────────────────────────
