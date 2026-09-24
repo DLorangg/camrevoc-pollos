@@ -20,7 +20,10 @@ export function proxy(request: NextRequest) {
   if (isLoginRoute) {
     if (isAuthenticated) {
       // Si ya está autenticado, redirigir directo al dashboard
-      return NextResponse.redirect(new URL("/admin", request.url));
+      const dashboardUrl = request.nextUrl.clone();
+      dashboardUrl.pathname = "/admin";
+      dashboardUrl.search = "";
+      return NextResponse.redirect(dashboardUrl);
     }
     // Si no está autenticado, permitir ver el formulario de login
     return NextResponse.next();
@@ -29,7 +32,8 @@ export function proxy(request: NextRequest) {
   // 2. Manejo de rutas administrativas protegidas
   if (!isAuthenticated) {
     // Redirigir al login guardando el destino original (solo si no es login)
-    const loginUrl = new URL("/admin/login", request.url);
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = "/admin/login";
     if (pathname && !pathname.startsWith("/admin/login")) {
       const fullPath = pathname + request.nextUrl.search;
       loginUrl.searchParams.set("from", fullPath);

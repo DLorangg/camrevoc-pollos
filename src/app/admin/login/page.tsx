@@ -19,7 +19,10 @@ export default function AdminLoginPage() {
       const result = await loginAdmin(password);
       if (result.ok) {
         const searchParams = new URLSearchParams(window.location.search);
-        const from = searchParams.get("from");
+        let from = searchParams.get("from");
+        if (from && from.startsWith("/pollos")) {
+          from = from.slice("/pollos".length) || "/";
+        }
         const destination =
           from && from.startsWith("/admin") && !from.startsWith("/admin/login")
             ? from

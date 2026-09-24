@@ -1,7 +1,7 @@
 // ─── Precios ─────────────────────────────────────────────────────────────────
 
 /** Precio unitario por pollo en pesos argentinos (ARS). Fácil de cambiar. */
-export const PRECIO_POLLO = 8_000;
+export const PRECIO_POLLO = 40000;
 
 // ─── Motivo de transferencia sugerido ─────────────────────────────────────────
 

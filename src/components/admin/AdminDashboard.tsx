@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useMemo } from "react";
+import { useState, useTransition, useMemo, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
@@ -17,6 +17,9 @@ import {
   TrendingUp,
   ChevronDown,
   ChevronUp,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import {
   approvePedido,
@@ -25,6 +28,7 @@ import {
   type EtapaStat,
   type VendedorLeaderboard,
 } from "@/app/actions/admin-pedidos";
+import { PRECIO_POLLO } from "@/config/constants";
 import { confirmarEntrega } from "@/app/actions/vale-actions";
 import { logoutAdmin, clearOperator } from "@/app/actions/admin-auth";
 import type { Pedido, Vale } from "@/types/database";
@@ -34,10 +38,19 @@ import type { Pedido, Vale } from "@/types/database";
 type PedidoConVales = Pedido & { vales: Vale[] };
 type Filter = "Todos" | "Pendiente" | "PorEntregar" | "Entregado" | "Rechazado";
 type AdminTab = "pedidos" | "estadisticas";
+type SortOrder = "fecha_desc" | "fecha_asc" | "nombre_asc" | "nombre_desc";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const PRECIO_POLLO = 8_000;
+function getApellidoNombreKey(fullName: string): string {
+  if (!fullName) return "";
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length <= 1) return parts[0]?.toLowerCase() || "";
+  // Tomar la última palabra como apellido y el resto como nombre
+  const apellido = parts[parts.length - 1].toLowerCase();
+  const nombres = parts.slice(0, -1).join(" ").toLowerCase();
+  return `${apellido} ${nombres}`;
+}
 
 function formatARS(n: number) {
   return new Intl.NumberFormat("es-AR", {
@@ -205,15 +218,21 @@ function ValeDetailRow({
   pedido,
   appUrl,
   onEntregado,
+  onValeEntregado,
 }: {
   vale: Vale;
   pedido: PedidoConVales;
   appUrl: string;
   onEntregado: () => void;
+  onValeEntregado: (pedidoId: string, valeId: string) => void;
 }) {
   const [isPending, startTransition] = useTransition();
 
   const handleMarcarEntregado = () => {
+    // 1. Actualización optimista inmediata en estado local
+    onValeEntregado(pedido.id, vale.id);
+
+    // 2. Persistir en servidor
     startTransition(async () => {
       await confirmarEntrega(vale.id, vale.codigo);
       onEntregado();
@@ -306,11 +325,13 @@ function ValesAccordion({
   appUrl,
   colSpan,
   onRefresh,
+  onValeEntregado,
 }: {
   pedido: PedidoConVales;
   appUrl: string;
   colSpan: number;
   onRefresh: () => void;
+  onValeEntregado: (pedidoId: string, valeId: string) => void;
 }) {
   return (
     <tr>
@@ -338,6 +359,7 @@ function ValesAccordion({
                     pedido={pedido}
                     appUrl={appUrl}
                     onEntregado={onRefresh}
+                    onValeEntregado={onValeEntregado}
                   />
                 ))}
               </tbody>
@@ -355,10 +377,12 @@ function PedidoRow({
   pedido,
   appUrl,
   onImageClick,
+  onValeEntregado,
 }: {
   pedido: PedidoConVales;
   appUrl: string;
   onImageClick: (url: string) => void;
+  onValeEntregado: (pedidoId: string, valeId: string) => void;
 }) {
   const [isPending, startTransition] = useTransition();
   const [rejectingId, setRejectingId] = useState<string | null>(null);
@@ -546,6 +570,7 @@ function PedidoRow({
           appUrl={appUrl}
           colSpan={7}
           onRefresh={() => router.refresh()}
+          onValeEntregado={onValeEntregado}
         />
       )}
     </>
@@ -562,7 +587,9 @@ export default function AdminDashboard({
   operator: string;
 }) {
   const [activeTab, setActiveTab] = useState<AdminTab>("pedidos");
+  const [pedidos, setPedidos] = useState(data.pedidos);
   const [filter, setFilter] = useState<Filter>("Todos");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("fecha_desc");
   const [search, setSearch] = useState("");
   const [modalUrl, setModalUrl] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -571,10 +598,33 @@ export default function AdminDashboard({
 
   const { metrics, rankingEtapas, leaderboardVendedores } = data;
 
+  // Sincronizar estado local cuando cambian las props del servidor (ej: tras router.refresh())
+  useEffect(() => {
+    setPedidos(data.pedidos);
+  }, [data.pedidos]);
+
+  // Actualización optimista inmediata de la entrega de un vale
+  const handleValeEntregado = (pedidoId: string, valeId: string) => {
+    const nowIso = new Date().toISOString();
+    setPedidos((prev) =>
+      prev.map((p) => {
+        if (p.id !== pedidoId) return p;
+        return {
+          ...p,
+          vales: p.vales.map((v) =>
+            v.id === valeId
+              ? { ...v, estado_entrega: "Entregado" as const, entregado_at: nowIso }
+              : v,
+          ),
+        };
+      }),
+    );
+  };
+
   // ─── Clasificadores semánticos ────────────────────────────────────────────
   const counts = useMemo(() => {
     let pendiente = 0, porEntregar = 0, entregado = 0, rechazado = 0;
-    for (const p of data.pedidos) {
+    for (const p of pedidos) {
       if (p.estado_pago === "Pendiente") pendiente++;
       else if (p.estado_pago === "Rechazado") rechazado++;
       else if (p.estado_pago === "Aprobado") {
@@ -585,10 +635,22 @@ export default function AdminDashboard({
       }
     }
     return { pendiente, porEntregar, entregado, rechazado };
-  }, [data.pedidos]);
+  }, [pedidos]);
+
+  const totalPollosEntregados = useMemo(() => {
+    return pedidos.reduce((acc, p) => {
+      return (
+        acc +
+        p.vales.reduce(
+          (vAcc, v) => (v.estado_entrega === "Entregado" ? vAcc + v.cantidad_pollos : vAcc),
+          0,
+        )
+      );
+    }, 0);
+  }, [pedidos]);
 
   const filtered = useMemo(() => {
-    return data.pedidos.filter((p) => {
+    return pedidos.filter((p) => {
       // Filtro semántico
       let matchFilter = false;
       if (filter === "Todos") {
@@ -620,7 +682,25 @@ export default function AdminDashboard({
         p.email.toLowerCase().includes(q);
       return matchFilter && matchSearch;
     });
-  }, [data.pedidos, filter, search]);
+  }, [pedidos, filter, search]);
+
+  const sorted = useMemo(() => {
+    const list = [...filtered];
+    return list.sort((a, b) => {
+      if (sortOrder === "fecha_desc") {
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+      if (sortOrder === "fecha_asc") {
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      }
+      const nameA = a.animador_vendedor || a.nombre_comprador || "";
+      const nameB = b.animador_vendedor || b.nombre_comprador || "";
+      const keyA = getApellidoNombreKey(nameA);
+      const keyB = getApellidoNombreKey(nameB);
+      const cmp = keyA.localeCompare(keyB, "es", { sensitivity: "base" });
+      return sortOrder === "nombre_asc" ? cmp : -cmp;
+    });
+  }, [filtered, sortOrder]);
 
   const handleLogout = () => {
     startTransition(async () => {
@@ -736,7 +816,7 @@ export default function AdminDashboard({
           />
           <MetricCard
             label="Pollos entregados"
-            value={String(metrics.totalEntregados)}
+            value={String(totalPollosEntregados)}
             color="border-blue-500"
           />
         </div>
@@ -744,8 +824,8 @@ export default function AdminDashboard({
         {/* ─── PESTAÑA 1: PEDIDOS ─────────────────────────────────────────── */}
         {activeTab === "pedidos" && (
           <div className="space-y-4 animate-in fade-in duration-200">
-            {/* Filters + search */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            {/* Filters + sort + search */}
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex flex-wrap gap-2">
                 {/* Todos */}
                 <button
@@ -827,21 +907,44 @@ export default function AdminDashboard({
                   )}
                 </button>
               </div>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Buscar por vendedor, WhatsApp, etapa…"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-4 text-sm text-slate-900 shadow-xs focus:border-[#009B4D] focus:outline-none focus:ring-2 focus:ring-[#009B4D]/20 sm:w-80"
-                />
+
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                  <label
+                    htmlFor="sort-order"
+                    className="text-xs font-semibold text-slate-500 whitespace-nowrap"
+                  >
+                    Ordenar:
+                  </label>
+                  <select
+                    id="sort-order"
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+                    className="rounded-xl border border-slate-300 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 shadow-xs focus:border-[#009B4D] focus:outline-none focus:ring-2 focus:ring-[#009B4D]/20 cursor-pointer"
+                  >
+                    <option value="fecha_desc">Fecha (más reciente)</option>
+                    <option value="fecha_asc">Fecha (más antiguo)</option>
+                    <option value="nombre_asc">Apellido / Nombre (A - Z)</option>
+                    <option value="nombre_desc">Apellido / Nombre (Z - A)</option>
+                  </select>
+                </div>
+
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Buscar por vendedor, WhatsApp, etapa…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-4 text-sm text-slate-900 shadow-xs focus:border-[#009B4D] focus:outline-none focus:ring-2 focus:ring-[#009B4D]/20 sm:w-64"
+                  />
+                </div>
               </div>
             </div>
 
             {/* Table */}
             <div className="overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-sm">
-              {filtered.length === 0 ? (
+              {sorted.length === 0 ? (
                 <p className="px-6 py-12 text-center text-sm text-slate-400">
                   No hay pedidos que coincidan con los filtros.
                 </p>
@@ -849,22 +952,63 @@ export default function AdminDashboard({
                 <table className="min-w-full text-left">
                   <thead className="bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-200">
                     <tr>
-                      {["Fecha", "Vendedor / Responsable", "WhatsApp", "Pollos / Vales", "Comprobantes", "Estado", "Acciones"].map(
-                        (h) => (
-                          <th key={h} className="px-4 py-3">
-                            {h}
-                          </th>
-                        ),
-                      )}
+                      <th className="px-4 py-3">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSortOrder((prev) =>
+                              prev === "fecha_desc" ? "fecha_asc" : "fecha_desc",
+                            )
+                          }
+                          className="inline-flex items-center gap-1 font-semibold uppercase tracking-wider text-slate-600 hover:text-slate-900 cursor-pointer transition-colors"
+                          title="Alternar orden por fecha"
+                        >
+                          <span>Fecha</span>
+                          {sortOrder === "fecha_desc" ? (
+                            <ArrowDown className="h-3.5 w-3.5 text-[#009B4D]" />
+                          ) : sortOrder === "fecha_asc" ? (
+                            <ArrowUp className="h-3.5 w-3.5 text-[#009B4D]" />
+                          ) : (
+                            <ArrowUpDown className="h-3.5 w-3.5 opacity-40" />
+                          )}
+                        </button>
+                      </th>
+                      <th className="px-4 py-3">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSortOrder((prev) =>
+                              prev === "nombre_asc" ? "nombre_desc" : "nombre_asc",
+                            )
+                          }
+                          className="inline-flex items-center gap-1 font-semibold uppercase tracking-wider text-slate-600 hover:text-slate-900 cursor-pointer transition-colors"
+                          title="Alternar orden por apellido / nombre"
+                        >
+                          <span>Vendedor / Responsable</span>
+                          {sortOrder === "nombre_asc" ? (
+                            <ArrowUp className="h-3.5 w-3.5 text-[#009B4D]" />
+                          ) : sortOrder === "nombre_desc" ? (
+                            <ArrowDown className="h-3.5 w-3.5 text-[#009B4D]" />
+                          ) : (
+                            <ArrowUpDown className="h-3.5 w-3.5 opacity-40" />
+                          )}
+                        </button>
+                      </th>
+                      <th className="px-4 py-3">WhatsApp</th>
+                      <th className="px-4 py-3 text-center">Pollos / Vales</th>
+                      <th className="px-4 py-3">Comprobantes</th>
+                      <th className="px-4 py-3">Estado</th>
+                      <th className="px-4 py-3">Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.map((pedido) => (
+                    {sorted.map((pedido) => (
                       <PedidoRow
                         key={pedido.id}
                         pedido={pedido}
                         appUrl={appUrl}
                         onImageClick={setModalUrl}
+                        onValeEntregado={handleValeEntregado}
                       />
                     ))}
                   </tbody>
@@ -873,7 +1017,7 @@ export default function AdminDashboard({
             </div>
 
             <p className="text-center text-xs text-slate-400">
-              {filtered.length} pedido{filtered.length !== 1 ? "s" : ""} mostrado{filtered.length !== 1 ? "s" : ""}
+              {sorted.length} pedido{sorted.length !== 1 ? "s" : ""} mostrado{sorted.length !== 1 ? "s" : ""}
             </p>
           </div>
         )}
