@@ -9,6 +9,7 @@ import type {
   PagoCampamento,
   InscriptoConPagos,
   MetricasEtapa,
+  PagoPendienteRevision,
 } from "@/types/campamento";
 
 /**
@@ -18,6 +19,7 @@ export async function getInscriptosEtapa(etapaParam: string): Promise<{
   ok: boolean;
   error?: string;
   inscriptos: InscriptoConPagos[];
+  pagosPendientes: PagoPendienteRevision[];
   metricas: MetricasEtapa;
   etapaConfig?: typeof COORDINADORES_POR_ETAPA[string];
 }> {
@@ -27,7 +29,8 @@ export async function getInscriptosEtapa(etapaParam: string): Promise<{
       ok: false,
       error: "Etapa no válida",
       inscriptos: [],
-      metricas: { totalInscriptos: 0, totalRecaudado: 0, totalPresupuestado: 0, porcentajeCobranza: 0 },
+      pagosPendientes: [],
+      metricas: { totalInscriptos: 0, totalRecaudado: 0, totalPresupuestado: 0, porcentajeCobranza: 0, pagosPendientesCount: 0 },
     };
   }
 
@@ -35,7 +38,6 @@ export async function getInscriptosEtapa(etapaParam: string): Promise<{
   const supabase = createCampamentoClient();
 
   // Traer inscriptos de la etapa. En la BD se guardan como "1ra Etapa", "2da Etapa", etc.
-  // Buscamos con ilike o con el prefijo numérico para mayor robustez
   const { data: inscriptosRaw, error: inscriptosError } = await supabase
     .from("inscriptos")
     .select("*")
@@ -49,49 +51,73 @@ export async function getInscriptosEtapa(etapaParam: string): Promise<{
       ok: false,
       error: "Error al consultar la base de datos de inscriptos.",
       inscriptos: [],
-      metricas: { totalInscriptos: 0, totalRecaudado: 0, totalPresupuestado: 0, porcentajeCobranza: 0 },
+      pagosPendientes: [],
+      metricas: { totalInscriptos: 0, totalRecaudado: 0, totalPresupuestado: 0, porcentajeCobranza: 0, pagosPendientesCount: 0 },
     };
   }
 
   const inscriptosList = (inscriptosRaw || []) as InscriptoCampamento[];
 
-  // Si no hay inscriptos, retornamos vacío
   if (inscriptosList.length === 0) {
     return {
       ok: true,
       inscriptos: [],
+      pagosPendientes: [],
       metricas: {
         totalInscriptos: 0,
         totalRecaudado: 0,
         totalPresupuestado: 0,
         porcentajeCobranza: 0,
+        pagosPendientesCount: 0,
       },
       etapaConfig,
     };
   }
 
   const inscriptoIds = inscriptosList.map((i) => i.id);
+  const inscriptosMap = new Map<string, InscriptoCampamento>();
+  for (const ins of inscriptosList) {
+    inscriptosMap.set(ins.id, ins);
+  }
 
   // Traer pagos asociados a estos inscriptos
   const { data: pagosRaw, error: pagosError } = await supabase
     .from("pagos")
     .select("*")
     .in("inscripto_id", inscriptoIds)
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: false });
 
   if (pagosError) {
-    // Si la tabla pagos aún no tiene registros o da error de consulta, procesamos sin pagos
     console.warn("[getInscriptosEtapa] Advertencia al obtener pagos:", pagosError);
   }
 
   const pagosList = (pagosRaw || []) as PagoCampamento[];
 
-  // Mapear pagos por inscripto_id
+  // Mapear pagos por inscripto_id y separar pendientes
   const pagosPorInscripto = new Map<string, PagoCampamento[]>();
+  const pagosPendientes: PagoPendienteRevision[] = [];
+
   for (const pago of pagosList) {
     const arr = pagosPorInscripto.get(pago.inscripto_id) || [];
     arr.push(pago);
     pagosPorInscripto.set(pago.inscripto_id, arr);
+
+    // Si el estado es PENDIENTE (subido por familia pendiente de revisión)
+    if (pago.estado === "PENDIENTE") {
+      const ins = inscriptosMap.get(pago.inscripto_id);
+      if (ins) {
+        pagosPendientes.push({
+          ...pago,
+          inscripto: {
+            id: ins.id,
+            nombre: ins.nombre,
+            apellido: ins.apellido,
+            dni: ins.dni,
+            etapa: ins.etapa,
+          },
+        });
+      }
+    }
   }
 
   let totalRecaudado = 0;
@@ -99,24 +125,28 @@ export async function getInscriptosEtapa(etapaParam: string): Promise<{
 
   const inscriptosConPagos: InscriptoConPagos[] = inscriptosList.map((inscripto) => {
     const pagos = pagosPorInscripto.get(inscripto.id) || [];
-    const pagado = pagos.reduce((acc, p) => acc + (Number(p.monto) || 0), 0);
+    // Solo computan en recaudado y saldo los pagos que NO estén rechazados ni pendientes (es decir APROBADO o sin estado)
+    const pagadoAprobado = pagos
+      .filter((p) => p.estado === "APROBADO" || !p.estado)
+      .reduce((acc, p) => acc + (Number(p.monto) || 0), 0);
+
     const tarifa = inscripto.tarifa || etapaConfig?.tarifa || 0;
-    const saldo = Math.max(0, tarifa - pagado);
+    const saldo = Math.max(0, tarifa - pagadoAprobado);
 
     let estadoPago: InscriptoConPagos["estadoPago"] = "PENDIENTE";
-    if (pagado >= tarifa && tarifa > 0) {
+    if (pagadoAprobado >= tarifa && tarifa > 0) {
       estadoPago = "PAGADO";
-    } else if (pagado > 0) {
+    } else if (pagadoAprobado > 0) {
       estadoPago = "PARCIAL";
     }
 
-    totalRecaudado += pagado;
+    totalRecaudado += pagadoAprobado;
     totalPresupuestado += tarifa;
 
     return {
       ...inscripto,
       pagos,
-      totalPagado: pagado,
+      totalPagado: pagadoAprobado,
       saldoRestante: saldo,
       estadoPago,
     };
@@ -130,18 +160,21 @@ export async function getInscriptosEtapa(etapaParam: string): Promise<{
   return {
     ok: true,
     inscriptos: inscriptosConPagos,
+    pagosPendientes,
     metricas: {
       totalInscriptos: inscriptosConPagos.length,
       totalRecaudado,
       totalPresupuestado,
       porcentajeCobranza,
+      pagosPendientesCount: pagosPendientes.length,
     },
     etapaConfig,
   };
 }
 
 /**
- * Server Action para registrar un nuevo pago de un participante y opcionalmente subir el comprobante.
+ * Server Action para registrar un nuevo pago manual cargado por el propio coordinador.
+ * Todo pago cargado manualmente por el propio coordinador se inserta directamente con estado = 'APROBADO' y subido_por = 'COORDINADOR'.
  */
 export async function registrarPagoCampamento(
   formData: FormData,
@@ -184,8 +217,6 @@ export async function registrarPagoCampamento(
 
       if (uploadError) {
         console.error("[registrarPagoCampamento] Error al subir comprobante:", uploadError);
-        // Si el bucket no existe o falla la subida, informamos o permitimos continuar guardando el pago
-        // Pero intentamos obtener URL pública
       } else if (uploadData) {
         const { data: publicUrlData } = supabase.storage
           .from("comprobantes-campa")
@@ -197,13 +228,17 @@ export async function registrarPagoCampamento(
     }
   }
 
-  // Insertar en la tabla 'pagos'
+  // Insertar en la tabla 'pagos' con estado APROBADO y subido_por COORDINADOR
   const { error: insertError } = await supabase.from("pagos").insert({
     inscripto_id: inscriptoId,
     monto,
     comprobante_url: comprobanteUrl,
     observaciones: observaciones.trim() || null,
     registrado_por: session.coordinador,
+    estado: "APROBADO",
+    subido_por: "COORDINADOR",
+    verificado_por: session.coordinador,
+    verificado_at: new Date().toISOString(),
   });
 
   if (insertError) {
@@ -214,10 +249,74 @@ export async function registrarPagoCampamento(
     };
   }
 
-  // Revalidar la vista de la etapa
   if (etapa) {
     revalidatePath(`/campamento/etapa/${etapa}`);
   }
 
   return { ok: true };
 }
+
+/**
+ * Server Action para aprobar un pago enviado por una familia.
+ */
+export async function aprobarPagoCampamento(
+  pagoId: string,
+  etapaNum: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const session = await getCampaSession();
+  if (!session) {
+    return { ok: false, error: "Sesión no válida o expirada." };
+  }
+
+  const supabase = createCampamentoClient();
+  const { error } = await supabase
+    .from("pagos")
+    .update({
+      estado: "APROBADO",
+      verificado_por: session.coordinador,
+      verificado_at: new Date().toISOString(),
+    })
+    .eq("id", pagoId);
+
+  if (error) {
+    console.error("[aprobarPagoCampamento] Error al aprobar:", error);
+    return { ok: false, error: error.message || "Error al aprobar pago." };
+  }
+
+  revalidatePath(`/campamento/etapa/${etapaNum}`);
+  return { ok: true };
+}
+
+/**
+ * Server Action para observar o rechazar un pago enviado por una familia.
+ */
+export async function observarPagoCampamento(
+  pagoId: string,
+  motivo: string,
+  etapaNum: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const session = await getCampaSession();
+  if (!session) {
+    return { ok: false, error: "Sesión no válida o expirada." };
+  }
+
+  const supabase = createCampamentoClient();
+  const { error } = await supabase
+    .from("pagos")
+    .update({
+      estado: "RECHAZADO",
+      motivo_rechazo: motivo.trim() || "Pago observado o rechazado por coordinación.",
+      verificado_por: session.coordinador,
+      verificado_at: new Date().toISOString(),
+    })
+    .eq("id", pagoId);
+
+  if (error) {
+    console.error("[observarPagoCampamento] Error al rechazar:", error);
+    return { ok: false, error: error.message || "Error al observar pago." };
+  }
+
+  revalidatePath(`/campamento/etapa/${etapaNum}`);
+  return { ok: true };
+}
+

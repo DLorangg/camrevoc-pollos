@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Drumstick, Tent, ArrowRight } from "lucide-react";
+import { Drumstick, Tent, ArrowRight, ReceiptText } from "lucide-react";
 
 export default function LandingPage() {
   return (
@@ -79,6 +79,25 @@ export default function LandingPage() {
             </p>
           </div>
           <ArrowRight className="h-5 w-5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-emerald-600" />
+        </Link>
+
+        {/* Informar Pago de Campamento */}
+        <Link
+          href="/campamento/pagos"
+          className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4.5 shadow-md shadow-slate-200/40 transition-all hover:border-sky-300 hover:shadow-sky-100/40 sm:p-5"
+        >
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-700 transition-colors group-hover:bg-sky-200 sm:h-14 sm:w-14">
+            <ReceiptText className="h-6 w-6 sm:h-7 sm:w-7" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-base font-bold text-slate-900 sm:text-lg">
+              Informar Pago de Campamento 📄
+            </h2>
+            <p className="mt-0.5 text-xs sm:text-sm text-slate-500">
+              Subí tu comprobante de transferencia y consultá tu saldo.
+            </p>
+          </div>
+          <ArrowRight className="h-5 w-5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-sky-600" />
         </Link>
 
         {/* Portal Coordinación Campamentos */}

@@ -17,16 +17,19 @@ import {
   HeartHandshake,
   KeyRound,
   ShieldAlert,
+  Inbox,
 } from "lucide-react";
-import type { InscriptoConPagos, MetricasEtapa } from "@/types/campamento";
+import type { InscriptoConPagos, MetricasEtapa, PagoPendienteRevision } from "@/types/campamento";
 import type { CoordinadorConfig } from "@/config/campamento-coordinadores";
 import { logoutCoordinador } from "@/app/campamento/actions/coordinacion-auth";
 import { formatPrecio } from "@/config/campamento";
 import GestionPagosModal from "./GestionPagosModal";
 import CambiarPinModal from "./CambiarPinModal";
+import PagosPendientesSection from "./PagosPendientesSection";
 
 interface EtapaDashboardProps {
   inscriptos: InscriptoConPagos[];
+  pagosPendientes?: PagoPendienteRevision[];
   metricas: MetricasEtapa;
   etapaConfig: CoordinadorConfig;
   coordinadorActual: string;
@@ -34,15 +37,18 @@ interface EtapaDashboardProps {
 }
 
 type FiltroEstado = "TODOS" | "PENDIENTES" | "PARCIALES" | "PAGADOS" | "DIFICULTAD";
+type TabDashboard = "INSCRIPTOS" | "PENDIENTES";
 
 export default function EtapaDashboard({
   inscriptos,
+  pagosPendientes = [],
   metricas,
   etapaConfig,
   coordinadorActual,
   esDefaultPin: defaultPinInicial,
 }: EtapaDashboardProps) {
   const router = useRouter();
+  const [tabActual, setTabActual] = useState<TabDashboard>("INSCRIPTOS");
   const [busqueda, setBusqueda] = useState("");
   const [filtro, setFiltro] = useState<FiltroEstado>("TODOS");
   const [inscriptoSeleccionado, setInscriptoSeleccionado] = useState<InscriptoConPagos | null>(null);
@@ -196,7 +202,7 @@ export default function EtapaDashboard({
             <p className="text-[11px] text-slate-400">Total al 100% de la cuota</p>
           </div>
 
-          {/* Porcentaje de Cobranza */}
+            {/* Porcentaje de Cobranza */}
           <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs">
             <div className="flex items-center justify-between text-slate-500">
               <span className="text-xs font-bold uppercase tracking-wider">% Cobranza</span>
@@ -214,36 +220,85 @@ export default function EtapaDashboard({
           </div>
         </section>
 
-        {/* Barra de Filtros y Búsqueda */}
-        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-            {/* Buscador */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Buscar por Nombre, Apellido o DNI..."
-                value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-900 focus:border-[#009B4D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#009B4D]/20 transition-all"
-              />
-              {busqueda && (
-                <button
-                  type="button"
-                  onClick={() => setBusqueda("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 hover:text-slate-600 cursor-pointer"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
+        {/* Selector de Pestañas: Inscriptos vs Pagos Pendientes */}
+        <div className="flex items-center gap-2 border-b border-slate-200 pb-2">
+          <button
+            type="button"
+            onClick={() => setTabActual("INSCRIPTOS")}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              tabActual === "INSCRIPTOS"
+                ? "bg-slate-900 text-white shadow-2xs"
+                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+            }`}
+          >
+            <Users className="h-4 w-4" />
+            <span>Chicos Inscriptos ({inscriptos.length})</span>
+          </button>
 
-            {/* Contador de resultados */}
-            <div className="text-xs text-slate-500 shrink-0 self-center">
-              Mostrando <strong>{inscriptosFiltrados.length}</strong> de{" "}
-              <strong>{inscriptos.length}</strong> inscriptos
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={() => setTabActual("PENDIENTES")}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              tabActual === "PENDIENTES"
+                ? "bg-amber-600 text-white shadow-2xs"
+                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+            }`}
+          >
+            <Inbox className="h-4 w-4 text-amber-500" />
+            <span>Pagos pendientes de revisión</span>
+            {pagosPendientes.length > 0 && (
+              <span
+                className={`ml-1 rounded-full px-2 py-0.5 text-xs font-black ${
+                  tabActual === "PENDIENTES"
+                    ? "bg-white text-amber-700"
+                    : "bg-amber-100 text-amber-900 border border-amber-300"
+                }`}
+              >
+                {pagosPendientes.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Contenido según pestaña seleccionada */}
+        {tabActual === "PENDIENTES" ? (
+          <PagosPendientesSection
+            pagos={pagosPendientes}
+            etapaNum={String(etapaConfig.etapaNum)}
+            nombreEtapa={etapaConfig.nombreEtapa}
+          />
+        ) : (
+          <>
+            {/* Barra de Filtros y Búsqueda */}
+            <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                {/* Buscador */}
+                <div className="relative flex-1">
+                  <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Buscar por Nombre, Apellido o DNI..."
+                    value={busqueda}
+                    onChange={(e) => setBusqueda(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-4 text-sm text-slate-900 focus:border-[#009B4D] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#009B4D]/20 transition-all"
+                  />
+                  {busqueda && (
+                    <button
+                      type="button"
+                      onClick={() => setBusqueda("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 hover:text-slate-600 cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                {/* Contador de resultados */}
+                <div className="text-xs text-slate-500 shrink-0 self-center">
+                  Mostrando <strong>{inscriptosFiltrados.length}</strong> de{" "}
+                  <strong>{inscriptos.length}</strong> inscriptos
+                </div>
+              </div>
 
           {/* Filtros rápidos por estado */}
           <div className="flex flex-wrap items-center gap-1.5 pt-1">
@@ -403,6 +458,8 @@ export default function EtapaDashboard({
             </div>
           )}
         </section>
+        </>
+        )}
       </main>
 
       {/* Modal de Pagos */}

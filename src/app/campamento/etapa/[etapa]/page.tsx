@@ -41,7 +41,7 @@ export default async function EtapaPage({ params }: Props) {
     redirect(`/campamento/etapa/${session.etapaNum}`);
   }
 
-  const { inscriptos, metricas, etapaConfig, ok, error } = await getInscriptosEtapa(etapaNum);
+  const { inscriptos, pagosPendientes, metricas, etapaConfig, ok, error } = await getInscriptosEtapa(etapaNum);
 
   if (!ok || !etapaConfig) {
     return (
@@ -57,6 +57,7 @@ export default async function EtapaPage({ params }: Props) {
   return (
     <EtapaDashboard
       inscriptos={inscriptos}
+      pagosPendientes={pagosPendientes}
       metricas={metricas}
       etapaConfig={etapaConfig}
       coordinadorActual={session.coordinador}
