@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS pagos (
   monto INTEGER NOT NULL CHECK (monto > 0),
   comprobante_url TEXT,
   observaciones TEXT,
-  registrado_por TEXT NOT NULL,
+  registrado_por TEXT, -- Opcional / NULL si es cargado por la familia
   estado TEXT DEFAULT 'APROBADO' NOT NULL, -- 'PENDIENTE' | 'APROBADO' | 'RECHAZADO'
   subido_por TEXT DEFAULT 'COORDINADOR' NOT NULL, -- 'FAMILIA' | 'COORDINADOR'
   contacto_telefono TEXT,

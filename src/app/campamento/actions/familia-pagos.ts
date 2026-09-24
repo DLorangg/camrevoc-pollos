@@ -81,8 +81,9 @@ export async function subirPagoFamilia(
   formData: FormData,
 ): Promise<{ ok: boolean; error?: string }> {
   const comprobanteFile = formData.get("comprobante") as File | null;
-  const telefono = (formData.get("telefono") as string) || "";
-  const observaciones = (formData.get("observaciones") as string) || "";
+  const rawTelefono = formData.get("telefono") as string | null;
+  const telefono = rawTelefono?.trim() || null;
+  const observaciones = ((formData.get("observaciones") as string) || "").trim();
   const itemsJson = formData.get("items") as string; // JSON de SubirPagoItem[]
 
   if (!comprobanteFile || comprobanteFile.size === 0) {
@@ -101,11 +102,12 @@ export async function subirPagoFamilia(
   }
 
   for (const it of items) {
-    if (!it.inscriptoId || !it.monto || it.monto <= 0) {
+    if (!it.inscriptoId || !it.monto || Number(it.monto) <= 0) {
       return { ok: false, error: "El monto correspondiente a cada participante debe ser mayor a 0." };
     }
   }
 
+  // Cliente Supabase con Service Role Key (elude RLS para storage e insert)
   const supabase = createCampamentoClient();
   let comprobanteUrl: string | null = null;
 
@@ -126,8 +128,11 @@ export async function subirPagoFamilia(
       });
 
     if (uploadError) {
-      console.error("[subirPagoFamilia] Error subiendo comprobante:", uploadError);
-      return { ok: false, error: "Error al subir el archivo de comprobante. Intentá nuevamente." };
+      console.error("Error exacto Supabase al subir comprobante:", uploadError);
+      return {
+        ok: false,
+        error: uploadError.message || "Error al subir el archivo de comprobante. Intentá nuevamente.",
+      };
     }
 
     if (uploadData) {
@@ -144,20 +149,29 @@ export async function subirPagoFamilia(
   // Insertar cada pago en la tabla 'pagos' con estado PENDIENTE y subido_por FAMILIA
   const rowsToInsert = items.map((it) => ({
     inscripto_id: it.inscriptoId,
-    monto: it.monto,
+    monto: Number(it.monto),
     comprobante_url: comprobanteUrl,
-    observaciones: observaciones.trim() || null,
-    registrado_por: "Familia (Portal Web)",
+    observaciones: observaciones || null,
+    registrado_por: null,
     estado: "PENDIENTE",
     subido_por: "FAMILIA",
-    contacto_telefono: telefono.trim() || null,
+    contacto_telefono: telefono || null,
   }));
 
   const { error: insertError } = await supabase.from("pagos").insert(rowsToInsert);
 
   if (insertError) {
-    console.error("[subirPagoFamilia] Error insertando pagos:", insertError);
-    return { ok: false, error: "Error al registrar el pago en la base de datos." };
+    console.error("Error exacto Supabase al insertar pago:", insertError);
+    console.error("Detalles del error:", {
+      message: insertError.message,
+      details: insertError.details,
+      hint: insertError.hint,
+      code: insertError.code,
+    });
+    return {
+      ok: false,
+      error: insertError.message || "Error al registrar el pago en la base de datos.",
+    };
   }
 
   return { ok: true };
