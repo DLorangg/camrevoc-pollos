@@ -67,6 +67,33 @@ async function getOrInitPinRecord(etapaNum: string): Promise<{ pin: string; es_d
   }
 }
 
+/**
+ * Obtiene los coordinadores ya registrados para una etapa desde Supabase.
+ */
+export async function obtenerCoordinadoresEtapa(etapa: number | string): Promise<string[]> {
+  const etapaNum = normalizarEtapa(String(etapa));
+  if (!etapaNum) return [];
+
+  const supabase = createCampamentoClient();
+  try {
+    const { data, error } = await supabase
+      .from("coordinadores_etapa")
+      .select("nombre")
+      .eq("etapa", etapaNum)
+      .order("nombre", { ascending: true });
+
+    if (error) {
+      console.warn("[obtenerCoordinadoresEtapa] Error al consultar coordinadores:", error);
+      return [];
+    }
+
+    return (data || []).map((row) => row.nombre);
+  } catch (err) {
+    console.warn("[obtenerCoordinadoresEtapa] Excepción al consultar coordinadores:", err);
+    return [];
+  }
+}
+
 export async function loginCoordinador(
   etapaInput: string,
   coordinador: string,
@@ -87,6 +114,26 @@ export async function loginCoordinador(
 
   if (pin.trim() !== pinRecord.pin) {
     return { ok: false, error: "PIN incorrecto para la etapa seleccionada." };
+  }
+
+  // Auto-registro en tabla coordinadores_etapa (ON CONFLICT DO NOTHING)
+  try {
+    const supabase = createCampamentoClient();
+    const { error: insertCoordError } = await supabase
+      .from("coordinadores_etapa")
+      .upsert(
+        {
+          etapa: etapaNum,
+          nombre: nombreCoord,
+        },
+        { onConflict: "etapa,nombre", ignoreDuplicates: true }
+      );
+
+    if (insertCoordError) {
+      console.warn("[loginCoordinador] Advertencia al registrar coordinador:", insertCoordError);
+    }
+  } catch (coordErr) {
+    console.warn("[loginCoordinador] Excepción al auto-registrar coordinador:", coordErr);
   }
 
   const sessionData: CampaSession = {

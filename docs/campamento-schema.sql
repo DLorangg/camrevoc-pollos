@@ -44,8 +44,20 @@ CREATE TABLE IF NOT EXISTS etapas_pines (
   updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
 );
 
--- 4. Storage Bucket: comprobantes-campa
+-- 4. Tabla de Coordinadores por Etapa (Auto-registro y selector dinámico)
+CREATE TABLE IF NOT EXISTS coordinadores_etapa (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT now() NOT NULL,
+  etapa TEXT NOT NULL, -- ej: '1', '2', etc. o '1ra Etapa'
+  nombre TEXT NOT NULL,
+  UNIQUE(etapa, nombre)
+);
+
+CREATE INDEX IF NOT EXISTS idx_coordinadores_etapa ON coordinadores_etapa (etapa);
+
+-- 5. Storage Bucket: comprobantes-campa
 -- En el dashboard de Supabase -> Storage -> Create new bucket:
 --   Name: 'comprobantes-campa'
 --   Public: true (o con RLS si se prefiere restringir)
+
 
