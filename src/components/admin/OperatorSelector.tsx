@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { setOperator, logoutAdmin } from "@/app/actions/admin-auth";
 import { Loader2, User, ArrowRight } from "lucide-react";
 
-export const PREDEFINED_OPERATORS = ["Damián", "Pepo", "Facu", "Otro"] as const;
+export const PREDEFINED_OPERATORS = ["Pepo", "Facu", "Juana", "Dani", "Otros"] as const;
 export type PredefinedOperator = (typeof PREDEFINED_OPERATORS)[number];
 
 export default function OperatorSelector() {
@@ -17,9 +17,9 @@ export default function OperatorSelector() {
   const customInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
-  // Enfocar el input cuando se elige "Otro"
+  // Enfocar el input cuando se elige "Otros"
   useEffect(() => {
-    if (selected === "Otro") {
+    if (selected === "Otros") {
       customInputRef.current?.focus();
     }
   }, [selected]);
@@ -27,7 +27,7 @@ export default function OperatorSelector() {
   const handleSelect = (op: PredefinedOperator) => {
     setSelected(op);
     setError(null);
-    if (op !== "Otro") {
+    if (op !== "Otros") {
       setCustomName("");
     }
   };
@@ -36,7 +36,7 @@ export default function OperatorSelector() {
     if (e) e.preventDefault();
     if (!selected) return;
 
-    const finalName = selected === "Otro" ? customName.trim() : selected;
+    const finalName = selected === "Otros" ? customName.trim() : selected;
 
     if (!finalName || finalName.length < 2) {
       setError("Por favor ingresá un nombre válido (mínimo 2 letras).");
@@ -88,6 +88,8 @@ export default function OperatorSelector() {
                 type="button"
                 onClick={() => handleSelect(op)}
                 className={`rounded-2xl border-2 py-3 text-sm font-semibold transition-all ${
+                  op === "Otros" ? "col-span-2" : ""
+                } ${
                   selected === op
                     ? "border-[#009B4D] bg-[#009B4D] text-white shadow-xs"
                     : "border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-slate-100"
@@ -98,8 +100,8 @@ export default function OperatorSelector() {
             ))}
           </div>
 
-          {/* Desplegable de nombre personalizado cuando elige "Otro" */}
-          {selected === "Otro" && (
+          {/* Desplegable de nombre personalizado cuando elige "Otros" */}
+          {selected === "Otros" && (
             <div className="space-y-2 pt-1 animate-in fade-in slide-in-from-top-2 duration-200">
               <label
                 htmlFor="custom-name"
@@ -134,7 +136,7 @@ export default function OperatorSelector() {
 
           <button
             type="submit"
-            disabled={!selected || (selected === "Otro" && !customName.trim()) || isPending}
+            disabled={!selected || (selected === "Otros" && !customName.trim()) || isPending}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#009B4D] py-3 text-sm font-bold text-white shadow-md shadow-emerald-700/20 transition-all hover:bg-[#007a3d] active:scale-[0.98] disabled:opacity-50"
           >
             {isPending ? (
