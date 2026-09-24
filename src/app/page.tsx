@@ -43,7 +43,7 @@ export default function LandingPage() {
 
       {/* Cards */}
       <main className="mx-auto w-full max-w-lg flex-1 px-4 py-6 space-y-4 sm:space-y-5">
-        {/* Pollada Solidaria */}
+        {/* Gran Pollada */}
         <Link
           href="/pollos"
           className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-lg shadow-slate-200/50 transition-all hover:border-amber-300 hover:shadow-amber-100/50 sm:p-6"
@@ -53,10 +53,10 @@ export default function LandingPage() {
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="text-lg font-bold text-slate-900 sm:text-xl">
-              Pollada Solidaria 🍗
+              Gran pollada 🍗
             </h2>
             <p className="mt-0.5 text-sm text-slate-500">
-              Reservá tus pollos para la pollada solidaria.
+              Reservá tus pollos para la gran pollada.
             </p>
           </div>
           <ArrowRight className="h-5 w-5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-amber-600" />
