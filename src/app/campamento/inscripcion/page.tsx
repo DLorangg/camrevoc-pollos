@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import InscripcionForm from "@/components/campamento/InscripcionForm";
+import InfoCampamentoCard from "@/components/campamento/InfoCampamentoCard";
 
 export const metadata: Metadata = {
   title: "Inscripción · Campamento de Verano 2027 | CamReVoc",
@@ -45,16 +46,18 @@ export default function InscripcionPage() {
         </div>
 
         <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-          Campamento de Verano 2027 ⛺
+          Confirmación de Asistencia — Campamentos de Verano 2027 ⛺
         </h1>
         <p className="mt-2 text-sm text-slate-600">
           Casa Salesiana Don Bosco Neuquén ·{" "}
           <strong className="font-semibold text-slate-900">CamReVoc</strong>
         </p>
-        <p className="mt-1 text-xs text-slate-400">
-          Completá el formulario para inscribirte.
-        </p>
       </header>
+
+      {/* Bloque Informativo Institucional */}
+      <section className="mx-auto mb-8 max-w-xl">
+        <InfoCampamentoCard />
+      </section>
 
       {/* Main Card */}
       <main className="mx-auto max-w-xl rounded-3xl border border-slate-200 bg-white px-6 py-8 shadow-xl shadow-slate-200/50 sm:px-8">

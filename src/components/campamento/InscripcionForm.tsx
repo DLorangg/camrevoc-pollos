@@ -99,7 +99,7 @@ export default function InscripcionForm() {
 
   if (success) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-10">
+      <div className="mx-auto max-w-lg px-4 py-8">
         <div className="rounded-3xl border border-emerald-200 bg-white p-8 shadow-xl text-center space-y-6">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
             <CheckCircle2 className="h-9 w-9 text-emerald-600" />
@@ -107,16 +107,16 @@ export default function InscripcionForm() {
 
           <div>
             <h2 className="text-2xl font-extrabold text-slate-900">
-              ¡Inscripción confirmada! 🎉
+              ¡Inscripción confirmada! 🏕️
             </h2>
             <p className="mt-2 text-sm text-slate-600">
-              Te inscribiste exitosamente al Campamento de Verano 2027.
+              Registramos tu confirmación de asistencia para los Campamentos 2027.
             </p>
           </div>
 
           <div className="rounded-2xl bg-slate-50 border border-slate-200 px-5 py-4 text-left space-y-3">
             <div className="flex justify-between text-sm">
-              <span className="text-slate-500">Nombre</span>
+              <span className="text-slate-500">Apellido y Nombre</span>
               <span className="font-semibold text-slate-900">
                 {success.apellido}, {success.nombre}
               </span>
@@ -139,13 +139,13 @@ export default function InscripcionForm() {
             </div>
             <hr className="border-slate-200" />
             <div className="flex justify-between text-sm">
-              <span className="text-slate-500">Destino</span>
+              <span className="text-slate-500">Destino asignado</span>
               <span className="font-bold text-emerald-700">
                 {success.destino}
               </span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-slate-500">Tarifa</span>
+              <span className="text-slate-500">Tarifa base</span>
               <span className="font-bold text-emerald-700">
                 {formatPrecio(success.tarifa)}
               </span>
@@ -160,9 +160,7 @@ export default function InscripcionForm() {
 
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-left">
             <p className="text-sm text-amber-900 leading-relaxed">
-              📋 <strong>Recordá:</strong> los pagos y comprobantes se coordinan
-              directamente con los animadores/coordinadores de tu etapa. ¡Ellos
-              te van a guiar en todo el proceso!
+              📋 <strong>Recordá realizar la transferencia a la cuenta institucional y enviarle el comprobante al coordinador/a de tu etapa. ¡Nos vemos en el campamento!</strong>
             </p>
           </div>
 
@@ -184,7 +182,7 @@ export default function InscripcionForm() {
           htmlFor="apellido"
           className="mb-1.5 block text-sm font-medium text-slate-700"
         >
-          Apellido <span className="text-rose-500">*</span>
+          Apellido/s (como figura en el DNI) <span className="text-rose-500">*</span>
         </label>
         <input
           id="apellido"
@@ -204,7 +202,7 @@ export default function InscripcionForm() {
           htmlFor="nombre"
           className="mb-1.5 block text-sm font-medium text-slate-700"
         >
-          Nombre completo <span className="text-rose-500">*</span>
+          Nombre completo (como figura en el DNI) <span className="text-rose-500">*</span>
         </label>
         <input
           id="nombre"
@@ -224,7 +222,7 @@ export default function InscripcionForm() {
           htmlFor="dni"
           className="mb-1.5 block text-sm font-medium text-slate-700"
         >
-          DNI <span className="text-rose-500">*</span>
+          DNI (sin puntos ni espacios) <span className="text-rose-500">*</span>
         </label>
         <input
           id="dni"
@@ -344,9 +342,13 @@ export default function InscripcionForm() {
         <select
           id="regimen"
           value={regimenAlimentario}
-          onChange={(e) =>
-            setRegimenAlimentario(e.target.value as RegimenAlimentario)
-          }
+          onChange={(e) => {
+            const nuevoRegimen = e.target.value as RegimenAlimentario;
+            setRegimenAlimentario(nuevoRegimen);
+            if (nuevoRegimen !== "Otros") {
+              setDetalleAlimentario("");
+            }
+          }}
           disabled={isPending}
           className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-xs focus:border-[#009B4D] focus:outline-none focus:ring-2 focus:ring-[#009B4D]/20 disabled:bg-slate-50"
         >
@@ -358,29 +360,36 @@ export default function InscripcionForm() {
         </select>
       </div>
 
-      {/* Detalles alimentarios / alergias */}
-      <div>
-        <label
-          htmlFor="detalleAlimentario"
-          className="mb-1.5 block text-sm font-medium text-slate-700"
-        >
-          Detalles alimentarios o alergias{" "}
-          <span className="text-slate-400">(opcional)</span>
-        </label>
-        <textarea
-          id="detalleAlimentario"
-          value={detalleAlimentario}
-          onChange={(e) => setDetalleAlimentario(e.target.value)}
-          disabled={isPending}
-          placeholder="Ej: Alergia a los frutos secos, intolerancia a la lactosa..."
-          rows={2}
-          className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-xs focus:border-[#009B4D] focus:outline-none focus:ring-2 focus:ring-[#009B4D]/20 disabled:bg-slate-50 resize-none"
-        />
-      </div>
+      {/* Detalles alimentarios / alergias (Solo visible si es 'Otros') */}
+      {regimenAlimentario === "Otros" && (
+        <div className="animate-in fade-in duration-200">
+          <label
+            htmlFor="detalleAlimentario"
+            className="mb-1.5 block text-sm font-medium text-slate-700"
+          >
+            Explicar qué alimentos no puede consumir o detalles de alergias{" "}
+            <span className="text-rose-500">*</span>
+          </label>
+          <textarea
+            id="detalleAlimentario"
+            required
+            value={detalleAlimentario}
+            onChange={(e) => setDetalleAlimentario(e.target.value)}
+            disabled={isPending}
+            placeholder="Especificá los alimentos o alergias..."
+            rows={2}
+            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-xs focus:border-[#009B4D] focus:outline-none focus:ring-2 focus:ring-[#009B4D]/20 disabled:bg-slate-50 resize-none"
+          />
+        </div>
+      )}
 
       {/* Sección solidaria */}
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
-        <label className="flex items-start gap-3 cursor-pointer">
+        <p className="text-xs sm:text-sm text-amber-900 leading-relaxed font-medium">
+          En el caso de poder dar una mano extra aportando donaciones de dinero, mercadería o materiales, ¡nos sería de gran ayuda!
+        </p>
+
+        <label className="flex items-start gap-3 cursor-pointer pt-1">
           <input
             type="checkbox"
             checked={quiereAportar}
@@ -392,26 +401,32 @@ export default function InscripcionForm() {
             className="mt-0.5 h-5 w-5 rounded border-amber-300 text-amber-600 focus:ring-amber-400/20 accent-amber-600"
           />
           <div>
-            <span className="text-sm font-medium text-amber-900 flex items-center gap-1.5">
-              <Heart className="h-4 w-4" />
+            <span className="text-sm font-bold text-amber-950 flex items-center gap-1.5">
+              <Heart className="h-4 w-4 text-amber-700" />
               Quiero aportar
             </span>
-            <p className="mt-0.5 text-xs text-amber-700">
-              Si querés colaborar con una donación para que otros puedan ir al
-              campamento, dejanos tu contacto.
-            </p>
           </div>
         </label>
 
         {quiereAportar && (
-          <input
-            type="text"
-            value={contactoDonacion}
-            onChange={(e) => setContactoDonacion(e.target.value)}
-            disabled={isPending}
-            placeholder="Tu teléfono o contacto para coordinación"
-            className="w-full rounded-xl border border-amber-300 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-xs focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-400/20 disabled:bg-slate-50"
-          />
+          <div className="animate-in fade-in duration-200 pt-1">
+            <label
+              htmlFor="contactoDonacion"
+              className="mb-1.5 block text-xs font-semibold text-amber-900"
+            >
+              Nombre y teléfono / WhatsApp de contacto
+            </label>
+            <input
+              id="contactoDonacion"
+              type="text"
+              required={quiereAportar}
+              value={contactoDonacion}
+              onChange={(e) => setContactoDonacion(e.target.value)}
+              disabled={isPending}
+              placeholder="Ej: Mamá de Juan - 299 1234567"
+              className="w-full rounded-xl border border-amber-300 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-xs focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-400/20 disabled:bg-slate-50"
+            />
+          </div>
         )}
       </div>
 
