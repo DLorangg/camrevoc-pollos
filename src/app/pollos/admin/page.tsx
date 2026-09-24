@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
-import { getOperator } from "@/app/actions/admin-auth";
-import { getDashboardData } from "@/app/actions/admin-pedidos";
+import { getOperator } from "@/app/pollos/actions/admin-auth";
+import { getDashboardData } from "@/app/pollos/actions/admin-pedidos";
 import AdminDashboard from "@/components/admin/AdminDashboard";
 import OperatorSelector from "@/components/admin/OperatorSelector";
 

@@ -1,5 +1,5 @@
 import type { Resend } from "resend";
-import type { ValeCreado } from "@/app/actions/create-order";
+import type { ValeCreado } from "@/app/pollos/actions/create-order";
 
 export interface SendTicketParams {
   to: string;

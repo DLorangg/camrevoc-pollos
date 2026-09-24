@@ -13,9 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Gran Pollada | CamReVoc",
-  description:
-    "Reservá tus pollos para la pollada solidaria de Camrevoc. Casa Salesiana Don Bosco Neuquén.",
+  title: "CamReVoc · Casa Salesiana Don Bosco Neuquén",
+  description: "Plataforma digital de CamReVoc – Casa Salesiana Don Bosco Neuquén.",
   icons: {
     icon: "/logo.png",
     apple: "/logo.png",

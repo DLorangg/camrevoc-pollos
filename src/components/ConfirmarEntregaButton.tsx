@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { confirmarEntrega } from "@/app/actions/vale-actions";
+import { confirmarEntrega } from "@/app/pollos/actions/vale-actions";
 import { Loader2, CheckCircle, AlertTriangle } from "lucide-react";
 
 interface Props {

@@ -6,13 +6,13 @@ const ADMIN_SESSION_COOKIE = "admin_session";
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Solo evaluar rutas que empiecen con /admin
-  if (!pathname.startsWith("/admin")) {
+  // Solo evaluar rutas que empiecen con /pollos/admin
+  if (!pathname.startsWith("/pollos/admin")) {
     return NextResponse.next();
   }
 
   const isLoginRoute =
-    pathname === "/admin/login" || pathname.startsWith("/admin/login/");
+    pathname === "/pollos/admin/login" || pathname.startsWith("/pollos/admin/login/");
   const isAuthenticated =
     request.cookies.get(ADMIN_SESSION_COOKIE)?.value === "authenticated";
 
@@ -21,7 +21,7 @@ export function proxy(request: NextRequest) {
     if (isAuthenticated) {
       // Si ya está autenticado, redirigir directo al dashboard
       const dashboardUrl = request.nextUrl.clone();
-      dashboardUrl.pathname = "/admin";
+      dashboardUrl.pathname = "/pollos/admin";
       dashboardUrl.search = "";
       return NextResponse.redirect(dashboardUrl);
     }
@@ -33,8 +33,8 @@ export function proxy(request: NextRequest) {
   if (!isAuthenticated) {
     // Redirigir al login guardando el destino original (solo si no es login)
     const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/admin/login";
-    if (pathname && !pathname.startsWith("/admin/login")) {
+    loginUrl.pathname = "/pollos/admin/login";
+    if (pathname && !pathname.startsWith("/pollos/admin/login")) {
       const fullPath = pathname + request.nextUrl.search;
       loginUrl.searchParams.set("from", fullPath);
     }
@@ -46,5 +46,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin", "/admin/:path*"],
+  matcher: ["/pollos/admin", "/pollos/admin/:path*"],
 };

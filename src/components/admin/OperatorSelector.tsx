@@ -3,7 +3,7 @@
 import { useState, useTransition, useRef, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { setOperator, logoutAdmin } from "@/app/actions/admin-auth";
+import { setOperator, logoutAdmin } from "@/app/pollos/actions/admin-auth";
 import { Loader2, User, ArrowRight } from "lucide-react";
 
 export const PREDEFINED_OPERATORS = ["Pepo", "Facu", "Juana", "Dani", "Otros"] as const;
@@ -57,7 +57,7 @@ export default function OperatorSelector() {
   const handleLogout = () => {
     startTransition(async () => {
       await logoutAdmin();
-      router.push("/admin/login");
+      router.push("/pollos/admin/login");
     });
   };
 
@@ -66,7 +66,7 @@ export default function OperatorSelector() {
       <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white px-8 py-10 shadow-xl shadow-slate-200/50">
         <div className="mb-6 flex flex-col items-center gap-3">
           <Image
-            src="/pollos/logo.png"
+            src="/logo.png"
             alt="Logo Camrevoc"
             width={64}
             height={64}

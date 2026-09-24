@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef } from "react";
 import { PRECIO_POLLO, DATOS_BANCARIOS, ETAPAS } from "@/config/constants";
 import { createClient } from "@/lib/supabase/client";
-import { createOrder, type ValeInput, type ValeCreado } from "@/app/actions/create-order";
+import { createOrder, type ValeInput, type ValeCreado } from "@/app/pollos/actions/create-order";
 import { nanoid } from "nanoid";
 import {
   CheckCircle,

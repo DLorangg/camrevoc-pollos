@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { loginAdmin } from "@/app/actions/admin-auth";
+import { loginAdmin } from "@/app/pollos/actions/admin-auth";
 import { Loader2, Lock } from "lucide-react";
 
 export default function AdminLoginPage() {
@@ -20,13 +20,10 @@ export default function AdminLoginPage() {
       if (result.ok) {
         const searchParams = new URLSearchParams(window.location.search);
         let from = searchParams.get("from");
-        if (from && from.startsWith("/pollos")) {
-          from = from.slice("/pollos".length) || "/";
-        }
         const destination =
-          from && from.startsWith("/admin") && !from.startsWith("/admin/login")
+          from && from.startsWith("/pollos/admin") && !from.startsWith("/pollos/admin/login")
             ? from
-            : "/admin";
+            : "/pollos/admin";
         router.push(destination);
         router.refresh();
       } else {
@@ -41,7 +38,7 @@ export default function AdminLoginPage() {
         {/* Logo */}
         <div className="mb-6 flex flex-col items-center gap-3">
           <Image
-            src="/pollos/logo.png"
+            src="/logo.png"
             alt="Logo Camrevoc"
             width={72}
             height={72}
