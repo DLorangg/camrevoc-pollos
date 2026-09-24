@@ -55,11 +55,14 @@ export interface PagoPendienteRevision extends PagoCampamento {
   };
 }
 
+export type PagoRechazadoRevision = PagoPendienteRevision;
+
 export interface MetricasEtapa {
   totalInscriptos: number;
   totalRecaudado: number;
   totalPresupuestado: number;
   porcentajeCobranza: number;
   pagosPendientesCount: number;
+  pagosRechazadosCount: number;
 }
 

@@ -10,6 +10,7 @@ import type {
   InscriptoConPagos,
   MetricasEtapa,
   PagoPendienteRevision,
+  PagoRechazadoRevision,
 } from "@/types/campamento";
 
 /**
@@ -20,6 +21,7 @@ export async function getInscriptosEtapa(etapaParam: string): Promise<{
   error?: string;
   inscriptos: InscriptoConPagos[];
   pagosPendientes: PagoPendienteRevision[];
+  pagosRechazados: PagoRechazadoRevision[];
   metricas: MetricasEtapa;
   etapaConfig?: typeof COORDINADORES_POR_ETAPA[string];
 }> {
@@ -30,7 +32,8 @@ export async function getInscriptosEtapa(etapaParam: string): Promise<{
       error: "Etapa no válida",
       inscriptos: [],
       pagosPendientes: [],
-      metricas: { totalInscriptos: 0, totalRecaudado: 0, totalPresupuestado: 0, porcentajeCobranza: 0, pagosPendientesCount: 0 },
+      pagosRechazados: [],
+      metricas: { totalInscriptos: 0, totalRecaudado: 0, totalPresupuestado: 0, porcentajeCobranza: 0, pagosPendientesCount: 0, pagosRechazadosCount: 0 },
     };
   }
 
@@ -52,7 +55,8 @@ export async function getInscriptosEtapa(etapaParam: string): Promise<{
       error: "Error al consultar la base de datos de inscriptos.",
       inscriptos: [],
       pagosPendientes: [],
-      metricas: { totalInscriptos: 0, totalRecaudado: 0, totalPresupuestado: 0, porcentajeCobranza: 0, pagosPendientesCount: 0 },
+      pagosRechazados: [],
+      metricas: { totalInscriptos: 0, totalRecaudado: 0, totalPresupuestado: 0, porcentajeCobranza: 0, pagosPendientesCount: 0, pagosRechazadosCount: 0 },
     };
   }
 
@@ -63,12 +67,14 @@ export async function getInscriptosEtapa(etapaParam: string): Promise<{
       ok: true,
       inscriptos: [],
       pagosPendientes: [],
+      pagosRechazados: [],
       metricas: {
         totalInscriptos: 0,
         totalRecaudado: 0,
         totalPresupuestado: 0,
         porcentajeCobranza: 0,
         pagosPendientesCount: 0,
+        pagosRechazadosCount: 0,
       },
       etapaConfig,
     };
@@ -93,9 +99,10 @@ export async function getInscriptosEtapa(etapaParam: string): Promise<{
 
   const pagosList = (pagosRaw || []) as PagoCampamento[];
 
-  // Mapear pagos por inscripto_id y separar pendientes
+  // Mapear pagos por inscripto_id y separar pendientes y rechazados
   const pagosPorInscripto = new Map<string, PagoCampamento[]>();
   const pagosPendientes: PagoPendienteRevision[] = [];
+  const pagosRechazados: PagoRechazadoRevision[] = [];
 
   for (const pago of pagosList) {
     const arr = pagosPorInscripto.get(pago.inscripto_id) || [];
@@ -107,6 +114,20 @@ export async function getInscriptosEtapa(etapaParam: string): Promise<{
       const ins = inscriptosMap.get(pago.inscripto_id);
       if (ins) {
         pagosPendientes.push({
+          ...pago,
+          inscripto: {
+            id: ins.id,
+            nombre: ins.nombre,
+            apellido: ins.apellido,
+            dni: ins.dni,
+            etapa: ins.etapa,
+          },
+        });
+      }
+    } else if (pago.estado === "RECHAZADO") {
+      const ins = inscriptosMap.get(pago.inscripto_id);
+      if (ins) {
+        pagosRechazados.push({
           ...pago,
           inscripto: {
             id: ins.id,
@@ -161,12 +182,14 @@ export async function getInscriptosEtapa(etapaParam: string): Promise<{
     ok: true,
     inscriptos: inscriptosConPagos,
     pagosPendientes,
+    pagosRechazados,
     metricas: {
       totalInscriptos: inscriptosConPagos.length,
       totalRecaudado,
       totalPresupuestado,
       porcentajeCobranza,
       pagosPendientesCount: pagosPendientes.length,
+      pagosRechazadosCount: pagosRechazados.length,
     },
     etapaConfig,
   };
@@ -275,6 +298,7 @@ export async function aprobarPagoCampamento(
       estado: "APROBADO",
       verificado_por: session.coordinador,
       verificado_at: new Date().toISOString(),
+      motivo_rechazo: null,
     })
     .eq("id", pagoId);
 

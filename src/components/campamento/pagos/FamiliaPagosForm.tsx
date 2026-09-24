@@ -301,6 +301,24 @@ export default function FamiliaPagosForm() {
                   </span>
                 </div>
 
+                {/* Alerta de comprobante rechazado */}
+                {inscriptoPrincipal.pagoRechazado && (
+                  <div className="flex items-start gap-2.5 rounded-xl border border-rose-300 bg-rose-50 p-3.5 text-xs text-rose-950 shadow-2xs">
+                    <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
+                    <div className="space-y-1">
+                      <p className="font-bold text-rose-900">
+                        ⚠️ Tenés un comprobante rechazado por coordinación:
+                      </p>
+                      <p className="italic text-rose-950 bg-rose-100/90 px-2.5 py-1.5 rounded-lg border border-rose-200 font-medium">
+                        &ldquo;{inscriptoPrincipal.pagoRechazado.motivo}&rdquo;
+                      </p>
+                      <p className="text-[11px] text-rose-700">
+                        Podés volver a transferir o adjuntar el comprobante correspondiente abajo.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Resumen de saldo */}
                 <div className="grid grid-cols-3 gap-2 rounded-xl bg-white p-3 text-center border border-emerald-200 shadow-2xs">
                   <div>
@@ -343,32 +361,51 @@ export default function FamiliaPagosForm() {
           </form>
         ) : (
           /* Participante 1 confirmado (modo resumen con botón de cambiar) */
-          <div className="flex items-center justify-between rounded-2xl border border-emerald-300 bg-emerald-50/60 p-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white font-black text-sm">
-                ✓
+          <div className="space-y-3">
+            <div className="flex items-center justify-between rounded-2xl border border-emerald-300 bg-emerald-50/60 p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white font-black text-sm">
+                  ✓
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">
+                    {inscriptoPrincipal?.apellido}, {inscriptoPrincipal?.nombre}
+                  </h3>
+                  <p className="text-xs text-slate-600">
+                    {inscriptoPrincipal?.etapa} (DNI {inscriptoPrincipal?.dni}) · Saldo pendiente:{" "}
+                    <strong className="text-amber-800 font-bold">
+                      {formatPrecio(inscriptoPrincipal?.saldoPendiente || 0)}
+                    </strong>
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-900">
-                  {inscriptoPrincipal?.apellido}, {inscriptoPrincipal?.nombre}
-                </h3>
-                <p className="text-xs text-slate-600">
-                  {inscriptoPrincipal?.etapa} (DNI {inscriptoPrincipal?.dni}) · Saldo pendiente:{" "}
-                  <strong className="text-amber-800 font-bold">
-                    {formatPrecio(inscriptoPrincipal?.saldoPendiente || 0)}
-                  </strong>
-                </p>
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setConfirmadoPrincipal(false);
+                }}
+                className="text-xs font-semibold text-slate-500 hover:text-slate-800 underline cursor-pointer"
+              >
+                Cambiar
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                setConfirmadoPrincipal(false);
-              }}
-              className="text-xs font-semibold text-slate-500 hover:text-slate-800 underline cursor-pointer"
-            >
-              Cambiar
-            </button>
+
+            {inscriptoPrincipal?.pagoRechazado && (
+              <div className="flex items-start gap-2.5 rounded-xl border border-rose-300 bg-rose-50 p-3.5 text-xs text-rose-950 shadow-2xs">
+                <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-bold text-rose-900">
+                    ⚠️ Tenés un comprobante rechazado por coordinación:
+                  </p>
+                  <p className="italic text-rose-950 bg-rose-100/90 px-2.5 py-1.5 rounded-lg border border-rose-200 font-medium">
+                    &ldquo;{inscriptoPrincipal.pagoRechazado.motivo}&rdquo;
+                  </p>
+                  <p className="text-[11px] text-rose-700">
+                    Podés volver a transferir o adjuntar el comprobante correspondiente abajo.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </section>
@@ -475,6 +512,20 @@ export default function FamiliaPagosForm() {
                       Confirmar
                     </button>
                   </div>
+
+                  {inscriptoHermano.pagoRechazado && (
+                    <div className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-2.5 text-xs text-rose-900 shadow-2xs">
+                      <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
+                      <div className="space-y-0.5">
+                        <p className="font-bold text-rose-900">
+                          ⚠️ Comprobante rechazado por coordinación:
+                        </p>
+                        <p className="italic text-rose-800 font-medium">
+                          &ldquo;{inscriptoHermano.pagoRechazado.motivo}&rdquo;
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </form>
@@ -482,36 +533,55 @@ export default function FamiliaPagosForm() {
 
           {/* Hermano confirmado */}
           {confirmadoHermano && inscriptoHermano && (
-            <div className="flex items-center justify-between rounded-2xl border border-sky-300 bg-sky-50/60 p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-600 text-white font-black text-sm">
-                  ✓
+            <div className="space-y-3">
+              <div className="flex items-center justify-between rounded-2xl border border-sky-300 bg-sky-50/60 p-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-600 text-white font-black text-sm">
+                    ✓
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">
+                      {inscriptoHermano.apellido}, {inscriptoHermano.nombre}
+                    </h3>
+                    <p className="text-xs text-slate-600">
+                      {inscriptoHermano.etapa} (DNI {inscriptoHermano.dni}) · Saldo pendiente:{" "}
+                      <strong className="text-amber-800 font-bold">
+                        {formatPrecio(inscriptoHermano.saldoPendiente)}
+                      </strong>
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900">
-                    {inscriptoHermano.apellido}, {inscriptoHermano.nombre}
-                  </h3>
-                  <p className="text-xs text-slate-600">
-                    {inscriptoHermano.etapa} (DNI {inscriptoHermano.dni}) · Saldo pendiente:{" "}
-                    <strong className="text-amber-800 font-bold">
-                      {formatPrecio(inscriptoHermano.saldoPendiente)}
-                    </strong>
-                  </p>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setConfirmadoHermano(false);
+                    setInscriptoHermano(null);
+                    setMontoHermano("");
+                  }}
+                  className="flex items-center gap-1 text-xs text-rose-600 hover:text-rose-800 font-medium cursor-pointer"
+                  title="Quitar hermano"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Quitar</span>
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setConfirmadoHermano(false);
-                  setInscriptoHermano(null);
-                  setMontoHermano("");
-                }}
-                className="flex items-center gap-1 text-xs text-rose-600 hover:text-rose-800 font-medium cursor-pointer"
-                title="Quitar hermano"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                <span>Quitar</span>
-              </button>
+
+              {inscriptoHermano.pagoRechazado && (
+                <div className="flex items-start gap-2.5 rounded-xl border border-rose-300 bg-rose-50 p-3.5 text-xs text-rose-950 shadow-2xs">
+                  <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="font-bold text-rose-900">
+                      ⚠️ Tenés un comprobante rechazado por coordinación para {inscriptoHermano.nombre}:
+                    </p>
+                    <p className="italic text-rose-950 bg-rose-100/90 px-2.5 py-1.5 rounded-lg border border-rose-200 font-medium">
+                      &ldquo;{inscriptoHermano.pagoRechazado.motivo}&rdquo;
+                    </p>
+                    <p className="text-[11px] text-rose-700">
+                      Podés volver a transferir o adjuntar el comprobante correspondiente abajo.
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </section>

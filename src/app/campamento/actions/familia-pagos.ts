@@ -9,6 +9,10 @@ export interface BuscarInscriptoPagoResult {
   inscripto?: InscriptoCampamento & {
     totalAbonado: number;
     saldoPendiente: number;
+    pagoRechazado?: {
+      motivo: string;
+      fecha?: string | null;
+    } | null;
   };
 }
 
@@ -41,11 +45,12 @@ export async function buscarInscriptoPorDni(dniInput: string): Promise<BuscarIns
     };
   }
 
-  // Consultar pagos aprobados del inscripto
+  // Consultar pagos del inscripto para saldos y alertas
   const { data: pagos, error: pagosError } = await supabase
     .from("pagos")
-    .select("monto, estado")
-    .eq("inscripto_id", inscripto.id);
+    .select("monto, estado, motivo_rechazo, created_at, verificado_at")
+    .eq("inscripto_id", inscripto.id)
+    .order("created_at", { ascending: false });
 
   if (pagosError) {
     console.warn("[buscarInscriptoPorDni] Error consultando pagos:", pagosError);
@@ -58,12 +63,20 @@ export async function buscarInscriptoPorDni(dniInput: string): Promise<BuscarIns
   const tarifa = Number(inscripto.tarifa) || 0;
   const saldoPendiente = Math.max(0, tarifa - totalAbonado);
 
+  const pagoRechazado = (pagos || []).find((p) => p.estado === "RECHAZADO");
+
   return {
     ok: true,
     inscripto: {
       ...(inscripto as InscriptoCampamento),
       totalAbonado,
       saldoPendiente,
+      pagoRechazado: pagoRechazado
+        ? {
+            motivo: pagoRechazado.motivo_rechazo || "Comprobante rechazado por coordinación.",
+            fecha: pagoRechazado.verificado_at || pagoRechazado.created_at,
+          }
+        : null,
     },
   };
 }

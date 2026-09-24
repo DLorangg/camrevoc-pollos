@@ -18,18 +18,26 @@ import {
   KeyRound,
   ShieldAlert,
   Inbox,
+  XCircle,
 } from "lucide-react";
-import type { InscriptoConPagos, MetricasEtapa, PagoPendienteRevision } from "@/types/campamento";
+import type {
+  InscriptoConPagos,
+  MetricasEtapa,
+  PagoPendienteRevision,
+  PagoRechazadoRevision,
+} from "@/types/campamento";
 import type { CoordinadorConfig } from "@/config/campamento-coordinadores";
 import { logoutCoordinador } from "@/app/campamento/actions/coordinacion-auth";
 import { formatPrecio } from "@/config/campamento";
 import GestionPagosModal from "./GestionPagosModal";
 import CambiarPinModal from "./CambiarPinModal";
 import PagosPendientesSection from "./PagosPendientesSection";
+import PagosRechazadosSection from "./PagosRechazadosSection";
 
 interface EtapaDashboardProps {
   inscriptos: InscriptoConPagos[];
   pagosPendientes?: PagoPendienteRevision[];
+  pagosRechazados?: PagoRechazadoRevision[];
   metricas: MetricasEtapa;
   etapaConfig: CoordinadorConfig;
   coordinadorActual: string;
@@ -37,11 +45,12 @@ interface EtapaDashboardProps {
 }
 
 type FiltroEstado = "TODOS" | "PENDIENTES" | "PARCIALES" | "PAGADOS" | "DIFICULTAD";
-type TabDashboard = "INSCRIPTOS" | "PENDIENTES";
+type TabDashboard = "INSCRIPTOS" | "PENDIENTES" | "RECHAZADOS";
 
 export default function EtapaDashboard({
   inscriptos,
   pagosPendientes = [],
+  pagosRechazados = [],
   metricas,
   etapaConfig,
   coordinadorActual,
@@ -245,7 +254,7 @@ export default function EtapaDashboard({
             }`}
           >
             <Inbox className="h-4 w-4 text-amber-500" />
-            <span>Pagos pendientes de revisión</span>
+            <span>Pagos pendientes</span>
             {pagosPendientes.length > 0 && (
               <span
                 className={`ml-1 rounded-full px-2 py-0.5 text-xs font-black ${
@@ -258,12 +267,42 @@ export default function EtapaDashboard({
               </span>
             )}
           </button>
+
+          <button
+            type="button"
+            onClick={() => setTabActual("RECHAZADOS")}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              tabActual === "RECHAZADOS"
+                ? "bg-rose-700 text-white shadow-2xs"
+                : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+            }`}
+          >
+            <XCircle className="h-4 w-4 text-rose-500" />
+            <span>Rechazados</span>
+            {pagosRechazados.length > 0 && (
+              <span
+                className={`ml-1 rounded-full px-2 py-0.5 text-xs font-black ${
+                  tabActual === "RECHAZADOS"
+                    ? "bg-white text-rose-800"
+                    : "bg-rose-100 text-rose-800 border border-rose-200"
+                }`}
+              >
+                {pagosRechazados.length}
+              </span>
+            )}
+          </button>
         </div>
 
         {/* Contenido según pestaña seleccionada */}
         {tabActual === "PENDIENTES" ? (
           <PagosPendientesSection
             pagos={pagosPendientes}
+            etapaNum={String(etapaConfig.etapaNum)}
+            nombreEtapa={etapaConfig.nombreEtapa}
+          />
+        ) : tabActual === "RECHAZADOS" ? (
+          <PagosRechazadosSection
+            pagos={pagosRechazados}
             etapaNum={String(etapaConfig.etapaNum)}
             nombreEtapa={etapaConfig.nombreEtapa}
           />
