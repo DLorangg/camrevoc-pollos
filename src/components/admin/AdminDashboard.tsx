@@ -42,15 +42,8 @@ type SortOrder = "fecha_desc" | "fecha_asc" | "nombre_asc" | "nombre_desc";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function getApellidoNombreKey(fullName: string): string {
-  if (!fullName) return "";
-  const parts = fullName.trim().split(/\s+/).filter(Boolean);
-  if (parts.length <= 1) return parts[0]?.toLowerCase() || "";
-  // Tomar la última palabra como apellido y el resto como nombre
-  const apellido = parts[parts.length - 1].toLowerCase();
-  const nombres = parts.slice(0, -1).join(" ").toLowerCase();
-  return `${apellido} ${nombres}`;
-}
+const cleanName = (str: string) =>
+  (str || "").trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
 function formatARS(n: number) {
   return new Intl.NumberFormat("es-AR", {
@@ -198,15 +191,47 @@ function MetricCard({ label, value, color }: { label: string; value: string; col
 
 // ─── Estado badge ─────────────────────────────────────────────────────────────
 
-function EstadoBadge({ estado }: { estado: string }) {
-  const styles: Record<string, string> = {
-    Pendiente: "bg-amber-100 text-amber-800 border-amber-200",
-    Aprobado: "bg-emerald-100 text-emerald-800 border-emerald-200",
-    Rechazado: "bg-rose-100 text-rose-800 border-rose-200",
-  };
+function PedidoEstadoBadge({ pedido }: { pedido: PedidoConVales }) {
+  if (pedido.estado_pago === "Pendiente") {
+    return (
+      <span className="inline-block rounded-full border border-amber-200 bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">
+        Pendiente
+      </span>
+    );
+  }
+
+  if (pedido.estado_pago === "Rechazado") {
+    return (
+      <span className="inline-block rounded-full border border-rose-200 bg-rose-100 px-2.5 py-0.5 text-xs font-semibold text-rose-800">
+        Rechazado
+      </span>
+    );
+  }
+
+  // Pedido aprobado: evaluar estado de entrega de los vales
+  const vales = pedido.vales || [];
+  const totalVales = vales.length;
+  const entregados = vales.filter((v) => v.estado_entrega === "Entregado").length;
+
+  if (totalVales > 0 && entregados === totalVales) {
+    return (
+      <span className="inline-block rounded-full border border-blue-200 bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-800">
+        ✓ Entregado
+      </span>
+    );
+  }
+
+  if (entregados > 0 && entregados < totalVales) {
+    return (
+      <span className="inline-block rounded-full border border-orange-200 bg-orange-100 px-2.5 py-0.5 text-xs font-semibold text-orange-800">
+        Entrega parcial ({entregados}/{totalVales})
+      </span>
+    );
+  }
+
   return (
-    <span className={`inline-block rounded-full border px-2.5 py-0.5 text-xs font-semibold ${styles[estado] ?? "bg-slate-100 text-slate-600"}`}>
-      {estado}
+    <span className="inline-block rounded-full border border-emerald-200 bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
+      Aprobado
     </span>
   );
 }
@@ -505,7 +530,7 @@ function PedidoRow({
 
         {/* Estado */}
         <td className="px-4 py-3">
-          <EstadoBadge estado={pedido.estado_pago} />
+          <PedidoEstadoBadge pedido={pedido} />
           {pedido.aprobado_por && (
             <p className="mt-1 text-[10px] text-slate-400 max-w-[140px] truncate" title={pedido.aprobado_por}>
               {pedido.aprobado_por}
@@ -693,11 +718,9 @@ export default function AdminDashboard({
       if (sortOrder === "fecha_asc") {
         return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       }
-      const nameA = a.animador_vendedor || a.nombre_comprador || "";
-      const nameB = b.animador_vendedor || b.nombre_comprador || "";
-      const keyA = getApellidoNombreKey(nameA);
-      const keyB = getApellidoNombreKey(nameB);
-      const cmp = keyA.localeCompare(keyB, "es", { sensitivity: "base" });
+      const nameA = cleanName(a.animador_vendedor || a.nombre_comprador);
+      const nameB = cleanName(b.animador_vendedor || b.nombre_comprador);
+      const cmp = nameA.localeCompare(nameB, "es", { sensitivity: "base" });
       return sortOrder === "nombre_asc" ? cmp : -cmp;
     });
   }, [filtered, sortOrder]);
@@ -922,10 +945,10 @@ export default function AdminDashboard({
                     onChange={(e) => setSortOrder(e.target.value as SortOrder)}
                     className="rounded-xl border border-slate-300 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 shadow-xs focus:border-[#009B4D] focus:outline-none focus:ring-2 focus:ring-[#009B4D]/20 cursor-pointer"
                   >
+                    <option value="nombre_asc">Vendedor (A → Z)</option>
+                    <option value="nombre_desc">Vendedor (Z → A)</option>
                     <option value="fecha_desc">Fecha (más reciente)</option>
                     <option value="fecha_asc">Fecha (más antiguo)</option>
-                    <option value="nombre_asc">Apellido / Nombre (A - Z)</option>
-                    <option value="nombre_desc">Apellido / Nombre (Z - A)</option>
                   </select>
                 </div>
 
@@ -982,7 +1005,7 @@ export default function AdminDashboard({
                             )
                           }
                           className="inline-flex items-center gap-1 font-semibold uppercase tracking-wider text-slate-600 hover:text-slate-900 cursor-pointer transition-colors"
-                          title="Alternar orden por apellido / nombre"
+                          title="Alternar orden por vendedor (A-Z / Z-A)"
                         >
                           <span>Vendedor / Responsable</span>
                           {sortOrder === "nombre_asc" ? (
