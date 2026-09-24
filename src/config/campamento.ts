@@ -88,3 +88,14 @@ export function formatPrecio(precio: number): string {
     maximumFractionDigits: 0,
   }).format(precio);
 }
+
+// ─── Datos Bancarios para Campamentos ────────────────────────────────────────
+
+export const DATOS_BANCARIOS_CAMPAMENTO = {
+  banco: "Santander",
+  titular: "ISSFJ DON BOSCO NEUQUEN",
+  cuit: "30610171601",
+  cbu: "0720124620000002236168",
+  alias: "GRUPOSDBNQN",
+  motivo: "CRV",
+} as const;

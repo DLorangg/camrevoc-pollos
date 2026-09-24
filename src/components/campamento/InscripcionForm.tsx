@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { inscribirParticipante } from "@/app/campamento/actions/inscripcion";
 import type { InscripcionInput } from "@/app/campamento/actions/inscripcion";
+import BankCardCampamento from "@/components/campamento/BankCardCampamento";
 import {
   ETAPAS_CAMPAMENTO,
   ROLES_CAMPAMENTO,
@@ -162,6 +163,11 @@ export default function InscripcionForm() {
             <p className="text-sm text-amber-900 leading-relaxed">
               📋 <strong>Recordá realizar la transferencia a la cuenta institucional y enviarle el comprobante al coordinador/a de tu etapa. ¡Nos vemos en el campamento!</strong>
             </p>
+          </div>
+
+          {/* Tarjeta bancaria para realizar la transferencia */}
+          <div className="text-left pt-2">
+            <BankCardCampamento />
           </div>
 
           <p className="text-xs text-slate-400">
