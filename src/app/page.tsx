@@ -80,6 +80,17 @@ export default function LandingPage() {
           </div>
           <ArrowRight className="h-5 w-5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-emerald-600" />
         </Link>
+
+        {/* Portal Coordinación Campamentos */}
+        <div className="pt-2 text-center">
+          <Link
+            href="/campamento/coordinacion"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-emerald-700 transition-colors"
+          >
+            <span>🔐 Portal de Coordinación por Etapa</span>
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
       </main>
 
       {/* Footer */}
