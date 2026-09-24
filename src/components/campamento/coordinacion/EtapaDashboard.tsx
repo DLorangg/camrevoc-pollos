@@ -15,18 +15,22 @@ import {
   CheckCircle,
   Clock,
   HeartHandshake,
+  KeyRound,
+  ShieldAlert,
 } from "lucide-react";
 import type { InscriptoConPagos, MetricasEtapa } from "@/types/campamento";
 import type { CoordinadorConfig } from "@/config/campamento-coordinadores";
 import { logoutCoordinador } from "@/app/campamento/actions/coordinacion-auth";
 import { formatPrecio } from "@/config/campamento";
 import GestionPagosModal from "./GestionPagosModal";
+import CambiarPinModal from "./CambiarPinModal";
 
 interface EtapaDashboardProps {
   inscriptos: InscriptoConPagos[];
   metricas: MetricasEtapa;
   etapaConfig: CoordinadorConfig;
   coordinadorActual: string;
+  esDefaultPin: boolean;
 }
 
 type FiltroEstado = "TODOS" | "PENDIENTES" | "PARCIALES" | "PAGADOS" | "DIFICULTAD";
@@ -36,11 +40,14 @@ export default function EtapaDashboard({
   metricas,
   etapaConfig,
   coordinadorActual,
+  esDefaultPin: defaultPinInicial,
 }: EtapaDashboardProps) {
   const router = useRouter();
   const [busqueda, setBusqueda] = useState("");
   const [filtro, setFiltro] = useState<FiltroEstado>("TODOS");
   const [inscriptoSeleccionado, setInscriptoSeleccionado] = useState<InscriptoConPagos | null>(null);
+  const [modalPinAbierto, setModalPinAbierto] = useState(false);
+  const [esDefaultPin, setEsDefaultPin] = useState(defaultPinInicial);
   const [isLoggingOut, startLogout] = useTransition();
 
   const handleLogout = () => {
@@ -100,19 +107,54 @@ export default function EtapaDashboard({
             </div>
           </div>
 
-          {/* Botón Cerrar Sesión / Cambiar etapa */}
-          <button
-            type="button"
-            onClick={handleLogout}
-            disabled={isLoggingOut}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700 transition-colors cursor-pointer disabled:opacity-50"
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Cerrar sesión / Cambiar etapa</span>
-            <span className="sm:hidden">Salir</span>
-          </button>
+          {/* Acciones del Navbar */}
+          <div className="flex items-center gap-2">
+            {/* Botón Cambiar PIN */}
+            <button
+              type="button"
+              onClick={() => setModalPinAbierto(true)}
+              className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-amber-50 hover:border-amber-300 hover:text-amber-800 transition-colors cursor-pointer"
+              title="Cambiar PIN de acceso"
+            >
+              <KeyRound className="h-3.5 w-3.5 text-amber-600" />
+              <span className="hidden sm:inline">Cambiar PIN</span>
+            </button>
+
+            {/* Botón Cerrar Sesión / Cambiar etapa */}
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-rose-50 hover:border-rose-200 hover:text-rose-700 transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Cerrar sesión</span>
+              <span className="sm:hidden">Salir</span>
+            </button>
+          </div>
         </div>
       </header>
+
+      {/* Banner de advertencia si tiene PIN por defecto */}
+      {esDefaultPin && (
+        <aside className="border-b border-amber-300 bg-gradient-to-r from-amber-50 via-amber-100/70 to-amber-50 px-4 py-3 text-amber-900 shadow-2xs">
+          <div className="mx-auto flex max-w-7xl flex-col sm:flex-row items-center justify-between gap-2.5 sm:px-6">
+            <div className="flex items-center gap-2 text-xs sm:text-sm font-medium text-center sm:text-left">
+              <ShieldAlert className="h-5 w-5 shrink-0 text-amber-700" />
+              <span>
+                <strong>⚠️ Tu etapa está usando la contraseña por defecto.</strong> Te recomendamos cambiarla por seguridad.
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setModalPinAbierto(true)}
+              className="shrink-0 rounded-xl bg-amber-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-amber-700 transition-colors cursor-pointer"
+            >
+              Cambiar contraseña ahora
+            </button>
+          </div>
+        </aside>
+      )}
 
       {/* Main Container */}
       <main className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 space-y-6">
@@ -370,6 +412,15 @@ export default function EtapaDashboard({
           coordinadorActual={coordinadorActual}
           etapaNum={String(etapaConfig.etapaNum)}
           onClose={() => setInscriptoSeleccionado(null)}
+        />
+      )}
+
+      {/* Modal de Cambio de PIN */}
+      {modalPinAbierto && (
+        <CambiarPinModal
+          etapaNombre={etapaConfig.nombreEtapa}
+          onClose={() => setModalPinAbierto(false)}
+          onSuccess={() => setEsDefaultPin(false)}
         />
       )}
     </div>

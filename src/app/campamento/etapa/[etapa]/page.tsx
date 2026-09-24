@@ -60,6 +60,7 @@ export default async function EtapaPage({ params }: Props) {
       metricas={metricas}
       etapaConfig={etapaConfig}
       coordinadorActual={session.coordinador}
+      esDefaultPin={session.esDefaultPin}
     />
   );
 }

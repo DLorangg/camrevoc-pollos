@@ -36,7 +36,16 @@ CREATE TABLE IF NOT EXISTS pagos (
 
 CREATE INDEX IF NOT EXISTS idx_pagos_inscripto_id ON pagos (inscripto_id);
 
--- 3. Storage Bucket: comprobantes-campa
+-- 3. Tabla de PINs por Etapa (Fase 2.1)
+CREATE TABLE IF NOT EXISTS etapas_pines (
+  etapa TEXT PRIMARY KEY, -- ej: '1', '2', '3', etc.
+  pin TEXT NOT NULL,
+  es_default BOOLEAN DEFAULT true NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT now() NOT NULL
+);
+
+-- 4. Storage Bucket: comprobantes-campa
 -- En el dashboard de Supabase -> Storage -> Create new bucket:
 --   Name: 'comprobantes-campa'
 --   Public: true (o con RLS si se prefiere restringir)
+
