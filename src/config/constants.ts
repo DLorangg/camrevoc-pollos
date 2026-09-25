@@ -28,7 +28,7 @@ export const ETAPAS = [
   "5ta Etapa",
   "6ta Etapa",
   "7ma Etapa",
-  "Guía",
+  "Animadores",
 ] as const;
 
 export type Etapa = (typeof ETAPAS)[number];

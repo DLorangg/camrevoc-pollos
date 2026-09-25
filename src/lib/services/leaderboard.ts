@@ -101,6 +101,18 @@ export function formatDisplayName(name: string): string {
 }
 
 /**
+ * Normaliza el nombre de la etapa, convirtiendo "Guía" o "Guia" a "Animadores".
+ */
+export function normalizeEtapa(etapa?: string | null): string {
+  const trimmed = etapa?.trim();
+  if (!trimmed) return "—";
+  if (trimmed.toLowerCase() === "guía" || trimmed.toLowerCase() === "guia") {
+    return "Animadores";
+  }
+  return trimmed;
+}
+
+/**
  * Agrupa los pedidos por vendedor normalizado, suma pollos aprobados y pendientes,
  * y conserva la versión visible con mejor formato (la última registrada o con mejor capitalización).
  */
@@ -130,6 +142,7 @@ export function calculateVendedorLeaderboard(
     const formattedCandidate = formatDisplayName(rawNombre);
     const candidateScore = scoreNameFormat(rawNombre);
     const orderDate = p.created_at || null;
+    const etapaVal = normalizeEtapa(p.etapa);
 
     const existing = vendedoresMap.get(key);
 
@@ -138,7 +151,7 @@ export function calculateVendedorLeaderboard(
         nombre: formattedCandidate,
         bestScore: candidateScore,
         lastCreatedAt: orderDate,
-        etapa: p.etapa?.trim() || "—",
+        etapa: etapaVal,
         pollosAprobados: p.estado_pago === "Aprobado" ? p.cantidad_total : 0,
         pollosPendientes: p.estado_pago === "Pendiente" ? p.cantidad_total : 0,
         pedidosCount: p.estado_pago === "Aprobado" ? 1 : 0,
@@ -168,9 +181,9 @@ export function calculateVendedorLeaderboard(
         existing.pollosPendientes += p.cantidad_total;
       }
 
-      // 3. Etapa: si no tenía asignada y este pedido sí tiene, actualizarla
-      if (p.etapa?.trim() && (!existing.etapa || existing.etapa === "—")) {
-        existing.etapa = p.etapa.trim();
+      // 3. Etapa: si no tenía asignada y este pedido sí tiene etapa válida, actualizarla
+      if (etapaVal !== "—" && (!existing.etapa || existing.etapa === "—")) {
+        existing.etapa = etapaVal;
       }
     }
   }

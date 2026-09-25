@@ -8,6 +8,7 @@ import { sendTicketEmail } from "@/lib/email/send-ticket";
 import type { Pedido, Vale } from "@/types/database";
 import {
   calculateVendedorLeaderboard,
+  normalizeEtapa,
   type VendedorLeaderboard,
 } from "@/lib/services/leaderboard";
 
@@ -156,7 +157,16 @@ export async function getDashboardData(): Promise<DashboardData> {
     throw new Error(error?.message ?? "No se pudieron cargar los pedidos.");
   }
 
-  const aprobados = pedidos.filter((p) => p.estado_pago === "Aprobado");
+  // Normalizar pedidos para que cualquier etapa "Guía" / "Guia" previa figure como "Animadores"
+  const pedidosNormalizados = pedidos.map((p) => {
+    const etapaNorm = normalizeEtapa(p.etapa);
+    return {
+      ...p,
+      etapa: etapaNorm === "—" ? (p.etapa || "—") : etapaNorm,
+    };
+  });
+
+  const aprobados = pedidosNormalizados.filter((p) => p.estado_pago === "Aprobado");
 
   // 1. Agrupación por Etapas (Meta grupal)
   const etapasMap = new Map<string, { aprobados: number; pendientes: number }>();
@@ -164,7 +174,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     etapasMap.set(e, { aprobados: 0, pendientes: 0 });
   }
 
-  for (const p of pedidos) {
+  for (const p of pedidosNormalizados) {
     const e = p.etapa?.trim() || "Otra";
     const current = etapasMap.get(e) ?? { aprobados: 0, pendientes: 0 };
     if (p.estado_pago === "Aprobado") {
@@ -209,13 +219,13 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   // 2. Leaderboard de Vendedores (Top 10)
   const leaderboardVendedores: VendedorLeaderboard[] = calculateVendedorLeaderboard(
-    pedidos,
+    pedidosNormalizados,
     PRECIO_POLLO,
     10,
   );
 
   return {
-    pedidos,
+    pedidos: pedidosNormalizados,
     metrics: {
       totalSolicitados: pedidos.reduce((s, p) => s + p.cantidad_total, 0),
       totalAprobados: aprobados.reduce((s, p) => s + p.cantidad_total, 0),
