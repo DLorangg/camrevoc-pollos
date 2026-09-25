@@ -6,6 +6,10 @@ import { Resend } from "resend";
 import { createServiceClient } from "@/lib/supabase/server";
 import { sendTicketEmail } from "@/lib/email/send-ticket";
 import type { Pedido, Vale } from "@/types/database";
+import {
+  calculateVendedorLeaderboard,
+  type VendedorLeaderboard,
+} from "@/lib/services/leaderboard";
 
 const ADMIN_SESSION_COOKIE = "admin_session";
 const OPERATOR_COOKIE = "admin_operator";
@@ -123,15 +127,7 @@ export interface EtapaStat {
   esLider: boolean;
 }
 
-export interface VendedorLeaderboard {
-  posicion: number;
-  nombre: string;
-  etapa: string;
-  pollosAprobados: number;
-  pollosPendientes: number;
-  pedidosCount: number;
-  recaudado: number;
-}
+export type { VendedorLeaderboard };
 
 export interface DashboardData {
   pedidos: (Pedido & { vales: Vale[] })[];
@@ -212,55 +208,11 @@ export async function getDashboardData(): Promise<DashboardData> {
   }
 
   // 2. Leaderboard de Vendedores (Top 10)
-  const vendedoresMap = new Map<
-    string,
-    {
-      nombre: string;
-      etapa: string;
-      pollosAprobados: number;
-      pollosPendientes: number;
-      pedidosCount: number;
-    }
-  >();
-
-  for (const p of pedidos) {
-    const rawNombre = p.animador_vendedor || p.nombre_comprador || "Sin nombre";
-    const key = rawNombre.trim().toLowerCase();
-    const existing = vendedoresMap.get(key) ?? {
-      nombre: rawNombre.trim(),
-      etapa: p.etapa?.trim() || "—",
-      pollosAprobados: 0,
-      pollosPendientes: 0,
-      pedidosCount: 0,
-    };
-
-    if (p.estado_pago === "Aprobado") {
-      existing.pollosAprobados += p.cantidad_total;
-      existing.pedidosCount += 1;
-    } else if (p.estado_pago === "Pendiente") {
-      existing.pollosPendientes += p.cantidad_total;
-    }
-
-    if (p.etapa?.trim()) {
-      existing.etapa = p.etapa.trim();
-    }
-
-    vendedoresMap.set(key, existing);
-  }
-
-  const leaderboardVendedores: VendedorLeaderboard[] = Array.from(vendedoresMap.values())
-    .filter((v) => v.pollosAprobados > 0 || v.pollosPendientes > 0)
-    .sort((a, b) => b.pollosAprobados - a.pollosAprobados || b.pollosPendientes - a.pollosPendientes)
-    .slice(0, 10)
-    .map((v, idx) => ({
-      posicion: idx + 1,
-      nombre: v.nombre,
-      etapa: v.etapa,
-      pollosAprobados: v.pollosAprobados,
-      pollosPendientes: v.pollosPendientes,
-      pedidosCount: v.pedidosCount,
-      recaudado: v.pollosAprobados * PRECIO_POLLO,
-    }));
+  const leaderboardVendedores: VendedorLeaderboard[] = calculateVendedorLeaderboard(
+    pedidos,
+    PRECIO_POLLO,
+    10,
+  );
 
   return {
     pedidos,

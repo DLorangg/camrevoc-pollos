@@ -618,17 +618,18 @@ export default function OrderForm() {
       setUploading(false);
 
       setSubmitting(true);
+      const trimmedVendedor = nombreComprador.trim();
       const valesInput: ValeInput[] = vales.map((v) => ({
         cantidad_pollos: v.cantidad_pollos,
-        destinatario: v.destinatario || nombreComprador,
+        destinatario: v.destinatario?.trim() || trimmedVendedor,
       }));
 
       const result = await createOrder({
-        nombre_comprador: nombreComprador,
-        whatsapp,
-        email,
-        etapa,
-        animador_vendedor: nombreComprador,
+        nombre_comprador: trimmedVendedor,
+        whatsapp: whatsapp.trim(),
+        email: email.trim(),
+        etapa: etapa.trim(),
+        animador_vendedor: trimmedVendedor,
         cantidad_total: cantidadTotal,
         comprobantes_urls: urls,
         vales: valesInput,
@@ -661,7 +662,7 @@ export default function OrderForm() {
         <SectionHeading emoji="🧑" label="Tus datos" />
 
         <Field
-          label="Tu Nombre y Apellido (Vendedor / Animador)"
+          label="Tu Nombre y Apellido (Vendedor / Responsable)"
           required
           error={errors.nombre_comprador}
         >
@@ -673,6 +674,9 @@ export default function OrderForm() {
             disabled={isBusy}
             className={inputCls}
           />
+          <p className="text-xs text-muted-foreground">
+            💡 Ingresá siempre tu Nombre y Apellido de la misma forma para sumar tus ventas en el ranking.
+          </p>
         </Field>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
