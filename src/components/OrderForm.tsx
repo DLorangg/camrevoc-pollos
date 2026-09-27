@@ -11,6 +11,7 @@ import {
   Check,
   Loader2,
   Plus,
+  Minus,
   Trash2,
   X,
   Share2,
@@ -50,7 +51,7 @@ function CopyButton({
     <button
       type="button"
       onClick={handleCopy}
-      className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all ${
+      className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-all cursor-pointer ${
         copied
           ? "border-emerald-400 bg-emerald-50 text-emerald-700 shadow-sm"
           : "border-slate-300 bg-slate-50 text-slate-700 hover:border-emerald-300 hover:bg-emerald-50/50"
@@ -70,7 +71,7 @@ function CopyButton({
 
 function BankCard() {
   return (
-    <div className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50/80 to-teal-50/60 p-5 shadow-sm">
+    <div className="rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50/80 to-teal-50/60 p-4 sm:p-5 shadow-sm">
       <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-emerald-800">
         💳 Datos para transferencia
       </h2>
@@ -91,12 +92,12 @@ function BankCard() {
         </p>
 
         {/* CBU row */}
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-200/70 bg-white/70 px-3.5 py-2.5">
-          <div className="flex flex-col">
+        <div className="flex items-center justify-between gap-2 rounded-xl border border-emerald-200/70 bg-white/70 px-3.5 py-2.5">
+          <div className="flex flex-col min-w-0 pr-1">
             <span className="text-[11px] font-bold uppercase tracking-wide text-emerald-800">
               CBU
             </span>
-            <span className="font-mono text-xs text-slate-900 sm:text-sm">
+            <span className="font-mono text-xs text-slate-900 sm:text-sm break-all select-all">
               {DATOS_BANCARIOS.cbu}
             </span>
           </div>
@@ -104,12 +105,12 @@ function BankCard() {
         </div>
 
         {/* Alias row — destacado */}
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-300 bg-white px-3.5 py-3 shadow-sm">
-          <div className="flex flex-col">
+        <div className="flex items-center justify-between gap-2 rounded-xl border border-emerald-300 bg-white px-3.5 py-3 shadow-sm">
+          <div className="flex flex-col min-w-0 pr-1">
             <span className="text-[11px] font-bold uppercase tracking-wide text-emerald-800">
               🏷️ Alias (recomendado)
             </span>
-            <span className="font-mono text-base font-extrabold tracking-wider text-emerald-950 sm:text-lg">
+            <span className="font-mono text-base font-extrabold tracking-wider text-emerald-950 sm:text-lg break-all select-all">
               {DATOS_BANCARIOS.alias}
             </span>
           </div>
@@ -241,53 +242,99 @@ function ValesDistributor({
         </div>
       )}
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         {vales.map((vale, idx) => (
           <div
             key={vale.id}
-            className="flex gap-2.5 rounded-xl border border-slate-200 bg-white p-3 shadow-xs"
+            className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs"
           >
-            <span className="mt-2.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-800">
-              {idx + 1}
-            </span>
-            <div className="flex flex-1 flex-col gap-2 sm:flex-row">
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-medium text-slate-600">Pollos</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={vale.cantidad_pollos}
-                  onChange={(e) =>
-                    updateVale(vale.id, "cantidad_pollos", Math.max(1, parseInt(e.target.value) || 1))
-                  }
-                  disabled={isBusy}
-                  className={`${inputCls} w-20 text-center font-semibold`}
-                />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-800">
+                  {idx + 1}
+                </span>
+                <span className="text-xs font-bold text-slate-700">
+                  Vale #{idx + 1}
+                </span>
               </div>
-              <div className="flex flex-1 flex-col gap-1">
+
+              {vales.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeVale(vale.id)}
+                  className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                  title="Eliminar vale"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Eliminar</span>
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-12 sm:items-end">
+              {/* Stepper pollos */}
+              <div className="sm:col-span-5 flex flex-col gap-1">
+                <label className="text-xs font-medium text-slate-600">Pollos en este vale</label>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateVale(vale.id, "cantidad_pollos", Math.max(1, (vale.cantidad_pollos || 1) - 1))
+                    }
+                    disabled={isBusy || (vale.cantidad_pollos || 1) <= 1}
+                    className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
+                    title="Disminuir"
+                  >
+                    <Minus className="h-4 w-4" />
+                  </button>
+
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    value={vale.cantidad_pollos === 0 ? "" : vale.cantidad_pollos}
+                    onChange={(e) => {
+                      const clean = e.target.value.replace(/\D/g, "");
+                      updateVale(vale.id, "cantidad_pollos", clean === "" ? 0 : parseInt(clean, 10));
+                    }}
+                    onBlur={() => {
+                      if (!vale.cantidad_pollos || vale.cantidad_pollos < 1) {
+                        updateVale(vale.id, "cantidad_pollos", 1);
+                      }
+                    }}
+                    disabled={isBusy}
+                    className="h-10 w-16 flex-1 rounded-xl border border-slate-300 bg-white text-center font-bold text-sm text-slate-900 shadow-2xs focus:border-[#009B4D] focus:outline-none focus:ring-2 focus:ring-[#009B4D]/20 disabled:bg-slate-50"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateVale(vale.id, "cantidad_pollos", (vale.cantidad_pollos || 0) + 1)
+                    }
+                    disabled={isBusy}
+                    className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 active:scale-95 transition-all cursor-pointer"
+                    title="Aumentar"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Destinatario */}
+              <div className="sm:col-span-7 flex flex-col gap-1">
                 <label className="text-xs font-medium text-slate-600">
                   ¿A nombre de quién retira?
                 </label>
                 <input
                   type="text"
-                  placeholder="Ej: Tío Juan"
+                  placeholder="Ej: Tío Juan (o tu nombre)"
                   value={vale.destinatario}
                   onChange={(e) => updateVale(vale.id, "destinatario", e.target.value)}
                   disabled={isBusy}
-                  className={inputCls}
+                  className={`${inputCls} h-10`}
                 />
               </div>
             </div>
-            {vales.length > 1 && (
-              <button
-                type="button"
-                onClick={() => removeVale(vale.id)}
-                className="mt-2 self-start rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-colors"
-                title="Eliminar vale"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            )}
           </div>
         ))}
       </div>
@@ -501,6 +548,7 @@ export default function OrderForm() {
   const [email, setEmail] = useState("");
   const [etapa, setEtapa] = useState("");
   const [cantidadTotal, setCantidadTotal] = useState(1);
+  const [cantidadInputStr, setCantidadInputStr] = useState("1");
 
   // Vales distribution
   const [vales, setVales] = useState<ValeRow[]>([
@@ -531,10 +579,48 @@ export default function OrderForm() {
     [vales],
   );
 
-  const handleCantidadChange = (qty: number) => {
-    const safeQty = Math.max(1, qty);
-    setCantidadTotal(safeQty);
-    syncSingleVale(safeQty, nombreComprador);
+  const handleCantidadInputChange = (val: string) => {
+    // Permitir borrar el valor para poder escribir libremente en celular y desktop
+    const clean = val.replace(/\D/g, "");
+    setCantidadInputStr(clean);
+
+    if (clean !== "") {
+      const num = parseInt(clean, 10);
+      if (num > 0) {
+        setCantidadTotal(num);
+        syncSingleVale(num, nombreComprador);
+      }
+    }
+  };
+
+  const handleCantidadBlur = () => {
+    if (!cantidadInputStr || parseInt(cantidadInputStr, 10) < 1) {
+      setCantidadInputStr("1");
+      setCantidadTotal(1);
+      syncSingleVale(1, nombreComprador);
+    } else {
+      const num = parseInt(cantidadInputStr, 10);
+      setCantidadInputStr(String(num));
+      setCantidadTotal(num);
+      syncSingleVale(num, nombreComprador);
+    }
+  };
+
+  const incrementCantidad = () => {
+    const current = parseInt(cantidadInputStr, 10) || cantidadTotal || 1;
+    const next = current + 1;
+    setCantidadTotal(next);
+    setCantidadInputStr(String(next));
+    syncSingleVale(next, nombreComprador);
+  };
+
+  const decrementCantidad = () => {
+    const current = parseInt(cantidadInputStr, 10) || cantidadTotal || 1;
+    if (current <= 1) return;
+    const next = current - 1;
+    setCantidadTotal(next);
+    setCantidadInputStr(String(next));
+    syncSingleVale(next, nombreComprador);
   };
 
   const handleNombreChange = (nombre: string) => {
@@ -729,20 +815,55 @@ export default function OrderForm() {
         <SectionHeading emoji="🐔" label="Tu pedido y vales" />
 
         <Field label="Cantidad de pollos" required error={errors.cantidad_total}>
-          <div className="flex items-center gap-4">
-            <input
-              type="number"
-              min={1}
-              value={cantidadTotal}
-              onChange={(e) => handleCantidadChange(parseInt(e.target.value) || 1)}
-              disabled={isBusy}
-              className={`${inputCls} w-28 text-center text-base font-bold`}
-            />
-            <div className="flex flex-col">
-              <span className="text-2xl font-extrabold tabular-nums text-slate-900">
-                {formatARS(cantidadTotal * PRECIO_POLLO)}
+          <div className="flex flex-col gap-3.5 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5 sm:p-4 shadow-xs">
+            {/* Stepper con botones táctiles grandes para celular */}
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={decrementCantidad}
+                disabled={isBusy || cantidadTotal <= 1}
+                className="flex h-12 w-12 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-700 shadow-xs hover:bg-slate-100 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
+                title="Disminuir cantidad"
+                aria-label="Disminuir cantidad"
+              >
+                <Minus className="h-5 w-5" />
+              </button>
+
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={cantidadInputStr}
+                onChange={(e) => handleCantidadInputChange(e.target.value)}
+                onBlur={handleCantidadBlur}
+                disabled={isBusy}
+                className="h-12 w-20 sm:w-24 rounded-xl border border-slate-300 bg-white text-center text-xl font-black text-slate-900 shadow-xs focus:border-[#009B4D] focus:outline-none focus:ring-2 focus:ring-[#009B4D]/20 disabled:bg-slate-50"
+                aria-label="Cantidad de pollos"
+              />
+
+              <button
+                type="button"
+                onClick={incrementCantidad}
+                disabled={isBusy}
+                className="flex h-12 w-12 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-700 shadow-xs hover:bg-slate-100 active:scale-95 transition-all cursor-pointer"
+                title="Aumentar cantidad"
+                aria-label="Aumentar cantidad"
+              >
+                <Plus className="h-5 w-5 text-slate-700" />
+              </button>
+            </div>
+
+            {/* Total acumulado */}
+            <div className="flex items-baseline justify-between sm:flex-col sm:items-end border-t border-slate-200 sm:border-0 pt-2.5 sm:pt-0">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider sm:hidden">
+                Total a transferir:
               </span>
-              <span className="text-xs text-slate-500">{formatARS(PRECIO_POLLO)} c/u</span>
+              <div className="text-right">
+                <span className="text-2xl sm:text-3xl font-black tabular-nums text-emerald-800 block">
+                  {formatARS(cantidadTotal * PRECIO_POLLO)}
+                </span>
+                <span className="text-xs text-slate-500">{formatARS(PRECIO_POLLO)} c/u</span>
+              </div>
             </div>
           </div>
         </Field>

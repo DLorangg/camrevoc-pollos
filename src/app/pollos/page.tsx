@@ -49,7 +49,7 @@ export default function HomePage() {
       </header>
 
       {/* Main Card */}
-      <main className="mx-auto max-w-xl rounded-3xl border border-slate-200 bg-white px-6 py-8 shadow-xl shadow-slate-200/50 sm:px-8">
+      <main className="mx-auto max-w-xl rounded-3xl border border-slate-200 bg-white px-4 py-6 shadow-xl shadow-slate-200/50 sm:px-8 sm:py-8">
         <OrderForm />
       </main>
 
