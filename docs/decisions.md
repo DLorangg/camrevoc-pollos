@@ -1,0 +1,116 @@
+# Registro de Decisiones de Arquitectura y Negocio (ADR)
+
+Este documento registra las decisiones fundamentales de arquitectura, reglas de negocio y compromisos técnicos tomados a lo largo de la evolución de CAMREVOC, incluyendo las **decisiones humanas definitivas** que rigen el repositorio.
+
+---
+
+## 1. Decisiones Arquitectónicas y Estructurales
+
+### ADR-01: Separación de Supabase en Dos Proyectos
+- **Categoría:** Arquitectura / Infraestructura.
+- **Contexto:** La institución opera con el plan gratuito de Supabase, el cual impone límites de cuota (500 MB en base de datos y 1 GB en storage), además de pausar proyectos inactivos. Mezclar la pollada con los campamentos generaba riesgo de agotar el almacenamiento de comprobantes y acoplaba dos ciclos de vida institucionales diferentes.
+- **Decisión:** Desacoplar la persistencia en dos proyectos Supabase dedicados: `camrevoc-pollos` y `camrevoc-campa`.
+- **Estado Actual:** Implementado. `src/lib/supabase/server.ts` gestiona Pollos y `src/lib/supabase/campamento.ts` gestiona Campamentos.
+- **Deuda Técnica:** Ninguna. Requiere mantener dos juegos de variables de entorno en producción.
+
+### ADR-02: Eliminación del `basePath: '/pollos'`
+- **Categoría:** Enrutamiento / App Router.
+- **Contexto:** Inicialmente, el repositorio se construyó exclusivamente para la pollada configurando `basePath: '/pollos'` en `next.config.ts`. Al incorporar Campamentos 2027 bajo el mismo dominio (`camrevoc.com.ar`), el `basePath` global impedía tener rutas en `/campamento/*` y una landing institucional en `/`.
+- **Decisión:** Remover `basePath` de `next.config.ts`, trasladar las páginas de la pollada a la subcarpeta `src/app/pollos/` e implementar redirecciones históricas de cortesía (`/admin` → `/pollos/admin`, `/vale/*` → `/pollos/vale/*`).
+- **Estado Actual:** Implementado y verificado en `next.config.ts`.
+- **Deuda Técnica:** Algunas llamadas a `revalidatePath` en Server Actions de Pollos conservaban la ruta legacy `"/admin"` en lugar de `"/pollos/admin"`.
+
+### ADR-03: Subida de Comprobantes: Cliente Directo (Pollos) vs. Server Action (Campamentos)
+- **Categoría:** Integración de Storage.
+- **Contexto:** En Pollos se implementó primero la subida directa desde el navegador mediante `@supabase/ssr` con la clave anónima pública (`anon key`), enviando solo las URLs al Server Action. En Campamentos, para no exponer credenciales públicas adicionales en el cliente, se canalizó la subida como `FormData` mediante Server Actions con la `service_role` key.
+- **Decisión:** Mantener ambas estrategias según su módulo por estabilidad operativa.
+- **Estado Actual:** Coexisten de forma asimétrica pero funcional.
+- **Deuda Técnica:** Asimetría arquitectónica entre módulos.
+
+---
+
+## 2. Decisiones del Módulo Pollos
+
+### ADR-04: Modelo de Carga por Animador/Crvquista
+- **Categoría:** Regla de Negocio / Formulario.
+- **Contexto:** Históricamente se proyectó que el comprador completaría el formulario indicando a qué animador correspondía la venta. En la práctica real del grupo, son los propios animadores y crvquistas quienes venden y cargan los pedidos directamente para acreditar sus puntos.
+- **Decisión Humana Definitiva:** El formulario siempre lo completa un **animador/crvquista**, porque registra las ventas que realizó. El pollo puede ser comprado por el propio animador o por un tercero (familiares, amigos). En el formulario se unificó el campo como `"Tu Nombre y Apellido (Vendedor / Responsable)"`, mapeando el valor a `nombre_comprador` y `animador_vendedor`.
+- **Estado Actual:** Implementado en `src/components/OrderForm.tsx` (commit `8aa6316`).
+
+### ADR-05: Canje de Vales mediante QR sin Login
+- **Categoría:** Seguridad / Operatoria de Retiro.
+- **Contexto:** El día del evento en la parrilla y mesa de entrega participan colaboradores, padres y animadores que no tienen credenciales de administrador ni acceso al panel `/pollos/admin`. Exigir autenticación administrativa para escanear y marcar un vale entregado bloquearía el flujo de retiro físico.
+- **Decisión Humana Definitiva:** El código QR y su enlace público asociado (`/pollos/vale/[codigo]`) funcionan como **mecanismo práctico de autorización para el retiro**. Cualquier persona con el QR puede visualizar el vale y confirmar la entrega físicamente en dos pasos. **No es una vulnerabilidad a corregir**, sino una decisión operativa deliberada.
+- **Estado Actual:** Implementado en `src/app/pollos/vale/[codigo]/page.tsx` con el componente `ConfirmarEntregaButton`.
+
+### ADR-06: Fecha Oficial de la Pollada
+- **Categoría:** Regla de Negocio / Comunicación.
+- **Contexto:** Existía una discrepancia entre la plantilla de correo de Resend (que mencionaba el sábado 11 de octubre de 2025) y la pantalla web del vale (que mencionaba el sábado 10 de octubre).
+- **Decisión Humana Definitiva:** La fecha oficial de retiro de los pollos es el **10 de octubre**.
+- **Estado Actual:** Definida como regla de negocio vinculante. La plantilla de correo debe ajustarse cuando se modifique código funcional.
+
+### ADR-07: Comprobante de Transferencia 100% Obligatorio
+- **Categoría:** Finanzas / Validación.
+- **Contexto:** En eventos anteriores, reservas sin comprobante generaban desfasajes de stock y pollos encargados que nunca se abonaban.
+- **Decisión:** Exigir obligatoriamente la carga del archivo de comprobante de transferencia bancaria antes de crear el pedido, bloqueando en el cliente y validando en el Server Action.
+- **Estado Actual:** Implementado en `OrderForm.tsx` y `create-order.ts`.
+
+### ADR-08: Normalización Algorítmica del Leaderboard
+- **Categoría:** Lógica de Negocio / Ranking.
+- **Contexto:** Para no demorar el lanzamiento precargando un padrón rígido de animadores, se permitió texto libre. Esto generaba que `"Juan Pérez"`, `"juan perez"` y `"JUAN PEREZ"` dividieran sus ventas.
+- **Decisión:** Crear un motor de normalización en `src/lib/services/leaderboard.ts` que remueve tildes, convierte a minúsculas y colapsa espacios para agrupar puntos, seleccionando la variante con mejor puntuación tipográfica (Title Case) para la vista pública.
+- **Estado Actual:** Implementado y operativo.
+
+### ADR-09: Generación Inmediata de Vales
+- **Categoría:** Flujo de Datos.
+- **Contexto:** Algunos borradores planteaban generar los vales recién al aprobar el pedido.
+- **Decisión:** Generar los vales e insertarlos en la tabla `vales` en el mismo momento en que se inserta el `pedido` (con estado inicial `Pendiente`). Esto permite mostrar los códigos y enlaces de WhatsApp al comprador en la pantalla de éxito inmediata, quedando inhabilitados para canje hasta que finanzas apruebe el pago.
+- **Estado Actual:** Implementado en `createOrder`.
+
+---
+
+## 3. Decisiones del Módulo Campamentos
+
+### ADR-10: Autogestión Familiar de Pagos por DNI
+- **Categoría:** Operatoria / Experiencia de Usuario.
+- **Contexto:** Anteriormente los coordinadores recibían cientos de capturas de WhatsApp desordenadas.
+- **Decisión:** Crear el portal `/campamento/pagos` donde las familias buscan la ficha del participante usando únicamente su DNI, consultan su saldo en tiempo real, ven observaciones de rechazo previo y suben los comprobantes de transferencia.
+- **Estado Actual:** Implementado y operativo.
+
+### ADR-11: PIN Dinámico por Etapa y Auto-Registro de Coordinadores
+- **Categoría:** Seguridad / Autenticación.
+- **Contexto:** Cada una de las 7 etapas tiene su propio equipo de coordinación y no se deseaba mantener una lista estática en código de los nombres de los coordinadores.
+- **Decisión:** Cada etapa tiene un PIN propio en la tabla `etapas_pines`. Los coordinadores escriben su nombre al entrar por primera vez (quedando guardado en `coordinadores_etapa` para selección rápida futura). Se incluye un banner de advertencia si la etapa usa el PIN por defecto y un modal para cambiar el PIN.
+- **Estado Actual:** Implementado en `src/app/campamento/actions/coordinacion-auth.ts`.
+
+### ADR-12: Almacenamiento de PINs en Texto Plano (Deuda Técnica Aceptada)
+- **Categoría:** Seguridad / Deuda Técnica.
+- **Contexto:** Los PINs se almacenan en texto plano en la tabla `etapas_pines` de Supabase sin funciones hash (como bcrypt o argon2).
+- **Decisión Humana Definitiva:** Se mantiene el almacenamiento actual de PINs tal como está por ahora para no introducir cambios ni complejidades en esta etapa del proyecto.
+- **Clasificación:** **Deuda técnica de seguridad aceptada temporalmente**.
+
+### ADR-13: Soporte para 3 o más Hermanos en Transferencias
+- **Categoría:** Requisito Pendiente / Flujo Familiar.
+- **Contexto:** Muchas familias tienen 3 hijos en el grupo y realizan una única transferencia bancaria familiar. El formulario actual `/campamento/pagos` solo ofrece desglosar montos para un máximo de 2 participantes.
+- **Decisión Humana Definitiva:** El sistema debe soportar **3 o más hermanos** en una misma transferencia/comprobante.
+- **Estado Actual:** **Requisito pendiente de implementación futura**. No debe modificarse el código en esta fase.
+
+---
+
+## 4. Matriz de Estado de Decisiones
+
+| Código | Asunto | Módulo | Estado |
+|---|---|---|---|
+| ADR-01 | Supabase desacoplado en dos proyectos | General | Resuelto / Implementado |
+| ADR-02 | Eliminación de basePath global | General | Resuelto / Implementado |
+| ADR-03 | Estrategia de subida de Storage asimétrica | General | Resuelto / Operativo |
+| ADR-04 | Carga de ventas por animador/crvquista | Pollos | Decisión definitiva / Implementado |
+| ADR-05 | Canje por QR sin login (autorización práctica) | Pollos | Decisión definitiva / Implementado |
+| ADR-06 | Fecha oficial de retiro: 10 de octubre | Pollos | Decisión definitiva (pendiente update email) |
+| ADR-07 | Comprobante 100% obligatorio | Pollos / Campa | Resuelto / Implementado |
+| ADR-08 | Normalización algorítmica de ranking | Pollos | Resuelto / Implementado |
+| ADR-09 | Generación inmediata de vales en Pendiente | Pollos | Resuelto / Implementado |
+| ADR-10 | Autogestión familiar por DNI | Campamentos | Resuelto / Implementado |
+| ADR-11 | PIN dinámico y auto-registro de coordinadores | Campamentos | Resuelto / Implementado |
+| ADR-12 | PINs en texto plano | Campamentos | **Deuda técnica aceptada** |
+| ADR-13 | Soporte para 3 o más hermanos | Campamentos | **Requisito pendiente de desarrollo** |
