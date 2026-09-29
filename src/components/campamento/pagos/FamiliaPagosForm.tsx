@@ -14,6 +14,7 @@ import {
   FileCheck,
   ArrowRight,
   HelpCircle,
+  Clock,
 } from "lucide-react";
 import BankCardCampamento from "@/components/campamento/BankCardCampamento";
 import { formatPrecio } from "@/config/campamento";
@@ -25,6 +26,12 @@ import {
 
 type InscriptoEncontrado = NonNullable<BuscarInscriptoPagoResult["inscripto"]>;
 
+export interface HermanoItem {
+  id: string;
+  inscripto: InscriptoEncontrado;
+  monto: string;
+}
+
 export default function FamiliaPagosForm() {
   // Estado de Paso 1 (Participante principal)
   const [dniPrincipal, setDniPrincipal] = useState("");
@@ -32,18 +39,15 @@ export default function FamiliaPagosForm() {
   const [errorPrincipal, setErrorPrincipal] = useState<string | null>(null);
   const [inscriptoPrincipal, setInscriptoPrincipal] = useState<InscriptoEncontrado | null>(null);
   const [confirmadoPrincipal, setConfirmadoPrincipal] = useState(false);
+  const [montoPrincipal, setMontoPrincipal] = useState<string>("");
 
-  // Estado de Paso 2 (Hermano/a opcional)
+  // Estado de Paso 2 (Hermanos dinámicos: 1, 2, 3 o más)
+  const [hermanos, setHermanos] = useState<HermanoItem[]>([]);
   const [mostrarBuscarHermano, setMostrarBuscarHermano] = useState(false);
   const [dniHermano, setDniHermano] = useState("");
   const [buscandoHermano, startBuscarHermano] = useTransition();
   const [errorHermano, setErrorHermano] = useState<string | null>(null);
-  const [inscriptoHermano, setInscriptoHermano] = useState<InscriptoEncontrado | null>(null);
-  const [confirmadoHermano, setConfirmadoHermano] = useState(false);
-
-  // Montos
-  const [montoPrincipal, setMontoPrincipal] = useState<string>("");
-  const [montoHermano, setMontoHermano] = useState<string>("");
+  const [hermanoEncontrado, setHermanoEncontrado] = useState<InscriptoEncontrado | null>(null);
 
   // Paso 4: Comprobante y datos de contacto
   const [comprobante, setComprobante] = useState<File | null>(null);
@@ -77,23 +81,29 @@ export default function FamiliaPagosForm() {
     });
   };
 
-  // ─── Buscar Hermano ──────────────────────────────────────────────────────────
+  // ─── Buscar y Gestionar Hermanos (Soporte dinámico 1, 2, 3+ hermanos) ────────
   const handleBuscarHermano = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorHermano(null);
-    setInscriptoHermano(null);
-    setConfirmadoHermano(false);
+    setHermanoEncontrado(null);
 
-    if (dniHermano.trim() === dniPrincipal.trim()) {
-      setErrorHermano("El DNI del hermano no puede ser el mismo que el del primer participante.");
+    const cleanDni = dniHermano.trim();
+    if (!cleanDni) return;
+
+    if (cleanDni === dniPrincipal.trim()) {
+      setErrorHermano("El DNI ingresado corresponde al participante principal ya seleccionado.");
+      return;
+    }
+
+    if (hermanos.some((h) => h.inscripto.dni === cleanDni)) {
+      setErrorHermano("Este hermano/a ya fue agregado a la lista de la transferencia.");
       return;
     }
 
     startBuscarHermano(async () => {
-      const res = await buscarInscriptoPorDni(dniHermano);
+      const res = await buscarInscriptoPorDni(cleanDni);
       if (res.ok && res.inscripto) {
-        setInscriptoHermano(res.inscripto);
-        setMontoHermano(res.inscripto.saldoPendiente > 0 ? String(res.inscripto.saldoPendiente) : "");
+        setHermanoEncontrado(res.inscripto);
       } else {
         setErrorHermano(
           res.error ||
@@ -103,10 +113,121 @@ export default function FamiliaPagosForm() {
     });
   };
 
-  // Total transferido calculado
+  const handleAgregarHermano = (ins: InscriptoEncontrado) => {
+    setHermanos((prev) => [
+      ...prev,
+      {
+        id: ins.id,
+        inscripto: ins,
+        monto: ins.saldoPendiente > 0 ? String(ins.saldoPendiente) : "",
+      },
+    ]);
+    setHermanoEncontrado(null);
+    setDniHermano("");
+    setMostrarBuscarHermano(false);
+    setErrorHermano(null);
+  };
+
+  const handleQuitarHermano = (id: string) => {
+    setHermanos((prev) => prev.filter((h) => h.id !== id));
+  };
+
+  const handleActualizarMontoHermano = (id: string, monto: string) => {
+    setHermanos((prev) =>
+      prev.map((h) => (h.id === id ? { ...h, monto } : h))
+    );
+  };
+
+  // Total transferido calculado (Principal + todos los Hermanos)
   const montoPrinNum = Number(montoPrincipal) || 0;
-  const montoHermNum = confirmadoHermano && inscriptoHermano ? Number(montoHermano) || 0 : 0;
-  const montoTotalTransferido = montoPrinNum + montoHermNum;
+  const montoHermanosTotal = hermanos.reduce((acc, h) => acc + (Number(h.monto) || 0), 0);
+  const montoTotalTransferido = montoPrinNum + montoHermanosTotal;
+
+  // ─── Renderizado de Avisos de Pagos Pendientes y Rechazados ──────────────────
+  const renderAvisosParticipante = (ins: InscriptoEncontrado) => {
+    const tienePendientes = ins.pagosPendientes && ins.pagosPendientes.length > 0;
+    const tieneRechazado = Boolean(ins.pagoRechazado);
+
+    if (!tienePendientes && !tieneRechazado) return null;
+
+    return (
+      <div className="space-y-2.5">
+        {/* Aviso de Comprobante en Revisión */}
+        {tienePendientes && (
+          <div className="flex items-start gap-2.5 rounded-xl border border-amber-300 bg-amber-50 p-3.5 text-xs text-amber-950 shadow-2xs">
+            <Clock className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
+            <div className="space-y-1">
+              <p className="font-bold text-amber-900">
+                {ins.pagosPendientes!.length === 1 ? (
+                  <>
+                    ⏳ Tenés un comprobante en revisión por{" "}
+                    {formatPrecio(ins.pagosPendientes![0].monto)}
+                  </>
+                ) : (
+                  <>
+                    ⏳ Tenés {ins.pagosPendientes!.length} comprobantes en revisión por un total de{" "}
+                    {formatPrecio(ins.montoPendienteTotal || 0)}
+                  </>
+                )}
+              </p>
+              <p className="text-amber-900 leading-relaxed">
+                {ins.pagosPendientes!.length === 1 ? (
+                  <>
+                    Enviado el{" "}
+                    <strong>
+                      {new Date(ins.pagosPendientes![0].created_at).toLocaleDateString("es-AR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                      hs
+                    </strong>
+                    . El pago se reflejará en tu saldo una vez que coordinación lo valide.
+                  </>
+                ) : (
+                  <>
+                    El último fue enviado el{" "}
+                    <strong>
+                      {new Date(ins.pagosPendientes![0].created_at).toLocaleDateString("es-AR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                      hs
+                    </strong>
+                    . Los pagos se reflejarán en tu saldo una vez que coordinación los valide.
+                  </>
+                )}
+              </p>
+              <p className="text-[11px] text-amber-800 font-medium">
+                ℹ️ No es necesario volver a transferir este importe mientras se encuentre en proceso de verificación.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Alerta de Comprobante Rechazado */}
+        {ins.pagoRechazado && (
+          <div className="flex items-start gap-2.5 rounded-xl border border-rose-300 bg-rose-50 p-3.5 text-xs text-rose-950 shadow-2xs">
+            <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
+            <div className="space-y-1">
+              <p className="font-bold text-rose-900">
+                ⚠️ Tenés un comprobante rechazado por coordinación:
+              </p>
+              <p className="italic text-rose-950 bg-rose-100/90 px-2.5 py-1.5 rounded-lg border border-rose-200 font-medium">
+                &ldquo;{ins.pagoRechazado.motivo}&rdquo;
+              </p>
+              <p className="text-[11px] text-rose-700">
+                Podés volver a transferir o adjuntar el comprobante correspondiente abajo.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   // ─── Envío Final ─────────────────────────────────────────────────────────────
   const handleSubmitFinal = (e: React.FormEvent) => {
@@ -119,13 +240,16 @@ export default function FamiliaPagosForm() {
     }
 
     if (montoPrinNum <= 0) {
-      setErrorEnvio("El monto correspondiente al primer participante debe ser mayor a 0.");
+      setErrorEnvio(`El monto correspondiente a ${inscriptoPrincipal.nombre} debe ser mayor a 0.`);
       return;
     }
 
-    if (confirmadoHermano && inscriptoHermano && montoHermNum <= 0) {
-      setErrorEnvio("El monto correspondiente al hermano/a debe ser mayor a 0.");
-      return;
+    for (const h of hermanos) {
+      const mNum = Number(h.monto) || 0;
+      if (mNum <= 0) {
+        setErrorEnvio(`El monto asignado a su hermano/a ${h.inscripto.nombre} debe ser mayor a 0.`);
+        return;
+      }
     }
 
     if (!comprobante) {
@@ -134,10 +258,10 @@ export default function FamiliaPagosForm() {
     }
 
     startSubmit(async () => {
-      const items = [{ inscriptoId: inscriptoPrincipal.id, monto: montoPrinNum }];
-      if (confirmadoHermano && inscriptoHermano) {
-        items.push({ inscriptoId: inscriptoHermano.id, monto: montoHermNum });
-      }
+      const items = [
+        { inscriptoId: inscriptoPrincipal.id, monto: montoPrinNum },
+        ...hermanos.map((h) => ({ inscriptoId: h.id, monto: Number(h.monto) })),
+      ];
 
       const formData = new FormData();
       formData.set("items", JSON.stringify(items));
@@ -183,14 +307,16 @@ export default function FamiliaPagosForm() {
               </span>
               <span className="font-bold text-emerald-700">{formatPrecio(montoPrinNum)}</span>
             </div>
-            {confirmadoHermano && inscriptoHermano && (
-              <div className="flex justify-between text-sm">
+            {hermanos.map((h) => (
+              <div key={h.id} className="flex justify-between text-sm">
                 <span className="text-slate-600">
-                  {inscriptoHermano.apellido}, {inscriptoHermano.nombre} ({inscriptoHermano.etapa})
+                  {h.inscripto.apellido}, {h.inscripto.nombre} ({h.inscripto.etapa})
                 </span>
-                <span className="font-bold text-emerald-700">{formatPrecio(montoHermNum)}</span>
+                <span className="font-bold text-emerald-700">
+                  {formatPrecio(Number(h.monto) || 0)}
+                </span>
               </div>
-            )}
+            ))}
             <hr className="border-slate-200" />
             <div className="flex justify-between text-base font-black text-slate-900">
               <span>Total informado:</span>
@@ -301,23 +427,8 @@ export default function FamiliaPagosForm() {
                   </span>
                 </div>
 
-                {/* Alerta de comprobante rechazado */}
-                {inscriptoPrincipal.pagoRechazado && (
-                  <div className="flex items-start gap-2.5 rounded-xl border border-rose-300 bg-rose-50 p-3.5 text-xs text-rose-950 shadow-2xs">
-                    <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
-                    <div className="space-y-1">
-                      <p className="font-bold text-rose-900">
-                        ⚠️ Tenés un comprobante rechazado por coordinación:
-                      </p>
-                      <p className="italic text-rose-950 bg-rose-100/90 px-2.5 py-1.5 rounded-lg border border-rose-200 font-medium">
-                        &ldquo;{inscriptoPrincipal.pagoRechazado.motivo}&rdquo;
-                      </p>
-                      <p className="text-[11px] text-rose-700">
-                        Podés volver a transferir o adjuntar el comprobante correspondiente abajo.
-                      </p>
-                    </div>
-                  </div>
-                )}
+                {/* Avisos de comprobantes pendientes y rechazados */}
+                {renderAvisosParticipante(inscriptoPrincipal)}
 
                 {/* Resumen de saldo */}
                 <div className="grid grid-cols-3 gap-2 rounded-xl bg-white p-3 text-center border border-emerald-200 shadow-2xs">
@@ -390,22 +501,7 @@ export default function FamiliaPagosForm() {
               </button>
             </div>
 
-            {inscriptoPrincipal?.pagoRechazado && (
-              <div className="flex items-start gap-2.5 rounded-xl border border-rose-300 bg-rose-50 p-3.5 text-xs text-rose-950 shadow-2xs">
-                <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
-                <div className="space-y-1">
-                  <p className="font-bold text-rose-900">
-                    ⚠️ Tenés un comprobante rechazado por coordinación:
-                  </p>
-                  <p className="italic text-rose-950 bg-rose-100/90 px-2.5 py-1.5 rounded-lg border border-rose-200 font-medium">
-                    &ldquo;{inscriptoPrincipal.pagoRechazado.motivo}&rdquo;
-                  </p>
-                  <p className="text-[11px] text-rose-700">
-                    Podés volver a transferir o adjuntar el comprobante correspondiente abajo.
-                  </p>
-                </div>
-              </div>
-            )}
+            {inscriptoPrincipal && renderAvisosParticipante(inscriptoPrincipal)}
           </div>
         )}
       </section>
@@ -419,16 +515,65 @@ export default function FamiliaPagosForm() {
                 2
               </span>
               <h2 className="text-base sm:text-lg font-bold text-slate-900">
-                ¿La transferencia incluye a otro/a hermano/a?
+                ¿La transferencia incluye a otros/as hermanos/as?
               </h2>
             </div>
+            {hermanos.length > 0 && !mostrarBuscarHermano && (
+              <button
+                type="button"
+                onClick={() => setMostrarBuscarHermano(true)}
+                className="flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:border-emerald-400 hover:text-emerald-800 transition-colors cursor-pointer"
+              >
+                <UserPlus className="h-3.5 w-3.5 text-emerald-700" />
+                <span>Agregar otro/a hermano/a</span>
+              </button>
+            )}
           </div>
 
-          {!mostrarBuscarHermano && !confirmadoHermano && (
+          {/* Lista de hermanos agregados */}
+          {hermanos.length > 0 && (
+            <div className="space-y-3">
+              {hermanos.map((h, idx) => (
+                <div key={h.id} className="space-y-2">
+                  <div className="flex items-center justify-between rounded-2xl border border-sky-300 bg-sky-50/60 p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-600 text-white font-black text-xs">
+                        {idx + 1}
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-900">
+                          {h.inscripto.apellido}, {h.inscripto.nombre}
+                        </h3>
+                        <p className="text-xs text-slate-600">
+                          {h.inscripto.etapa} (DNI {h.inscripto.dni}) · Saldo pendiente:{" "}
+                          <strong className="text-amber-800 font-bold">
+                            {formatPrecio(h.inscripto.saldoPendiente)}
+                          </strong>
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleQuitarHermano(h.id)}
+                      className="flex items-center gap-1 text-xs text-rose-600 hover:text-rose-800 font-medium cursor-pointer"
+                      title="Quitar hermano/a"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      <span>Quitar</span>
+                    </button>
+                  </div>
+                  {renderAvisosParticipante(h.inscripto)}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Mensaje inicial cuando no hay hermanos y no se está buscando */}
+          {hermanos.length === 0 && !mostrarBuscarHermano && (
             <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
               <div className="flex items-center gap-2.5 text-xs text-slate-600 text-center sm:text-left">
                 <Users className="h-4 w-4 text-slate-400 shrink-0" />
-                <span>Si hiciste una única transferencia bancaria para dos hermanos, podés vincularlo ahora.</span>
+                <span>Si hiciste una única transferencia bancaria para dos o más hermanos/as, podés vincularlos ahora.</span>
               </div>
               <button
                 type="button"
@@ -442,7 +587,7 @@ export default function FamiliaPagosForm() {
           )}
 
           {/* Formulario búsqueda hermano */}
-          {mostrarBuscarHermano && !confirmadoHermano && (
+          {mostrarBuscarHermano && (
             <form onSubmit={handleBuscarHermano} className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
@@ -452,8 +597,9 @@ export default function FamiliaPagosForm() {
                   type="button"
                   onClick={() => {
                     setMostrarBuscarHermano(false);
-                    setInscriptoHermano(null);
+                    setHermanoEncontrado(null);
                     setErrorHermano(null);
+                    setDniHermano("");
                   }}
                   className="text-xs text-slate-400 hover:text-slate-600 cursor-pointer"
                 >
@@ -490,99 +636,33 @@ export default function FamiliaPagosForm() {
                 </div>
               )}
 
-              {inscriptoHermano && (
-                <div className="rounded-xl border border-emerald-300 bg-white p-3.5 space-y-2">
+              {hermanoEncontrado && (
+                <div className="rounded-xl border border-emerald-300 bg-white p-3.5 space-y-3">
                   <div className="flex justify-between items-start">
                     <div>
                       <h4 className="text-sm font-bold text-slate-900">
-                        {inscriptoHermano.nombre} {inscriptoHermano.apellido}
+                        {hermanoEncontrado.nombre} {hermanoEncontrado.apellido}
                       </h4>
                       <p className="text-xs text-slate-500">
-                        {inscriptoHermano.etapa} · Saldo pendiente:{" "}
+                        {hermanoEncontrado.etapa} · Saldo pendiente:{" "}
                         <strong className="text-amber-800 font-bold">
-                          {formatPrecio(inscriptoHermano.saldoPendiente)}
+                          {formatPrecio(hermanoEncontrado.saldoPendiente)}
                         </strong>
                       </p>
                     </div>
                     <button
                       type="button"
-                      onClick={() => setConfirmadoHermano(true)}
-                      className="rounded-xl bg-[#009B4D] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#007a3d] cursor-pointer"
+                      onClick={() => handleAgregarHermano(hermanoEncontrado)}
+                      className="rounded-xl bg-[#009B4D] px-3.5 py-1.5 text-xs font-bold text-white hover:bg-[#007a3d] cursor-pointer"
                     >
-                      Confirmar
+                      Confirmar y agregar
                     </button>
                   </div>
 
-                  {inscriptoHermano.pagoRechazado && (
-                    <div className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-2.5 text-xs text-rose-900 shadow-2xs">
-                      <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
-                      <div className="space-y-0.5">
-                        <p className="font-bold text-rose-900">
-                          ⚠️ Comprobante rechazado por coordinación:
-                        </p>
-                        <p className="italic text-rose-800 font-medium">
-                          &ldquo;{inscriptoHermano.pagoRechazado.motivo}&rdquo;
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                  {renderAvisosParticipante(hermanoEncontrado)}
                 </div>
               )}
             </form>
-          )}
-
-          {/* Hermano confirmado */}
-          {confirmadoHermano && inscriptoHermano && (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between rounded-2xl border border-sky-300 bg-sky-50/60 p-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-600 text-white font-black text-sm">
-                    ✓
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900">
-                      {inscriptoHermano.apellido}, {inscriptoHermano.nombre}
-                    </h3>
-                    <p className="text-xs text-slate-600">
-                      {inscriptoHermano.etapa} (DNI {inscriptoHermano.dni}) · Saldo pendiente:{" "}
-                      <strong className="text-amber-800 font-bold">
-                        {formatPrecio(inscriptoHermano.saldoPendiente)}
-                      </strong>
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setConfirmadoHermano(false);
-                    setInscriptoHermano(null);
-                    setMontoHermano("");
-                  }}
-                  className="flex items-center gap-1 text-xs text-rose-600 hover:text-rose-800 font-medium cursor-pointer"
-                  title="Quitar hermano"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  <span>Quitar</span>
-                </button>
-              </div>
-
-              {inscriptoHermano.pagoRechazado && (
-                <div className="flex items-start gap-2.5 rounded-xl border border-rose-300 bg-rose-50 p-3.5 text-xs text-rose-950 shadow-2xs">
-                  <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
-                  <div className="space-y-1">
-                    <p className="font-bold text-rose-900">
-                      ⚠️ Tenés un comprobante rechazado por coordinación para {inscriptoHermano.nombre}:
-                    </p>
-                    <p className="italic text-rose-950 bg-rose-100/90 px-2.5 py-1.5 rounded-lg border border-rose-200 font-medium">
-                      &ldquo;{inscriptoHermano.pagoRechazado.motivo}&rdquo;
-                    </p>
-                    <p className="text-[11px] text-rose-700">
-                      Podés volver a transferir o adjuntar el comprobante correspondiente abajo.
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
           )}
         </section>
       )}
@@ -640,26 +720,35 @@ export default function FamiliaPagosForm() {
                 </div>
               </div>
 
-              {/* Monto para Hermano (si aplica) */}
-              {confirmadoHermano && inscriptoHermano && (
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Monto a imputar a su hermano/a {inscriptoHermano.nombre} {inscriptoHermano.apellido} ($) *
-                  </label>
+              {/* Monto para cada Hermano (si aplica) */}
+              {hermanos.map((h) => (
+                <div key={h.id}>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-slate-700">
+                      Monto a imputar a su hermano/a {h.inscripto.nombre} {h.inscripto.apellido} ($) *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => handleQuitarHermano(h.id)}
+                      className="text-[11px] text-rose-600 hover:text-rose-800 font-medium cursor-pointer"
+                    >
+                      Quitar
+                    </button>
+                  </div>
                   <div className="relative">
                     <input
                       type="number"
                       min="1"
                       required
-                      value={montoHermano}
-                      onChange={(e) => setMontoHermano(e.target.value)}
-                      placeholder={`Saldo restante: ${inscriptoHermano.saldoPendiente}`}
+                      value={h.monto}
+                      onChange={(e) => handleActualizarMontoHermano(h.id, e.target.value)}
+                      placeholder={`Saldo restante: ${h.inscripto.saldoPendiente}`}
                       className="w-full rounded-xl border border-slate-300 bg-white py-2 px-3.5 text-sm font-bold text-slate-900 shadow-2xs focus:border-[#009B4D] focus:outline-none focus:ring-2 focus:ring-[#009B4D]/20"
                     />
-                    {inscriptoHermano.saldoPendiente > 0 && montoHermano !== String(inscriptoHermano.saldoPendiente) && (
+                    {h.inscripto.saldoPendiente > 0 && h.monto !== String(h.inscripto.saldoPendiente) && (
                       <button
                         type="button"
-                        onClick={() => setMontoHermano(String(inscriptoHermano.saldoPendiente))}
+                        onClick={() => handleActualizarMontoHermano(h.id, String(h.inscripto.saldoPendiente))}
                         className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-sky-100 px-2 py-0.5 text-[11px] font-bold text-sky-800 hover:bg-sky-200 cursor-pointer"
                       >
                         Saldar total
@@ -667,7 +756,7 @@ export default function FamiliaPagosForm() {
                     )}
                   </div>
                 </div>
-              )}
+              ))}
 
               {/* Total acumulado de la transferencia */}
               <div className="rounded-xl bg-slate-50 border border-slate-200 p-3.5 flex items-center justify-between text-xs sm:text-sm">

@@ -51,3 +51,48 @@ Bienvenido al repositorio de **CAMREVOC (Casa Salesiana Don Bosco Neuquén)**. E
 - **NO hacer commits.**
 - **NO hacer git push.**
 - Salvo solicitud explícita del usuario, el agente debe abstenerse de manipular el historial de Git. El desarrollador humano es la única persona que realiza commits y push al repositorio.
+
+## 6. Regla de Documentación Viva
+A partir de ahora, cada cambio de código debe evaluarse también desde el punto de vista de la documentación.
+
+**NO significa actualizar automáticamente todos los archivos .md en cada cambio.**
+
+Después de implementar una funcionalidad, determinar si cambió alguno de estos aspectos:
+
+### 1. Regla de negocio
+Si cambió una regla de negocio, actualizar el `business-rules.md` correspondiente.
+- *Ejemplo:* Antes: máximo 2 hermanos por transferencia. Después: cantidad ilimitada de hermanos.
+
+### 2. Flujo funcional
+Si cambió un flujo importante para usuarios, actualizar el `flujo.md` correspondiente.
+
+### 3. Decisión de arquitectura/producto
+Si se tomó una decisión relevante de arquitectura, seguridad, infraestructura o producto, actualizar `docs/decisions.md`.
+
+### 4. Base de datos
+Si cambia el esquema, relaciones, Storage, políticas o integración con Supabase, actualizar `docs/database.md`.
+
+### 5. Arquitectura general
+Si cambia la estructura general del sistema, actualizar `docs/architecture.md`.
+
+### Principios Fundamentales
+- **Estado Actual:** La documentación debe describir el **ESTADO ACTUAL** del sistema.
+- **Sin obsolescencia:** No conservar como vigente una regla que ya fue reemplazada.
+- **Veracidad:** No inventar decisiones que no fueron tomadas.
+- **Propósito genuino:** No modificar documentación solamente para generar actividad.
+- **Atomicidad:** Cuando una implementación cambia una regla o flujo documentado, la documentación debe actualizarse **en el mismo cambio**.
+
+## 7. Formato Obligatorio del Resumen al Finalizar una Tarea
+Al finalizar una tarea, el resumen de Antigravity DEBE incluir:
+
+### Código
+- archivos modificados;
+- funcionalidad implementada.
+
+### Documentación
+- archivos `.md` modificados;
+- motivo de cada modificación.
+
+Si no fue necesario modificar documentación, indicar textualmente:
+"Documentación: no requiere cambios porque no se modificaron reglas, flujos, arquitectura ni decisiones documentadas."
+

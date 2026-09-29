@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import {
   Loader2,
   CheckCircle2,
@@ -9,6 +10,7 @@ import {
   UserCheck,
   Heart,
   AlertCircle,
+  ArrowRight,
 } from "lucide-react";
 import { inscribirParticipante } from "@/app/campamento/actions/inscripcion";
 import type { InscripcionInput } from "@/app/campamento/actions/inscripcion";
@@ -159,14 +161,30 @@ export default function InscripcionForm() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-left">
-            <p className="text-sm text-amber-900 leading-relaxed">
-              📋 <strong>Recordá realizar la transferencia a la cuenta institucional y enviarle el comprobante al coordinador/a de tu etapa. ¡Nos vemos en el campamento!</strong>
-            </p>
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5 text-left space-y-3.5">
+            <div>
+              <h3 className="text-sm font-bold text-emerald-950 flex items-center gap-1.5">
+                <span>Portal de Autogestión de Pagos</span>
+              </h3>
+              <p className="mt-1 text-xs text-emerald-900 leading-relaxed">
+                Si vas a abonar el campamento (total o en cuotas), realizá la transferencia a la cuenta oficial y luego subí tu comprobante desde el portal online para que coordinación valide tu saldo.
+              </p>
+            </div>
+
+            <Link
+              href="/campamento/pagos"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#009B4D] py-3.5 px-4 text-xs sm:text-sm font-bold text-white shadow-md shadow-emerald-700/20 hover:bg-[#007a3d] transition-all cursor-pointer"
+            >
+              <span>Informar mi pago</span>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
 
           {/* Tarjeta bancaria para realizar la transferencia */}
-          <div className="text-left pt-2">
+          <div className="text-left pt-2 space-y-2">
+            <p className="text-xs text-slate-500 font-medium">
+              Datos para transferir a la cuenta institucional:
+            </p>
             <BankCardCampamento />
           </div>
 

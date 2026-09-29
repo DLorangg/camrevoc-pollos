@@ -3,12 +3,20 @@
 import { createCampamentoClient } from "@/lib/supabase/campamento";
 import type { InscriptoCampamento } from "@/types/campamento";
 
+export interface PagoPendienteInfo {
+  id: string;
+  monto: number;
+  created_at: string;
+}
+
 export interface BuscarInscriptoPagoResult {
   ok: boolean;
   error?: string;
   inscripto?: InscriptoCampamento & {
     totalAbonado: number;
     saldoPendiente: number;
+    pagosPendientes?: PagoPendienteInfo[];
+    montoPendienteTotal?: number;
     pagoRechazado?: {
       motivo: string;
       fecha?: string | null;
@@ -17,7 +25,8 @@ export interface BuscarInscriptoPagoResult {
 }
 
 /**
- * Busca a un inscripto por DNI y calcula su total abonado (solo pagos aprobados) y saldo pendiente.
+ * Busca a un inscripto por DNI y calcula su total abonado (solo pagos aprobados),
+ * pagos en estado PENDIENTE de revisión y saldo pendiente.
  */
 export async function buscarInscriptoPorDni(dniInput: string): Promise<BuscarInscriptoPagoResult> {
   const dni = dniInput.replace(/\D/g, "").trim();
@@ -45,10 +54,10 @@ export async function buscarInscriptoPorDni(dniInput: string): Promise<BuscarIns
     };
   }
 
-  // Consultar pagos del inscripto para saldos y alertas
+  // Consultar pagos del inscripto para saldos, alertas y pagos pendientes
   const { data: pagos, error: pagosError } = await supabase
     .from("pagos")
-    .select("monto, estado, motivo_rechazo, created_at, verificado_at")
+    .select("id, monto, estado, motivo_rechazo, created_at, verificado_at")
     .eq("inscripto_id", inscripto.id)
     .order("created_at", { ascending: false });
 
@@ -56,6 +65,7 @@ export async function buscarInscriptoPorDni(dniInput: string): Promise<BuscarIns
     console.warn("[buscarInscriptoPorDni] Error consultando pagos:", pagosError);
   }
 
+  // Pagos aprobados impactan en saldo abonado
   const totalAbonado = (pagos || [])
     .filter((p) => p.estado === "APROBADO" || !p.estado)
     .reduce((acc, p) => acc + (Number(p.monto) || 0), 0);
@@ -63,6 +73,16 @@ export async function buscarInscriptoPorDni(dniInput: string): Promise<BuscarIns
   const tarifa = Number(inscripto.tarifa) || 0;
   const saldoPendiente = Math.max(0, tarifa - totalAbonado);
 
+  // Pagos pendientes de revisión por coordinación (no descuentan aún del saldo)
+  const pagosPendientesRaw = (pagos || []).filter((p) => p.estado === "PENDIENTE");
+  const pagosPendientes: PagoPendienteInfo[] = pagosPendientesRaw.map((p) => ({
+    id: p.id,
+    monto: Number(p.monto) || 0,
+    created_at: p.created_at,
+  }));
+  const montoPendienteTotal = pagosPendientes.reduce((acc, p) => acc + p.monto, 0);
+
+  // Comprobante rechazado más reciente (si existe)
   const pagoRechazado = (pagos || []).find((p) => p.estado === "RECHAZADO");
 
   return {
@@ -71,6 +91,8 @@ export async function buscarInscriptoPorDni(dniInput: string): Promise<BuscarIns
       ...(inscripto as InscriptoCampamento),
       totalAbonado,
       saldoPendiente,
+      pagosPendientes,
+      montoPendienteTotal,
       pagoRechazado: pagoRechazado
         ? {
             motivo: pagoRechazado.motivo_rechazo || "Comprobante rechazado por coordinación.",
@@ -88,7 +110,7 @@ export interface SubirPagoItem {
 
 /**
  * Server Action para subir el comprobante de pago enviado por una familia
- * (puede abarcar a 1 o 2 hermanos).
+ * (puede abarcar a 1, 2, 3 o más hermanos/participantes).
  */
 export async function subirPagoFamilia(
   formData: FormData,
@@ -112,6 +134,14 @@ export async function subirPagoFamilia(
 
   if (!items || items.length === 0) {
     return { ok: false, error: "No se especificaron participantes para este pago." };
+  }
+
+  const ids = items.map((it) => it.inscriptoId);
+  if (new Set(ids).size !== ids.length) {
+    return {
+      ok: false,
+      error: "No se puede incluir al mismo participante más de una vez en la misma transferencia.",
+    };
   }
 
   for (const it of items) {

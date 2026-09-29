@@ -38,4 +38,5 @@ Auditor de Calidad, Integridad de Datos y Seguridad (QA & SecOps).
 ## Comportamiento Esperado
 - Ejecutar `npm run lint` y `npm run build` para asegurar la salud del proyecto.
 - Contrastar que los cambios respeten las reglas de negocio registradas en `docs/`.
+- Verificar el cumplimiento de la **Regla de Documentación Viva**: si una implementación altera reglas de negocio, flujos funcionales, arquitectura, base de datos o decisiones de producto, constatar que los archivos `.md` correspondientes hayan sido actualizados en la misma tarea.
 - Advertir proactivamente si un Server Action no valida parámetros de entrada o no coteja que la operación pertenezca a la sesión del usuario.
