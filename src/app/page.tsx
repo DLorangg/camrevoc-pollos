@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Drumstick, Tent, ArrowRight, ReceiptText, Shirt, Clock } from "lucide-react";
+import { Drumstick, ArrowRight, Shirt, Clock } from "lucide-react";
 
 export default function LandingPage() {
   return (
@@ -62,44 +62,6 @@ export default function LandingPage() {
           <ArrowRight className="h-5 w-5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-amber-600" />
         </Link>
 
-        {/* Campamentos 2027 */}
-        <Link
-          href="/campamento/inscripcion"
-          className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-lg shadow-slate-200/50 transition-all hover:border-emerald-300 hover:shadow-emerald-100/50 sm:p-6"
-        >
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 transition-colors group-hover:bg-emerald-200 sm:h-16 sm:w-16">
-            <Tent className="h-7 w-7 sm:h-8 sm:w-8" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-bold text-slate-900 sm:text-xl">
-              Campamentos 2027 ⛺
-            </h2>
-            <p className="mt-0.5 text-sm text-slate-500">
-              Inscribite al Campamento de Verano — Junín & Regina, Enero 2027.
-            </p>
-          </div>
-          <ArrowRight className="h-5 w-5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-emerald-600" />
-        </Link>
-
-        {/* Informar Pago de Campamento */}
-        <Link
-          href="/campamento/pagos"
-          className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4.5 shadow-md shadow-slate-200/40 transition-all hover:border-sky-300 hover:shadow-sky-100/40 sm:p-5"
-        >
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-700 transition-colors group-hover:bg-sky-200 sm:h-14 sm:w-14">
-            <ReceiptText className="h-6 w-6 sm:h-7 sm:w-7" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h2 className="text-base font-bold text-slate-900 sm:text-lg">
-              Informar Pago de Campamento 📄
-            </h2>
-            <p className="mt-0.5 text-xs sm:text-sm text-slate-500">
-              Subí tu comprobante de transferencia y consultá tu saldo.
-            </p>
-          </div>
-          <ArrowRight className="h-5 w-5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-sky-600" />
-        </Link>
-
         {/* Buzos 2027 — Próximamente */}
         <div
           aria-disabled="true"
@@ -118,17 +80,6 @@ export default function LandingPage() {
             </p>
           </div>
           <Clock className="h-5 w-5 shrink-0 text-slate-400" />
-        </div>
-
-        {/* Portal Coordinación Campamentos */}
-        <div className="pt-2 text-center">
-          <Link
-            href="/campamento/coordinacion"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-emerald-700 transition-colors"
-          >
-            <span>🔐 Portal de Coordinación por Etapa</span>
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
         </div>
       </main>
 
