@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CamReVoc · Casa Salesiana Don Bosco Neuquén",
-  description: "Plataforma digital de CamReVoc – Casa Salesiana Don Bosco Neuquén.",
+  title: "CAMREVOC Neuquén · Casa Salesiana Don Bosco",
+  description: "Plataforma digital de CAMREVOC Neuquén – Casa Salesiana Don Bosco.",
   icons: {
     icon: "/logo.png",
     apple: "/logo.png",

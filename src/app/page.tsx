@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Drumstick, ArrowRight, Shirt, Clock } from "lucide-react";
+import { Drumstick, ArrowRight, Shirt, Clock, Gamepad2, ExternalLink } from "lucide-react";
 
 export default function LandingPage() {
   return (
@@ -34,10 +34,10 @@ export default function LandingPage() {
         </div>
 
         <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-          CamReVoc
+          CAMREVOC Neuquén
         </h1>
         <p className="mt-2 text-sm text-slate-600 sm:text-base">
-          Casa Salesiana Don Bosco · Neuquén
+          Casa Salesiana Don Bosco
         </p>
       </header>
 
@@ -61,6 +61,27 @@ export default function LandingPage() {
           </div>
           <ArrowRight className="h-5 w-5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-amber-600" />
         </Link>
+
+        {/* CamReQuiz — Recurso externo */}
+        <a
+          href="https://camrequiz.vercel.app/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-lg shadow-slate-200/50 transition-all hover:border-emerald-300 hover:shadow-emerald-100/50 sm:p-6"
+        >
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 transition-colors group-hover:bg-emerald-200 sm:h-16 sm:w-16">
+            <Gamepad2 className="h-7 w-7 sm:h-8 sm:w-8" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg font-bold text-slate-900 sm:text-xl">
+              CamReQuiz 🎮
+            </h2>
+            <p className="mt-0.5 text-sm text-slate-500">
+              El juego de preguntas de CAMREVOC.
+            </p>
+          </div>
+          <ExternalLink className="h-5 w-5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-emerald-600" />
+        </a>
 
         {/* Buzos 2027 — Próximamente */}
         <div
@@ -86,7 +107,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="pb-8 pt-4 text-center space-y-1.5">
         <p className="text-xs text-slate-500">
-          Casa Salesiana Don Bosco Neuquén · CamReVoc
+          CAMREVOC Neuquén · Casa Salesiana Don Bosco
         </p>
         <p className="text-xs text-slate-400">Diseñado con ❤️ por Dami Lorang</p>
       </footer>
