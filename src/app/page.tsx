@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Drumstick, Tent, ArrowRight, ReceiptText } from "lucide-react";
+import { Drumstick, Tent, ArrowRight, ReceiptText, Shirt, Clock } from "lucide-react";
 
 export default function LandingPage() {
   return (
@@ -99,6 +99,26 @@ export default function LandingPage() {
           </div>
           <ArrowRight className="h-5 w-5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-sky-600" />
         </Link>
+
+        {/* Buzos 2027 — Próximamente */}
+        <div
+          aria-disabled="true"
+          title="Próximamente disponible"
+          className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white/70 p-5 shadow-xs opacity-75 cursor-not-allowed select-none sm:p-6"
+        >
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-purple-700 sm:h-16 sm:w-16">
+            <Shirt className="h-7 w-7 sm:h-8 sm:w-8" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg font-bold text-slate-800 sm:text-xl">
+              Buzos 2027 🧥
+            </h2>
+            <p className="mt-0.5 text-sm text-slate-500">
+              Próximamente
+            </p>
+          </div>
+          <Clock className="h-5 w-5 shrink-0 text-slate-400" />
+        </div>
 
         {/* Portal Coordinación Campamentos */}
         <div className="pt-2 text-center">
