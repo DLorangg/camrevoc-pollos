@@ -7,6 +7,8 @@ import {
   Tent,
   ReceiptText,
   Brain,
+  Shirt,
+  Clock,
 } from "lucide-react";
 
 export default function LandingPage() {
@@ -139,6 +141,31 @@ export default function LandingPage() {
           </div>
           <ExternalLink className="h-5 w-5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-indigo-600" />
         </a>
+
+        {/* Buzos 2027 — Próximamente */}
+        <div
+          aria-disabled="true"
+          title="Próximamente disponible"
+          className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 opacity-60 shadow-xs select-none sm:p-6"
+        >
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-400 sm:h-16 sm:w-16">
+            <Shirt className="h-7 w-7 sm:h-8 sm:w-8" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-bold text-slate-700 sm:text-xl">
+                Buzos 2027 🧥
+              </h2>
+              <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-500">
+                Próximamente
+              </span>
+            </div>
+            <p className="mt-0.5 text-sm text-slate-400">
+              Pedidos y diseño para animadores.
+            </p>
+          </div>
+          <Clock className="h-5 w-5 shrink-0 text-slate-400" />
+        </div>
       </main>
 
       {/* Footer */}
