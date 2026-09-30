@@ -748,35 +748,36 @@ export default function VotacionWizard({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
             {OPCIONES_COLOR.map((opcion) => {
               const seleccionado = colorSeleccionado === opcion.id;
-              const imageSrc = `/Buzos/Colores/${opcion.archivo}`;
 
               return (
                 <div
                   key={opcion.id}
                   onClick={() => setColorSeleccionado(opcion.id)}
-                  className={`flex flex-col items-center justify-between rounded-2xl border-2 bg-white p-3.5 text-center transition-all cursor-pointer shadow-xs ${
+                  className={`flex flex-col items-center justify-between rounded-2xl border-2 bg-white p-4 text-center transition-all cursor-pointer shadow-xs ${
                     seleccionado
                       ? "border-purple-600 bg-purple-50/40 ring-2 ring-purple-600/20"
                       : "border-slate-200 hover:border-slate-300"
                   }`}
                 >
-                  <div className="relative h-20 w-20 sm:h-24 sm:w-24 rounded-full overflow-hidden shadow-inner my-1">
-                    <Image
-                      src={imageSrc}
-                      alt={opcion.nombre}
-                      fill
-                      className="object-cover"
-                      sizes="96px"
+                  {/* Swatch circular generado */}
+                  <div className="relative my-2">
+                    <div
+                      className="h-20 w-20 sm:h-22 sm:w-22 rounded-full border border-black/15 shadow-md transition-transform hover:scale-105"
+                      style={{ backgroundColor: opcion.hex }}
                     />
-                  </div>
-
-                  <div className="mt-2 flex items-center gap-1.5">
-                    <h3 className="text-sm font-bold text-slate-900">{opcion.nombre}</h3>
                     {seleccionado && (
-                      <span className="flex h-4 w-4 items-center justify-center rounded-full bg-purple-600 text-white text-[10px]">
-                        ✓
+                      <span className="absolute -top-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-purple-600 text-white shadow-xs">
+                        <Check className="h-3.5 w-3.5 stroke-[3]" />
                       </span>
                     )}
+                  </div>
+
+                  {/* Nombre y Código HEX */}
+                  <div className="mt-2 space-y-0.5">
+                    <h3 className="text-sm font-bold text-slate-900">{opcion.nombre}</h3>
+                    <p className="font-mono text-xs font-semibold text-slate-500">
+                      {opcion.hex}
+                    </p>
                   </div>
                 </div>
               );
@@ -917,19 +918,19 @@ export default function VotacionWizard({
             <div className="flex items-center justify-between py-2">
               <div className="flex items-center gap-3">
                 {colorActual && (
-                  <div className="relative h-10 w-10 rounded-full overflow-hidden shadow-inner shrink-0 border border-slate-200">
-                    <Image
-                      src={`/Buzos/Colores/${colorActual.archivo}`}
-                      alt={colorActual.nombre}
-                      fill
-                      className="object-cover"
-                      sizes="40px"
-                    />
-                  </div>
+                  <div
+                    className="h-10 w-10 rounded-full border border-black/10 shadow-xs shrink-0"
+                    style={{ backgroundColor: colorActual.hex }}
+                  />
                 )}
                 <div>
                   <p className="text-xs text-slate-500">Color Elegido</p>
-                  <p className="text-sm font-bold text-slate-900">{colorActual?.nombre}</p>
+                  <p className="text-sm font-bold text-slate-900">
+                    {colorActual?.nombre}{" "}
+                    <span className="font-mono text-xs text-slate-500 font-medium">
+                      ({colorActual?.hex})
+                    </span>
+                  </p>
                 </div>
               </div>
               <button

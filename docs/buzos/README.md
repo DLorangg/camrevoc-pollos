@@ -48,12 +48,12 @@ Existen dos tipos de propuestas en `public/Buzos/Delante/`:
 - Esta elección es independiente de los mockups seleccionados en frente o espalda.
 
 ### Paso 4: Color Oficial del Buzo
-- Opciones en `public/Buzos/Colores/`:
-  - **Petróleo** (`#2F5D7C`)
-  - **Malbec** (`#6B213F`)
-  - **Marino** (`#101827`)
-  - **Negro** (`#111111`)
-- Muestra el círculo de color real de la tela y su nombre.
+- Selección exclusiva entre 4 swatches generados con colores exactos:
+  - **Petróleo** (`#34627e`)
+  - **Malbec** (`#7e3548`)
+  - **Marino** (`#0e192d`)
+  - **Negro** (`#1b1b1b`)
+- Cada opción muestra el swatch circular limpio, su nombre y el código HEX debajo (sin textos superpuestos ni color picker libre).
 
 ### Paso 5: Confirmación
 - Resumen visual con imágenes y textos obligatorios:

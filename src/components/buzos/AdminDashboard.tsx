@@ -276,18 +276,30 @@ export default function AdminDashboard({ resultados }: AdminDashboardProps) {
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-200 text-[10px] font-black text-slate-700">
                       {idx + 1}
                     </span>
-                    {c.archivo && (
-                      <div className="relative h-8 w-8 shrink-0 rounded-full overflow-hidden border border-slate-200 shadow-inner">
+                    {c.hex ? (
+                      <div
+                        className="h-7 w-7 shrink-0 rounded-full border border-black/15 shadow-xs"
+                        style={{ backgroundColor: c.hex }}
+                      />
+                    ) : c.archivo ? (
+                      <div className="relative h-7 w-7 shrink-0 rounded-full overflow-hidden border border-slate-200 shadow-inner">
                         <Image
                           src={`/Buzos/Colores/${c.archivo}`}
                           alt={c.nombre}
                           fill
                           className="object-cover"
-                          sizes="32px"
+                          sizes="28px"
                         />
                       </div>
-                    )}
-                    <span className="font-bold text-slate-900">{c.nombre}</span>
+                    ) : null}
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="font-bold text-slate-900">{c.nombre}</span>
+                      {c.hex && (
+                        <span className="font-mono text-xs font-semibold text-slate-400">
+                          {c.hex}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0 ml-2">
                     <span className="font-extrabold text-purple-700">{c.votos} votos</span>
@@ -402,7 +414,17 @@ export default function AdminDashboard({ resultados }: AdminDashboardProps) {
                         {v.crvManga ? "Sí" : "No"}
                       </span>
                     </td>
-                    <td className="py-3 px-3 font-bold text-slate-900">{v.colorNombre}</td>
+                    <td className="py-3 px-3 font-bold text-slate-900">
+                      <div className="flex items-center gap-1.5">
+                        {v.colorHex && (
+                          <span
+                            className="inline-block h-3.5 w-3.5 rounded-full border border-black/15 shrink-0"
+                            style={{ backgroundColor: v.colorHex }}
+                          />
+                        )}
+                        <span>{v.colorNombre}</span>
+                      </div>
+                    </td>
                     <td className="py-3 px-3 text-right text-slate-400 font-mono text-[11px]">
                       {new Date(v.updatedAt).toLocaleDateString("es-AR", {
                         day: "2-digit",

@@ -17,6 +17,7 @@ export interface ItemResultado {
   id: string;
   nombre: string;
   archivo?: string;
+  hex?: string;
   votos: number;
   porcentaje: number;
 }
@@ -40,6 +41,7 @@ export interface ResultadosBuzosAdmin {
     atrasNombre: string;
     crvManga: boolean;
     colorNombre: string;
+    colorHex?: string;
     updatedAt: string;
   }>;
 }
@@ -183,6 +185,7 @@ export async function obtenerResultadosAdmin(): Promise<{
         id: c.id,
         nombre: c.nombre,
         archivo: c.archivo,
+        hex: c.hex,
         votos: cant,
         porcentaje: total > 0 ? Math.round((cant / total) * 100) : 0,
       };
@@ -201,6 +204,7 @@ export async function obtenerResultadosAdmin(): Promise<{
         atrasNombre: a ? a.nombre : "No corresponde (frente con frase)",
         crvManga: Boolean(r.crv_manga),
         colorNombre: c ? c.nombre : r.color,
+        colorHex: c?.hex,
         updatedAt: r.updated_at,
       };
     });

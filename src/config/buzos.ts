@@ -166,25 +166,25 @@ export const OPCIONES_COLOR: OpcionColor[] = [
   {
     id: "PETROLEO",
     nombre: "Petróleo",
-    hex: "#2F5D7C",
+    hex: "#34627e",
     archivo: "Captura de pantalla 2026-09-29 002338.png",
   },
   {
     id: "MALBEC",
     nombre: "Malbec",
-    hex: "#6B213F",
+    hex: "#7e3548",
     archivo: "Captura de pantalla 2026-09-29 002348.png",
   },
   {
     id: "MARINO",
     nombre: "Marino",
-    hex: "#101827",
+    hex: "#0e192d",
     archivo: "Captura de pantalla 2026-09-29 002405.png",
   },
   {
     id: "NEGRO",
     nombre: "Negro",
-    hex: "#111111",
+    hex: "#1b1b1b",
     archivo: "Captura de pantalla 2026-09-29 002409.png",
   },
 ];
