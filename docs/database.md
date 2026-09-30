@@ -47,13 +47,29 @@ Almacena los vales individuales emitidos para cada pedido.
 | `estado_entrega` | `TEXT` | `"Pendiente" \| "Entregado"` | `DEFAULT 'Pendiente' NOT NULL` | Estado del vale en la mesa de retiro. |
 | `entregado_at` | `TIMESTAMPTZ` | `string \| null` | `NULL` | Timestamp exacto en que se canjeó físicamente. |
 
+#### 3. `buzos_votos`
+Almacena los votos individuales de los animadores y coordinadores para la elección del diseño único de Buzos 2027.
+
+| Columna | Tipo PostgreSQL | TypeScript | Restricciones / Default | Descripción |
+|---|---|---|---|---|
+| `id` | `UUID` | `string` | `PRIMARY KEY DEFAULT gen_random_uuid()` | Identificador único del voto. |
+| `dni` | `TEXT` | `string` | `UNIQUE NOT NULL` | DNI del votante (un solo voto activo por DNI). |
+| `frente` | `TEXT` | `string` | `NOT NULL` | ID del diseño de frente seleccionado. |
+| `atras` | `TEXT` | `string \| null` | `NULL` | ID del diseño de espalda (NULL si frente tiene frase). |
+| `crv_manga` | `BOOLEAN` | `boolean` | `DEFAULT false NOT NULL` | Elección de incluir el logo CRV en la manga. |
+| `color` | `TEXT` | `string` | `NOT NULL` | ID del color oficial seleccionado (PETROLEO, MALBEC, etc.). |
+| `created_at` | `TIMESTAMPTZ` | `string` | `DEFAULT now() NOT NULL` | Fecha de creación del primer voto. |
+| `updated_at` | `TIMESTAMPTZ` | `string` | `DEFAULT now() NOT NULL` | Fecha de última modificación del voto. |
+
+> Script DDL de creación disponible en [`docs/buzos/schema.sql`](file:///mnt/HDD/proyectos/camrevoc-pollos/docs/buzos/schema.sql).
+
 ### Storage
 - **Bucket:** `comprobantes`
 - **Configuración:** Público.
 - **Acceso:** Subida directa desde el navegador mediante cliente Supabase anon (`upload(fileName, file)`), obteniendo la URL pública con `getPublicUrl(fileName)`.
 
 ### RLS en `camrevoc-pollos`
-- `NO DOCUMENTADO` formalmente en scripts SQL del repositorio. Dado que los Server Actions operan con `SUPABASE_SERVICE_ROLE_KEY`, las políticas RLS se omiten en el servidor. El bucket `comprobantes` permite subidas anónimas desde el cliente.
+- `NO DOCUMENTADO` formalmente en scripts SQL históricos del repositorio. Las Server Actions operan con `SUPABASE_SERVICE_ROLE_KEY` eludiendo RLS en el servidor. La tabla `buzos_votos` cuenta con RLS habilitado de forma defensiva.
 
 ---
 

@@ -90,10 +90,21 @@ Este documento registra las decisiones fundamentales de arquitectura, reglas de 
 - **Clasificación:** **Deuda técnica de seguridad aceptada temporalmente**.
 
 ### ADR-13: Soporte para 3 o más Hermanos en Transferencias
-- **Categoría:** Requisito Pendiente / Flujo Familiar.
-- **Contexto:** Muchas familias tienen 3 hijos en el grupo y realizan una única transferencia bancaria familiar. El formulario actual `/campamento/pagos` solo ofrece desglosar montos para un máximo de 2 participantes.
-- **Decisión Humana Definitiva:** El sistema debe soportar **3 o más hermanos** en una misma transferencia/comprobante.
-- **Estado Actual:** **Requisito pendiente de implementación futura**. No debe modificarse el código en esta fase.
+- **Categoría:** Flujo Familiar / Pagos.
+- **Contexto:** Muchas familias tienen 3 hijos en el grupo y realizan una única transferencia bancaria familiar. El formulario anterior `/campamento/pagos` solo ofrecía desglosar montos para un máximo de 2 participantes.
+- **Decisión Humana Definitiva:** El sistema debe soportar **3 o más hermanos** en una misma transferencia/comprobante de manera dinámica.
+- **Estado Actual:** Implementado en `src/components/campamento/pagos/FamiliaPagosForm.tsx`.
+
+### ADR-14: Votación Unificada de Diseño para Buzos 2027 sin Padrón Previo
+- **Categoría:** Producto / Módulo Buzos.
+- **Contexto:** Se requiere definir urgentemente un único diseño colectivo de buzos para animadores y coordinadores para cotizarlo y presupuestarlo. No se cuenta con un padrón digital previo de animadores cargado en el sistema ni se desean vincular cuentas en esta etapa.
+- **Decisión Humana Definitiva:** 
+  1. La votación se identifica mediante DNI (7 a 9 dígitos numéricos) sin validación contra inscriptos de Campamentos.
+  2. Un único voto por DNI (con posibilidad de modificarlo mientras la votación permanezca abierta mediante `upsert`).
+  3. Los buzos y campamentos se mantienen desacoplados por ahora (no vincular saldos a favor ni pedidos).
+  4. La votación tiene fecha de cierre estricta configurable y panel administrativo `/buzos/admin` protegido por contraseña.
+  5. Si el diseño de frente elegido posee frase, el dorso se inhabilita automáticamente (`atras = null`). Si no posee frase, se vota el dorso. CRV en manga y color se votan de forma independiente.
+- **Estado Actual:** Implementado en `/buzos` y `/buzos/admin`. Persistencia en tabla `buzos_votos` (`camrevoc-pollos`).
 
 ---
 
@@ -113,4 +124,5 @@ Este documento registra las decisiones fundamentales de arquitectura, reglas de 
 | ADR-10 | Autogestión familiar por DNI | Campamentos | Resuelto / Implementado |
 | ADR-11 | PIN dinámico y auto-registro de coordinadores | Campamentos | Resuelto / Implementado |
 | ADR-12 | PINs en texto plano | Campamentos | **Deuda técnica aceptada** |
-| ADR-13 | Soporte para 3 o más hermanos | Campamentos | **Requisito pendiente de desarrollo** |
+| ADR-13 | Soporte para 3 o más hermanos | Campamentos | Resuelto / Implementado |
+| ADR-14 | Votación unificada de diseño sin padrón para Buzos 2027 | Buzos | Resuelto / Implementado |

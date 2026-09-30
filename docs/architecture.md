@@ -37,16 +37,23 @@ src/app/
 │   │   └── login/page.tsx       # Acceso por contraseña maestra (/pollos/admin/login)
 │   └── actions/                 # Server Actions exclusivas de Pollos
 │
-└── campamento/                  # MÓDULO 2: Campamentos de Verano 2027
-    ├── inscripcion/page.tsx     # Formulario público de inscripción (/campamento/inscripcion)
-    ├── pagos/page.tsx           # Portal familiar de consulta de saldo y subida de pago (/campamento/pagos)
-    ├── coordinacion/page.tsx    # Portal de acceso por PIN para coordinadores (/campamento/coordinacion)
-    ├── etapa/[etapa]/page.tsx   # Dashboard de gestión y auditoría por etapa (/campamento/etapa/[etapa])
-    └── actions/                 # Server Actions exclusivas de Campamentos
+├── campamento/                  # MÓDULO 2: Campamentos de Verano 2027
+│   ├── inscripcion/page.tsx     # Formulario público de inscripción (/campamento/inscripcion)
+│   ├── pagos/page.tsx           # Portal familiar de consulta de saldo y subida de pago (/campamento/pagos)
+│   ├── coordinacion/page.tsx    # Portal de acceso por PIN para coordinadores (/campamento/coordinacion)
+│   ├── etapa/[etapa]/page.tsx   # Dashboard de gestión y auditoría por etapa (/campamento/etapa/[etapa])
+│   └── actions/                 # Server Actions exclusivas de Campamentos
+│
+└── buzos/                       # MÓDULO 3: Buzos 2027 (Elección Colectiva)
+    ├── page.tsx                 # Wizard público de votación por DNI (/buzos)
+    ├── admin/
+    │   ├── page.tsx             # Panel de cómputo y resultados (/buzos/admin)
+    │   └── login/page.tsx       # Acceso administrativo con contraseña (/buzos/admin/login)
+    └── actions/                 # Server Actions exclusivas de Buzos
 ```
 
 ### Principio de Aislamiento
-A pesar de compartir el mismo runtime de Node.js / Next.js, **Pollos y Campamentos no comparten tablas, ni modelos de datos, ni proyectos de Supabase**. Cada módulo encapsula sus propias Server Actions, sus propios tipos en `src/types/` y sus propias configuraciones en `src/config/`.
+A pesar de compartir el mismo runtime de Node.js / Next.js, **Pollos, Campamentos y Buzos mantienen sus lógicas y modelos de datos desacoplados**. Cada módulo encapsula sus propias Server Actions, componentes en `src/components/[modulo]/` y configuraciones en `src/config/`. Campamentos utiliza su propio proyecto Supabase (`camrevoc-campa`), mientras que Buzos y Pollos operan sobre el proyecto principal (`camrevoc-pollos`) con tablas independientes.
 
 ---
 
