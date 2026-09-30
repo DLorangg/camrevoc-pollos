@@ -167,7 +167,7 @@ export default function LandingPage() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-bold text-slate-900 transition-colors group-hover:text-purple-700 sm:text-xl">
-                  Buzos 2027 👕
+                  Buzos 2027 🧥
                 </h2>
                 <span className="rounded-full border border-purple-200 bg-purple-100 px-2.5 py-0.5 text-xs font-bold text-purple-800 shadow-2xs">
                   Nuevo
