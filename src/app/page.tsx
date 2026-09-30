@@ -103,23 +103,36 @@ export default function LandingPage() {
         </div>
 
         {/* 2. Gran Pollada */}
-        <Link
-          href="/pollos"
-          className="group flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-lg shadow-slate-200/50 transition-all hover:border-amber-300 hover:shadow-amber-100/50 sm:p-6"
-        >
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700 transition-colors group-hover:bg-amber-200 sm:h-16 sm:w-16">
-            <Drumstick className="h-7 w-7 sm:h-8 sm:w-8" />
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-lg shadow-slate-200/50 transition-all hover:border-amber-300 hover:shadow-amber-100/50 sm:p-6">
+          <Link
+            href="/pollos"
+            className="group flex items-center gap-4"
+          >
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700 transition-colors group-hover:bg-amber-200 sm:h-16 sm:w-16">
+              <Drumstick className="h-7 w-7 sm:h-8 sm:w-8" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-lg font-bold text-slate-900 transition-colors group-hover:text-amber-700 sm:text-xl">
+                Gran Pollada 🍗
+              </h2>
+              <p className="mt-0.5 text-sm text-slate-500">
+                Reservá tus pollos para la gran pollada.
+              </p>
+            </div>
+            <ArrowRight className="h-5 w-5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-amber-600" />
+          </Link>
+
+          {/* Acceso para coordinación */}
+          <div className="mt-2.5 pt-2.5 border-t border-slate-100 text-center">
+            <Link
+              href="/pollos/admin"
+              className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 hover:text-amber-700 transition-colors"
+            >
+              <span>🔐 Panel de Coordinación de Pollos</span>
+              <ArrowRight className="h-3 w-3" />
+            </Link>
           </div>
-          <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-bold text-slate-900 sm:text-xl">
-              Gran Pollada 🍗
-            </h2>
-            <p className="mt-0.5 text-sm text-slate-500">
-              Reservá tus pollos para la gran pollada.
-            </p>
-          </div>
-          <ArrowRight className="h-5 w-5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-amber-600" />
-        </Link>
+        </div>
 
         {/* 3. CamReQuiz — Recurso externo */}
         <a
