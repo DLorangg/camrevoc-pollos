@@ -28,9 +28,9 @@ export interface OpcionColor {
 export const BUZOS_CONFIG = {
   // Fecha y hora de cierre oficial en Argentina (UTC-3: America/Argentina/Buenos_Aires)
   // Formato ISO 8601 con offset -03:00. Modificar aquí para cambiar la fecha de cierre.
-  fechaCierreISO: "2026-10-06T23:59:59-03:00",
+  fechaCierreISO: "2026-10-12T23:59:59-03:00",
   // Texto legible para informar a la comunidad
-  fechaCierreTexto: "Martes 6 de Octubre a las 23:59 hs",
+  fechaCierreTexto: "Lunes 12 de Octubre a las 23:59 hs",
   // Flag manual de emergencia para coordinadores si desean cerrar antes
   forzarCierreManual: false,
 };

@@ -17,7 +17,11 @@ export default function LandingPage() {
       {/* Header */}
       <header className="px-4 pt-12 pb-6 text-center">
         <div className="mx-auto mb-6 flex items-center justify-center gap-3 sm:gap-5">
-          <div className="flex items-center justify-center rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-xs">
+          <Link
+            href="/"
+            title="CAMREVOC Neuquén"
+            className="flex items-center justify-center rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-xs transition-transform hover:scale-105 active:scale-95"
+          >
             <Image
               src="/logo.png"
               alt="Logo CamReVoc · Casa Salesiana Don Bosco Neuquén"
@@ -26,7 +30,7 @@ export default function LandingPage() {
               className="h-16 w-16 object-contain rounded-xl sm:h-20 sm:w-20"
               priority
             />
-          </div>
+          </Link>
 
           <div className="h-12 w-px bg-slate-200" aria-hidden="true" />
 

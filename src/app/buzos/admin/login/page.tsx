@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { loginBuzosAdmin } from "@/app/buzos/actions/admin-actions";
-import { Loader2, Lock, ArrowLeft, Shirt } from "lucide-react";
+import { Loader2, Lock, ArrowLeft, Shirt, ChevronLeft } from "lucide-react";
 
 export default function BuzosAdminLoginPage() {
   const [password, setPassword] = useState("");
@@ -33,9 +33,9 @@ export default function BuzosAdminLoginPage() {
       <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white px-8 py-10 shadow-xl shadow-slate-200/50">
         {/* Cabecera */}
         <div className="mb-6 flex flex-col items-center gap-3">
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-purple-100 text-purple-700 shadow-xs">
+          <Link href="/" title="Volver al inicio" className="flex h-16 w-16 items-center justify-center rounded-2xl bg-purple-100 text-purple-700 shadow-xs transition-transform hover:scale-105">
             <Shirt className="h-8 w-8" />
-          </div>
+          </Link>
           <div className="text-center">
             <p className="text-xs font-semibold uppercase tracking-widest text-purple-700">
               Administración
@@ -87,13 +87,19 @@ export default function BuzosAdminLoginPage() {
           </button>
         </form>
 
-        <div className="mt-6 pt-4 border-t border-slate-100 text-center">
+        <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1 hover:text-slate-600 transition-colors"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+            <span>Volver al inicio</span>
+          </Link>
           <Link
             href="/buzos"
-            className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 transition-colors"
+            className="inline-flex items-center gap-1 hover:text-purple-700 transition-colors"
           >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            <span>Volver a la votación</span>
+            <span>Ir a la votación →</span>
           </Link>
         </div>
       </div>

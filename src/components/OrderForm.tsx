@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
+import Link from "next/link";
 import { PRECIO_POLLO, DATOS_BANCARIOS, ETAPAS } from "@/config/constants";
 import { createClient } from "@/lib/supabase/client";
 import { createOrder, type ValeInput, type ValeCreado } from "@/app/pollos/actions/create-order";
@@ -16,6 +17,7 @@ import {
   X,
   Share2,
   AlertCircle,
+  ChevronLeft,
 } from "lucide-react";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -478,6 +480,16 @@ function SuccessScreen({
             </div>
           );
         })}
+
+        <div className="pt-2 text-center">
+          <Link
+            href="/"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-xs transition-colors"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span>Volver a la página principal</span>
+          </Link>
+        </div>
       </div>
     </div>
   );

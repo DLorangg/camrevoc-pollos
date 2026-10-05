@@ -15,6 +15,7 @@ import {
   Sparkles,
   Palette,
   Layers,
+  ChevronLeft,
 } from "lucide-react";
 
 interface AdminDashboardProps {
@@ -43,24 +44,45 @@ export default function AdminDashboard({ resultados }: AdminDashboardProps) {
     <div className="space-y-8">
       {/* Top Header con acciones */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-purple-100 text-purple-700">
-              <Shirt className="h-3.5 w-3.5" />
-            </span>
-            <span className="text-xs font-bold uppercase tracking-wider text-purple-700">
-              Módulo de Administración
-            </span>
+        <div className="flex items-start gap-3">
+          <Link href="/" title="Volver al inicio" className="transition-transform hover:scale-105 shrink-0 mt-1">
+            <Image
+              src="/logo.png"
+              alt="Logo CamReVoc"
+              width={40}
+              height={40}
+              className="rounded-xl object-contain shadow-2xs"
+            />
+          </Link>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-purple-100 text-purple-700">
+                <Shirt className="h-3.5 w-3.5" />
+              </span>
+              <span className="text-xs font-bold uppercase tracking-wider text-purple-700">
+                Módulo de Administración
+              </span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mt-1">
+              Resultados de Votación Buzos 2027
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500">
+              Cómputo en tiempo real de animadores y coordinadores.
+            </p>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mt-1">
-            Resultados de Votación Buzos 2027
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500">
-            Cómputo en tiempo real de animadores y coordinadores.
-          </p>
         </div>
 
         <div className="flex items-center gap-2">
+          <Link
+            href="/"
+            className="flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-2xs transition-colors"
+            title="Volver a la página principal"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Volver al inicio</span>
+            <span className="sm:hidden">Inicio</span>
+          </Link>
+
           <button
             type="button"
             onClick={handleRefresh}

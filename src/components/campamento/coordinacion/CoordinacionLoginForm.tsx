@@ -3,7 +3,8 @@
 import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Lock, User, KeyRound, Loader2, AlertCircle, PlusCircle, Check } from "lucide-react";
+import Link from "next/link";
+import { Lock, User, KeyRound, Loader2, AlertCircle, PlusCircle, Check, ChevronLeft } from "lucide-react";
 import { loginCoordinador, obtenerCoordinadoresEtapa } from "@/app/campamento/actions/coordinacion-auth";
 import { COORDINADORES_POR_ETAPA } from "@/config/campamento-coordinadores";
 
@@ -66,7 +67,11 @@ export default function CoordinacionLoginForm() {
       <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white px-7 py-9 shadow-xl shadow-slate-200/50">
         {/* Header logos & título */}
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
-          <div className="flex items-center justify-center rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-xs">
+          <Link
+            href="/"
+            title="Volver al inicio"
+            className="flex items-center justify-center rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-xs transition-transform hover:scale-105"
+          >
             <Image
               src="/logo.png"
               alt="Logo CamReVoc"
@@ -75,7 +80,7 @@ export default function CoordinacionLoginForm() {
               className="h-14 w-14 object-contain rounded-xl"
               priority
             />
-          </div>
+          </Link>
           <div>
             <span className="inline-block rounded-full bg-emerald-100 px-3 py-0.5 text-xs font-bold text-emerald-800 uppercase tracking-wider">
               Portal de Coordinación
@@ -244,6 +249,16 @@ export default function CoordinacionLoginForm() {
             )}
           </button>
         </form>
+
+        <div className="mt-6 pt-4 border-t border-slate-100 text-center">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-emerald-700 transition-colors"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+            <span>Volver al inicio</span>
+          </Link>
+        </div>
       </div>
     </div>
   );

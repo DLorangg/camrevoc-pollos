@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import {
   Users,
   DollarSign,
@@ -19,6 +20,7 @@ import {
   ShieldAlert,
   Inbox,
   XCircle,
+  ChevronLeft,
 } from "lucide-react";
 import type {
   InscriptoConPagos,
@@ -100,13 +102,15 @@ export default function EtapaDashboard({
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
           <div className="flex items-center gap-3">
-            <Image
-              src="/logo.png"
-              alt="CamReVoc"
-              width={40}
-              height={40}
-              className="h-9 w-9 rounded-xl object-contain"
-            />
+            <Link href="/" title="Volver al inicio" className="transition-transform hover:scale-105 shrink-0">
+              <Image
+                src="/logo.png"
+                alt="CamReVoc"
+                width={40}
+                height={40}
+                className="h-9 w-9 rounded-xl object-contain"
+              />
+            </Link>
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-base font-extrabold text-slate-900 sm:text-lg">
@@ -124,6 +128,16 @@ export default function EtapaDashboard({
 
           {/* Acciones del Navbar */}
           <div className="flex items-center gap-2">
+            {/* Botón Ir a Inicio */}
+            <Link
+              href="/"
+              className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+              title="Ir a la página principal"
+            >
+              <ChevronLeft className="h-3.5 w-3.5 text-slate-500" />
+              <span className="hidden sm:inline">Inicio</span>
+            </Link>
+
             {/* Botón Cambiar PIN */}
             <button
               type="button"

@@ -32,7 +32,11 @@ export default function FamiliaPagosPage() {
       <header className="mx-auto mb-8 max-w-xl text-center">
         {/* Logos */}
         <div className="mb-5 flex items-center justify-center gap-3 sm:gap-5">
-          <div className="flex items-center justify-center rounded-2xl border border-slate-200/80 bg-white p-2 shadow-2xs">
+          <Link
+            href="/"
+            title="Volver al inicio"
+            className="flex items-center justify-center rounded-2xl border border-slate-200/80 bg-white p-2 shadow-2xs transition-transform hover:scale-105"
+          >
             <Image
               src="/logo.png"
               alt="Logo CamReVoc · Casa Salesiana Don Bosco Neuquén"
@@ -41,7 +45,7 @@ export default function FamiliaPagosPage() {
               className="h-12 w-12 object-contain rounded-xl sm:h-14 sm:w-14"
               priority
             />
-          </div>
+          </Link>
 
           <div className="h-9 w-px bg-slate-200" aria-hidden="true" />
 

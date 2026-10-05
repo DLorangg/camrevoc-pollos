@@ -11,7 +11,7 @@ export interface SendTicketParams {
 }
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://camrevoc.com.ar/pollos";
-const FECHA_ENTREGA = "Sábado 11 de Octubre de 2025";
+const FECHA_ENTREGA = "Sábado 10 de Octubre de 2026";
 
 function buildHtml(params: SendTicketParams): string {
   const { nombreComprador, cantidadTotal, etapa, animadorVendedor, vales } = params;

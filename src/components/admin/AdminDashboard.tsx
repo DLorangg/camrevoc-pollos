@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useMemo, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   CheckCircle,
@@ -17,6 +18,7 @@ import {
   TrendingUp,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
@@ -747,7 +749,9 @@ export default function AdminDashboard({
       {/* Top bar */}
       <header className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3 sm:px-6 shadow-xs">
         <div className="flex items-center gap-3">
-          <Image src="/logo.png" alt="Logo" width={36} height={36} className="rounded-xl shadow-xs" />
+          <Link href="/" title="Volver al inicio" className="transition-transform hover:scale-105">
+            <Image src="/logo.png" alt="Logo" width={36} height={36} className="rounded-xl shadow-xs" />
+          </Link>
           <div>
             <h1 className="text-base font-bold text-slate-900">Panel Camrevoc</h1>
             <div className="flex items-center gap-1.5 text-xs text-slate-500">
@@ -769,6 +773,14 @@ export default function AdminDashboard({
         </div>
 
         <div className="flex items-center gap-2">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 shadow-xs transition-colors"
+            title="Ir a la página principal"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+            <span>Inicio</span>
+          </Link>
           <button
             onClick={handleLogout}
             disabled={isPending}

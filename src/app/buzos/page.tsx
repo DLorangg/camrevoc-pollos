@@ -20,9 +20,17 @@ export default async function BuzosPage() {
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3 sm:px-6">
           <Link
             href="/"
-            className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors"
+            title="Volver al inicio"
+            className="group flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-900 transition-colors"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+            <Image
+              src="/logo.png"
+              alt="Logo CamReVoc"
+              width={24}
+              height={24}
+              className="rounded-lg object-contain"
+            />
             <span>Volver al inicio</span>
           </Link>
 

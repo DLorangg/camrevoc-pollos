@@ -2,9 +2,10 @@
 
 import { useState, useTransition, useRef, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { setOperator, logoutAdmin } from "@/app/pollos/actions/admin-auth";
-import { Loader2, User, ArrowRight } from "lucide-react";
+import { Loader2, User, ArrowRight, ChevronLeft } from "lucide-react";
 
 export const PREDEFINED_OPERATORS = ["Pepo", "Facu", "Juana", "Dani", "Otros"] as const;
 export type PredefinedOperator = (typeof PREDEFINED_OPERATORS)[number];
@@ -65,13 +66,15 @@ export default function OperatorSelector() {
     <div className="flex min-h-[80vh] flex-col items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white px-8 py-10 shadow-xl shadow-slate-200/50">
         <div className="mb-6 flex flex-col items-center gap-3">
-          <Image
-            src="/logo.png"
-            alt="Logo Camrevoc"
-            width={64}
-            height={64}
-            className="rounded-2xl shadow-md"
-          />
+          <Link href="/" title="Volver al inicio" className="transition-transform hover:scale-105">
+            <Image
+              src="/logo.png"
+              alt="Logo Camrevoc"
+              width={64}
+              height={64}
+              className="rounded-2xl shadow-md"
+            />
+          </Link>
           <div className="text-center">
             <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
               Panel de Administración
@@ -150,14 +153,23 @@ export default function OperatorSelector() {
           </button>
         </form>
 
-        <button
-          type="button"
-          onClick={handleLogout}
-          disabled={isPending}
-          className="mt-4 w-full text-center text-xs text-slate-400 hover:text-slate-600 underline"
-        >
-          Cerrar sesión
-        </button>
+        <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-400">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1 hover:text-slate-600 transition-colors"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+            <span>Volver al inicio</span>
+          </Link>
+          <button
+            type="button"
+            onClick={handleLogout}
+            disabled={isPending}
+            className="hover:text-slate-600 underline cursor-pointer"
+          >
+            Cerrar sesión
+          </button>
+        </div>
       </div>
     </div>
   );

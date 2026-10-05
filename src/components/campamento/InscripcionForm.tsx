@@ -11,6 +11,7 @@ import {
   Heart,
   AlertCircle,
   ArrowRight,
+  ChevronLeft,
 } from "lucide-react";
 import { inscribirParticipante } from "@/app/campamento/actions/inscripcion";
 import type { InscripcionInput } from "@/app/campamento/actions/inscripcion";
@@ -177,6 +178,16 @@ export default function InscripcionForm() {
             >
               <span>Informar mi pago</span>
               <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div>
+            <Link
+              href="/"
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 shadow-xs transition-colors cursor-pointer"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span>Volver a la página principal</span>
             </Link>
           </div>
 

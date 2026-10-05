@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getVale } from "@/app/pollos/actions/vale-actions";
 import ValeQR from "@/components/ValeQR";
 import ConfirmarEntregaButton from "@/components/ConfirmarEntregaButton";
+import { ChevronLeft } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +45,9 @@ export default async function ValePage({ params }: Props) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-between bg-slate-50 px-4 py-12">
         <div className="my-auto w-full max-w-sm rounded-3xl border border-amber-200 bg-white p-8 shadow-xl text-center space-y-4">
-          <Image src="/logo.png" alt="Camrevoc" width={64} height={64} className="mx-auto rounded-2xl shadow-xs" />
+          <Link href="/" title="Volver al inicio" className="inline-block transition-transform hover:scale-105">
+            <Image src="/logo.png" alt="Camrevoc" width={64} height={64} className="mx-auto rounded-2xl shadow-xs" />
+          </Link>
           <span className="text-5xl">⏳</span>
           <h1 className="text-xl font-bold text-amber-800">Pago en revisión</h1>
           <p className="text-slate-600 text-sm">
@@ -56,6 +60,16 @@ export default async function ValePage({ params }: Props) {
             </strong>
           </div>
           <p className="text-xs text-slate-400">Código: <span className="font-mono font-bold text-slate-600">{codigo}</span></p>
+
+          <div className="pt-2 border-t border-amber-100">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-900/70 hover:text-amber-950 transition-colors"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+              <span>Volver al inicio</span>
+            </Link>
+          </div>
         </div>
         <footer className="pt-6 text-center text-xs text-slate-400">
           Diseñado con ❤️ por Dami Lorang
@@ -80,13 +94,15 @@ export default async function ValePage({ params }: Props) {
       <div className="flex min-h-screen flex-col justify-between bg-[#E52427]">
         <div className="flex flex-1 flex-col items-center justify-center px-4 py-12 text-center">
           <div className="w-full max-w-sm space-y-6">
-            <Image
-              src="/logo.png"
-              alt="Camrevoc"
-              width={72}
-              height={72}
-              className="mx-auto rounded-2xl opacity-90 shadow-md"
-            />
+            <Link href="/" title="Volver al inicio" className="inline-block transition-transform hover:scale-105">
+              <Image
+                src="/logo.png"
+                alt="Camrevoc"
+                width={72}
+                height={72}
+                className="mx-auto rounded-2xl opacity-90 shadow-md"
+              />
+            </Link>
             <div>
               <p className="text-6xl mb-2">⚠️</p>
               <h1 className="text-3xl font-extrabold tracking-tight text-white">
@@ -113,6 +129,16 @@ export default async function ValePage({ params }: Props) {
             <p className="text-xs text-white/60">
               Si creés que esto es un error, contactá al coordinador de tu etapa.
             </p>
+
+            <div className="pt-1">
+              <Link
+                href="/"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/80 hover:text-white transition-colors"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+                <span>Volver al inicio</span>
+              </Link>
+            </div>
           </div>
         </div>
         <footer className="pb-6 text-center text-xs text-white/60">
@@ -129,13 +155,15 @@ export default async function ValePage({ params }: Props) {
       <div className="flex flex-1 flex-col items-center justify-center px-4 py-10 text-center">
         <div className="w-full max-w-sm space-y-6">
           {/* Logo */}
-          <Image
-            src="/logo.png"
-            alt="Camrevoc"
-            width={72}
-            height={72}
-            className="mx-auto rounded-2xl shadow-lg"
-          />
+          <Link href="/" title="Volver al inicio" className="inline-block transition-transform hover:scale-105">
+            <Image
+              src="/logo.png"
+              alt="Camrevoc"
+              width={72}
+              height={72}
+              className="mx-auto rounded-2xl shadow-lg"
+            />
+          </Link>
 
           {/* Status */}
           <div>
@@ -192,6 +220,16 @@ export default async function ValePage({ params }: Props) {
           <p className="text-xs text-white/60">
             Solo presionar al entregar físicamente los pollos.
           </p>
+
+          <div className="pt-1">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-white/80 hover:text-white transition-colors"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+              <span>Volver a la página principal</span>
+            </Link>
+          </div>
         </div>
       </div>
       <footer className="pb-6 text-center text-xs text-white/70">

@@ -1,10 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { loginAdmin } from "@/app/pollos/actions/admin-auth";
-import { Loader2, Lock } from "lucide-react";
+import { Loader2, Lock, ChevronLeft } from "lucide-react";
 
 export default function AdminLoginPage() {
   const [password, setPassword] = useState("");
@@ -37,14 +38,16 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white px-8 py-10 shadow-xl shadow-slate-200/50">
         {/* Logo */}
         <div className="mb-6 flex flex-col items-center gap-3">
-          <Image
-            src="/logo.png"
-            alt="Logo Camrevoc"
-            width={72}
-            height={72}
-            className="rounded-2xl shadow-md"
-            priority
-          />
+          <Link href="/" title="Volver al inicio" className="transition-transform hover:scale-105">
+            <Image
+              src="/logo.png"
+              alt="Logo Camrevoc"
+              width={72}
+              height={72}
+              className="rounded-2xl shadow-md"
+              priority
+            />
+          </Link>
           <div className="text-center">
             <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
               Panel de Administración
@@ -95,6 +98,16 @@ export default function AdminLoginPage() {
             )}
           </button>
         </form>
+
+        <div className="mt-6 pt-4 border-t border-slate-100 text-center">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-600 transition-colors"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+            <span>Volver al inicio</span>
+          </Link>
+        </div>
       </div>
     </div>
   );

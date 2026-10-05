@@ -1,15 +1,32 @@
 import Image from "next/image";
+import Link from "next/link";
 import OrderForm from "@/components/OrderForm";
 import HowItWorksModal from "@/components/HowItWorksModal";
+import { ChevronLeft } from "lucide-react";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-10 sm:px-6">
+    <div className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6">
+      {/* Botón Volver al inicio */}
+      <div className="mx-auto mb-6 max-w-xl">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-amber-800 transition-colors"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          <span>Volver al inicio</span>
+        </Link>
+      </div>
+
       {/* Header */}
       <header className="mx-auto mb-8 max-w-xl text-center">
         {/* Logos emparejados armónicamente */}
         <div className="mb-6 flex items-center justify-center gap-3 sm:gap-5">
-          <div className="flex items-center justify-center rounded-2xl border border-slate-200/80 bg-white p-2 shadow-xs">
+          <Link
+            href="/"
+            title="Volver al inicio"
+            className="flex items-center justify-center rounded-2xl border border-slate-200/80 bg-white p-2 shadow-xs transition-transform hover:scale-105"
+          >
             <Image
               src="/logo.png"
               alt="Logo CamReVoc · Casa Salesiana Don Bosco Neuquén"
@@ -18,7 +35,7 @@ export default function HomePage() {
               className="h-14 w-14 object-contain rounded-xl sm:h-16 sm:w-16"
               priority
             />
-          </div>
+          </Link>
 
           <div className="h-10 w-px bg-slate-200" aria-hidden="true" />
 
