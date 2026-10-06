@@ -17,6 +17,11 @@ Este documento compila las reglas comerciales, operativas y de validación que g
    - `6ta Etapa`
    - `7ma Etapa`
    - `Animadores` *(nota: la opción histórica "Guía" fue discontinuada y renombrada a "Animadores")*.
+4. **Significado de la Etapa y Categoría Especial 'Animadores':**
+   - **La etapa de una venta de Pollos representa la categoría en la que se contabiliza la venta**, no necesariamente la etapa que guía el animador.
+   - **Las ventas realizadas como animador deben utilizar la etapa especial 'Animadores'**, independientemente de la etapa que esa persona guíe (por ejemplo, si un animador es guía de 4ta Etapa pero vende como animador, el pedido debe tener etapa `"Animadores"`, no `"4ta Etapa"`).
+   - **Decisión Explícita y Manual:** El sistema no infiere ni altera automáticamente la etapa según el usuario o rol; la decisión es manual.
+   - **Corrección Administrativa:** Desde `/pollos/admin`, el botón *"Editar"* de cada pedido permite cambiar la etapa en cualquier momento para corregir cargas erróneas y actualizar instantáneamente el ranking de etapas.
 
 ---
 

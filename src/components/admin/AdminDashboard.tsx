@@ -32,7 +32,7 @@ import {
   type EtapaStat,
   type VendedorLeaderboard,
 } from "@/app/pollos/actions/admin-pedidos";
-import { PRECIO_POLLO } from "@/config/constants";
+import { PRECIO_POLLO, ETAPAS } from "@/config/constants";
 import { confirmarEntrega } from "@/app/pollos/actions/vale-actions";
 import { logoutAdmin, clearOperator } from "@/app/pollos/actions/admin-auth";
 import type { Pedido, Vale } from "@/types/database";
@@ -192,26 +192,43 @@ function EditarPagoModal({
 }: {
   pedido: PedidoConVales;
   onClose: () => void;
-  onSave: (esEfectivo: boolean, recibidoPor: string | null) => Promise<void>;
-  onSaveAndApprove?: (esEfectivo: boolean, recibidoPor: string | null) => Promise<void>;
+  onSave: (data: { esEfectivo: boolean; recibidoPor: string | null; etapa: string }) => Promise<void>;
+  onSaveAndApprove?: (data: { esEfectivo: boolean; recibidoPor: string | null; etapa: string }) => Promise<void>;
 }) {
+  const [etapa, setEtapa] = useState(pedido.etapa || ETAPAS[0]);
   const [esEfectivo, setEsEfectivo] = useState(Boolean(pedido.es_efectivo));
   const [recibidoPor, setRecibidoPor] = useState(pedido.recibido_por || "");
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
+  const availableEtapas = useMemo(() => {
+    if (pedido.etapa && !ETAPAS.includes(pedido.etapa as (typeof ETAPAS)[number])) {
+      return [pedido.etapa, ...ETAPAS];
+    }
+    return ETAPAS;
+  }, [pedido.etapa]);
+
   const handleSubmit = async (approveAfter = false) => {
     setError(null);
+    if (!etapa || !etapa.trim()) {
+      setError("Seleccioná una etapa válida.");
+      return;
+    }
     if (esEfectivo && !recibidoPor.trim()) {
       setError("Indicá quién recibió el dinero en efectivo.");
       return;
     }
     try {
       setIsSaving(true);
+      const payload = {
+        esEfectivo,
+        recibidoPor: esEfectivo ? recibidoPor.trim() : null,
+        etapa: etapa.trim(),
+      };
       if (approveAfter && onSaveAndApprove) {
-        await onSaveAndApprove(esEfectivo, esEfectivo ? recibidoPor.trim() : null);
+        await onSaveAndApprove(payload);
       } else {
-        await onSave(esEfectivo, esEfectivo ? recibidoPor.trim() : null);
+        await onSave(payload);
       }
       onClose();
     } catch (err) {
@@ -231,7 +248,7 @@ function EditarPagoModal({
       >
         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div>
-            <h3 className="text-base font-bold text-slate-900">Editar datos del pago</h3>
+            <h3 className="text-base font-bold text-slate-900">Editar datos del pedido</h3>
             <p className="text-xs text-slate-500">
               {pedido.animador_vendedor || pedido.nombre_comprador} · {pedido.cantidad_total} pollo(s)
             </p>
@@ -245,35 +262,61 @@ function EditarPagoModal({
         </div>
 
         <div className="space-y-4">
-          <label className="flex items-center gap-3 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={esEfectivo}
-              onChange={(e) => {
-                setEsEfectivo(e.target.checked);
-                if (!e.target.checked) setRecibidoPor("");
-              }}
+          {/* Selector de Etapa */}
+          <div className="space-y-1.5">
+            <label htmlFor="edit-etapa-select" className="block text-xs font-semibold text-slate-700">
+              Etapa asignada a la venta <span className="text-rose-500">*</span>
+            </label>
+            <select
+              id="edit-etapa-select"
+              value={etapa}
+              onChange={(e) => setEtapa(e.target.value)}
               disabled={isSaving}
-              className="h-4 w-4 rounded border-slate-300 text-[#009B4D] focus:ring-[#009B4D] cursor-pointer"
-            />
-            <span className="text-sm font-semibold text-slate-800">¿Es pago en efectivo?</span>
-          </label>
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-900 focus:border-[#009B4D] focus:outline-none focus:ring-2 focus:ring-[#009B4D]/20 shadow-xs cursor-pointer"
+            >
+              {availableEtapas.map((e) => (
+                <option key={e} value={e}>
+                  {e === "Animadores" ? "Animadores (Venta de animador)" : e}
+                </option>
+              ))}
+            </select>
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              Las ventas realizadas como animador deben contabilizarse en la etapa especial <strong>Animadores</strong>, independientemente de la etapa que esa persona guíe.
+            </p>
+          </div>
 
-          {esEfectivo && (
-            <div className="space-y-1.5 animate-in fade-in duration-150">
-              <label className="block text-xs font-semibold text-slate-700">
-                ¿Quién recibió el dinero? <span className="text-rose-500">*</span>
-              </label>
+          {/* Medio de Pago */}
+          <div className="border-t border-slate-100 pt-3 space-y-3">
+            <label className="flex items-center gap-3 cursor-pointer select-none">
               <input
-                type="text"
-                placeholder="Ej: Facu, Vasco, Juampi..."
-                value={recibidoPor}
-                onChange={(e) => setRecibidoPor(e.target.value)}
+                type="checkbox"
+                checked={esEfectivo}
+                onChange={(e) => {
+                  setEsEfectivo(e.target.checked);
+                  if (!e.target.checked) setRecibidoPor("");
+                }}
                 disabled={isSaving}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-[#009B4D] focus:outline-none focus:ring-2 focus:ring-[#009B4D]/20 shadow-xs"
+                className="h-4 w-4 rounded border-slate-300 text-[#009B4D] focus:ring-[#009B4D] cursor-pointer"
               />
-            </div>
-          )}
+              <span className="text-sm font-semibold text-slate-800">¿Es pago en efectivo?</span>
+            </label>
+
+            {esEfectivo && (
+              <div className="space-y-1.5 animate-in fade-in duration-150">
+                <label className="block text-xs font-semibold text-slate-700">
+                  ¿Quién recibió el dinero? <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ej: Facu, Vasco, Juampi..."
+                  value={recibidoPor}
+                  onChange={(e) => setRecibidoPor(e.target.value)}
+                  disabled={isSaving}
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 focus:border-[#009B4D] focus:outline-none focus:ring-2 focus:ring-[#009B4D]/20 shadow-xs"
+                />
+              </div>
+            )}
+          </div>
 
           {error && (
             <p className="text-xs text-rose-600 bg-rose-50 p-2.5 rounded-xl border border-rose-200">
@@ -542,11 +585,13 @@ function PedidoRow({
   appUrl,
   onImageClick,
   onValeEntregado,
+  onPedidoUpdated,
 }: {
   pedido: PedidoConVales;
   appUrl: string;
   onImageClick: (url: string) => void;
   onValeEntregado: (pedidoId: string, valeId: string) => void;
+  onPedidoUpdated?: (pedidoId: string, updates: Partial<PedidoConVales>) => void;
 }) {
   const [isPending, startTransition] = useTransition();
   const [rejectingId, setRejectingId] = useState<string | null>(null);
@@ -583,12 +628,31 @@ function PedidoRow({
         <EditarPagoModal
           pedido={pedido}
           onClose={() => setEditingPago(false)}
-          onSave={async (esEfectivo, recibidoPor) => {
-            await updatePedidoPago(pedido.id, { es_efectivo: esEfectivo, recibido_por: recibidoPor });
+          onSave={async (data) => {
+            await updatePedidoPago(pedido.id, {
+              es_efectivo: data.esEfectivo,
+              recibido_por: data.recibidoPor,
+              etapa: data.etapa,
+            });
+            onPedidoUpdated?.(pedido.id, {
+              es_efectivo: data.esEfectivo,
+              recibido_por: data.recibidoPor,
+              etapa: data.etapa,
+            });
             router.refresh();
           }}
-          onSaveAndApprove={async (esEfectivo, recibidoPor) => {
-            await approvePedido(pedido.id, { es_efectivo: esEfectivo, recibido_por: recibidoPor });
+          onSaveAndApprove={async (data) => {
+            await approvePedido(pedido.id, {
+              es_efectivo: data.esEfectivo,
+              recibido_por: data.recibidoPor,
+              etapa: data.etapa,
+            });
+            onPedidoUpdated?.(pedido.id, {
+              estado_pago: "Aprobado",
+              es_efectivo: data.esEfectivo,
+              recibido_por: data.recibidoPor,
+              etapa: data.etapa,
+            });
             router.refresh();
           }}
         />
@@ -622,7 +686,7 @@ function PedidoRow({
               type="button"
               onClick={() => setEditingPago(true)}
               className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition-colors cursor-pointer"
-              title="Corregir medio de pago o quién recibió el dinero"
+              title="Corregir etapa, medio de pago o quién recibió el dinero"
             >
               <Pencil className="h-3 w-3" />
               <span>Editar</span>
@@ -804,6 +868,13 @@ export default function AdminDashboard({
     setPrevPedidos(data.pedidos);
     setPedidos(data.pedidos);
   }
+
+  // Actualización optimista de pedidos al editar datos (etapa, medio de pago, etc.)
+  const handlePedidoUpdated = (pedidoId: string, updates: Partial<PedidoConVales>) => {
+    setPedidos((prev) =>
+      prev.map((p) => (p.id === pedidoId ? { ...p, ...updates } : p)),
+    );
+  };
 
   // Actualización optimista inmediata de la entrega de un vale
   const handleValeEntregado = (pedidoId: string, valeId: string) => {
@@ -1220,6 +1291,7 @@ export default function AdminDashboard({
                         appUrl={appUrl}
                         onImageClick={setModalUrl}
                         onValeEntregado={handleValeEntregado}
+                        onPedidoUpdated={handlePedidoUpdated}
                       />
                     ))}
                   </tbody>

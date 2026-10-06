@@ -12,6 +12,8 @@ import {
   type VendedorLeaderboard,
 } from "@/lib/services/leaderboard";
 
+import { PRECIO_POLLO, ETAPAS } from "@/config/constants";
+
 const ADMIN_SESSION_COOKIE = "admin_session";
 const OPERATOR_COOKIE = "admin_operator";
 
@@ -27,28 +29,44 @@ async function currentOperator(): Promise<string> {
   return jar.get(OPERATOR_COOKIE)?.value ?? "Desconocido";
 }
 
-// ─── Update pedido pago ───────────────────────────────────────────────────────
+// ─── Update pedido pago y etapa ───────────────────────────────────────────────
 
 export async function updatePedidoPago(
   pedidoId: string,
-  data: { es_efectivo: boolean; recibido_por: string | null },
+  data: { es_efectivo?: boolean; recibido_por?: string | null; etapa?: string },
 ): Promise<{ ok: boolean; error?: string }> {
   await assertAdmin();
   const supabase = createServiceClient();
 
-  const esEfectivo = Boolean(data.es_efectivo);
-  const recibidoPor = esEfectivo ? (data.recibido_por || "").trim() : null;
+  const updatePayload: Record<string, unknown> = {};
 
-  if (esEfectivo && !recibidoPor) {
-    return { ok: false, error: "Para pagos en efectivo, debés indicar quién recibió el dinero." };
+  if (typeof data.es_efectivo === "boolean") {
+    const esEfectivo = Boolean(data.es_efectivo);
+    const recibidoPor = esEfectivo ? (data.recibido_por || "").trim() : null;
+
+    if (esEfectivo && !recibidoPor) {
+      return { ok: false, error: "Para pagos en efectivo, debés indicar quién recibió el dinero." };
+    }
+
+    updatePayload.es_efectivo = esEfectivo;
+    updatePayload.recibido_por = recibidoPor;
+  }
+
+  if (data.etapa) {
+    const etapaTrimmed = data.etapa.trim();
+    if (!etapaTrimmed) {
+      return { ok: false, error: "La etapa no puede estar vacía." };
+    }
+    updatePayload.etapa = etapaTrimmed;
+  }
+
+  if (Object.keys(updatePayload).length === 0) {
+    return { ok: true };
   }
 
   const { error } = await supabase
     .from("pedidos")
-    .update({
-      es_efectivo: esEfectivo,
-      recibido_por: recibidoPor,
-    })
+    .update(updatePayload)
     .eq("id", pedidoId);
 
   if (error) {
@@ -64,7 +82,7 @@ export async function updatePedidoPago(
 
 export async function approvePedido(
   pedidoId: string,
-  datosPago?: { es_efectivo?: boolean; recibido_por?: string | null },
+  datosPago?: { es_efectivo?: boolean; recibido_por?: string | null; etapa?: string },
 ): Promise<{ ok: boolean; error?: string }> {
   await assertAdmin();
   const operator = await currentOperator();
@@ -77,13 +95,22 @@ export async function approvePedido(
   };
 
   if (datosPago) {
-    const esEfectivo = Boolean(datosPago.es_efectivo);
-    const recibidoPor = esEfectivo ? (datosPago.recibido_por || "").trim() : null;
-    if (esEfectivo && !recibidoPor) {
-      return { ok: false, error: "Para pagos en efectivo, debés indicar quién recibió el dinero." };
+    if (typeof datosPago.es_efectivo === "boolean") {
+      const esEfectivo = Boolean(datosPago.es_efectivo);
+      const recibidoPor = esEfectivo ? (datosPago.recibido_por || "").trim() : null;
+      if (esEfectivo && !recibidoPor) {
+        return { ok: false, error: "Para pagos en efectivo, debés indicar quién recibió el dinero." };
+      }
+      updateData.es_efectivo = esEfectivo;
+      updateData.recibido_por = recibidoPor;
     }
-    updateData.es_efectivo = esEfectivo;
-    updateData.recibido_por = recibidoPor;
+    if (datosPago.etapa) {
+      const etapaTrimmed = datosPago.etapa.trim();
+      if (!etapaTrimmed) {
+        return { ok: false, error: "La etapa no puede estar vacía." };
+      }
+      updateData.etapa = etapaTrimmed;
+    }
   }
 
   // 1. Update pedido
@@ -161,8 +188,6 @@ export async function rejectPedido(
   revalidatePath("/admin");
   return { ok: true };
 }
-
-import { PRECIO_POLLO, ETAPAS } from "@/config/constants";
 
 // ─── Get dashboard data ───────────────────────────────────────────────────────
 

@@ -100,7 +100,7 @@ flowchart TD
 - El equipo de finanzas inicia sesión con la contraseña maestra y selecciona su nombre de operador.
 - En la pestaña **Pendientes**, revisa el comprobante y coteja con la cuenta bancaria (o con el cobrador indicado si fue en efectivo).
 - **Indicador de Cobro:** Cada tarjeta/fila muestra visualmente `💵 Efectivo · Recibió: [nombre]` o `🏦 Transferencia`.
-- **Edición Previa:** El operador cuenta con el botón **Editar** para corregir el cobrador en mano o la modalidad de pago antes de aprobar, o utilizar el atajo **Guardar y Aprobar**.
+- **Edición Previa / Corrección:** El operador cuenta con el botón **Editar** para corregir la **etapa asignada a la venta** (pudiendo reasignar a la categoría especial `"Animadores"` o viceversa), el cobrador en mano o la modalidad de pago antes de aprobar, o utilizar el atajo **Guardar y Aprobar**.
 - **Aprobación:** Al aprobar, el pedido cambia a `Aprobado`. Los vales quedan oficialmente habilitados para su canje.
 - **Rechazo:** Si el comprobante es ilegible, no coincide el monto o el cobrador desconoce el pago, se rechaza indicando el motivo.
 
