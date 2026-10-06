@@ -409,9 +409,11 @@ function FilePreview({
 function SuccessScreen({
   vales,
   email,
+  esEfectivo,
 }: {
   vales: ValeCreado[];
   email: string;
+  esEfectivo?: boolean;
 }) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
 
@@ -424,8 +426,9 @@ function SuccessScreen({
       <div>
         <h2 className="text-2xl font-bold text-slate-900">¡Pedido recibido con éxito!</h2>
         <p className="mt-2 max-w-md text-sm text-slate-600">
-          Estamos revisando tu transferencia. Apenas la confirmemos, te enviaremos los vales
-          definitivos a{" "}
+          {esEfectivo
+            ? "Estamos revisando tu comprobante de pago en efectivo. Apenas lo confirmemos, te enviaremos los vales definitivos a "
+            : "Estamos revisando tu transferencia. Apenas la confirmemos, te enviaremos los vales definitivos a "}
           <span className="font-semibold text-slate-900">{email}</span>.
         </p>
       </div>
@@ -548,6 +551,7 @@ interface FormErrors {
   etapa?: string;
   cantidad_total?: string;
   comprobantes?: string;
+  recibido_por?: string;
 }
 
 const inputCls =
@@ -561,6 +565,8 @@ export default function OrderForm() {
   const [etapa, setEtapa] = useState("");
   const [cantidadTotal, setCantidadTotal] = useState(1);
   const [cantidadInputStr, setCantidadInputStr] = useState("1");
+  const [esEfectivo, setEsEfectivo] = useState(false);
+  const [recibidoPor, setRecibidoPor] = useState("");
 
   // Vales distribution
   const [vales, setVales] = useState<ValeRow[]>([
@@ -669,8 +675,14 @@ export default function OrderForm() {
     }
     if (!etapa) errs.etapa = "La etapa es obligatoria.";
     if (cantidadTotal < 1) errs.cantidad_total = "Mínimo 1 pollo.";
-    if (archivos.length === 0)
-      errs.comprobantes = "Adjuntá al menos un comprobante de pago.";
+    if (esEfectivo && !recibidoPor.trim()) {
+      errs.recibido_por = "Indicá quién recibió el dinero en efectivo.";
+    }
+    if (archivos.length === 0) {
+      errs.comprobantes = esEfectivo
+        ? "Adjuntá una foto del recibo o papel entregado por quien recibió el dinero."
+        : "Adjuntá al menos un comprobante de pago.";
+    }
 
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -731,6 +743,8 @@ export default function OrderForm() {
         cantidad_total: cantidadTotal,
         comprobantes_urls: urls,
         vales: valesInput,
+        es_efectivo: esEfectivo,
+        recibido_por: esEfectivo ? recibidoPor.trim() : null,
       });
 
       if (!result.ok) throw new Error(result.error);
@@ -748,7 +762,13 @@ export default function OrderForm() {
 
   // ─── Success screen ────────────────────────────────────────────────────────
   if (successData) {
-    return <SuccessScreen vales={successData.vales} email={successData.email} />;
+    return (
+      <SuccessScreen
+        vales={successData.vales}
+        email={successData.email}
+        esEfectivo={esEfectivo}
+      />
+    );
   }
 
   // ─── Form ──────────────────────────────────────────────────────────────────
@@ -891,18 +911,99 @@ export default function OrderForm() {
 
       <Divider />
 
-      {/* ③ DATOS PARA TRANSFERENCIA ────────────────────────────────────────── */}
-      <section>
-        <BankCard />
+      {/* ③ FORMA DE PAGO ─────────────────────────────────────────────────────── */}
+      <section className="space-y-4">
+        <SectionHeading emoji="💵" label="Forma de pago" />
+
+        <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 space-y-3">
+          <label className="flex items-center gap-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={esEfectivo}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setEsEfectivo(checked);
+                if (!checked) {
+                  setRecibidoPor("");
+                  if (errors.recibido_por) {
+                    setErrors((prev) => ({ ...prev, recibido_por: undefined }));
+                  }
+                }
+              }}
+              disabled={isBusy}
+              className="h-5 w-5 rounded-md border-slate-300 text-[#009B4D] focus:ring-[#009B4D] cursor-pointer"
+            />
+            <span className="text-sm font-semibold text-slate-800">
+              ¿Es pago en efectivo?
+            </span>
+          </label>
+
+          {esEfectivo && (
+            <div className="pt-2 border-t border-slate-200/80 space-y-1.5 animate-in fade-in duration-200">
+              <Field
+                label="¿Quién recibió el dinero?"
+                required
+                error={errors.recibido_por}
+              >
+                <input
+                  type="text"
+                  placeholder="Ej: Facu, Vasco, Juampi, Facu Rojas..."
+                  value={recibidoPor}
+                  onChange={(e) => {
+                    setRecibidoPor(e.target.value);
+                    if (errors.recibido_por) {
+                      setErrors((prev) => ({ ...prev, recibido_por: undefined }));
+                    }
+                  }}
+                  disabled={isBusy}
+                  className={inputCls}
+                />
+                <p className="text-xs text-slate-500">
+                  Escribí el nombre de la persona que recibió el dinero en mano.
+                </p>
+              </Field>
+            </div>
+          )}
+        </div>
       </section>
 
       <Divider />
 
-      {/* ④ COMPROBANTE DE PAGO ─────────────────────────────────────────────── */}
+      {/* ④ DATOS DE PAGO ────────────────────────────────────────────────────── */}
+      <section>
+        {esEfectivo ? (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 sm:p-5 shadow-xs space-y-2">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-emerald-800">
+              💵 Pago en efectivo
+            </h2>
+            <p className="text-sm text-slate-700 leading-relaxed">
+              Entregá el dinero en mano a{" "}
+              <strong className="text-slate-900">
+                {recibidoPor.trim() || "quien recibió el dinero"}
+              </strong>{" "}
+              y solicitá el recibo o papel entregado como constancia.
+            </p>
+            <p className="text-xs text-slate-500">
+              A continuación debés subir una foto de dicho papel/recibo para que coordinación verifique el pago.
+            </p>
+          </div>
+        ) : (
+          <BankCard />
+        )}
+      </section>
+
+      <Divider />
+
+      {/* ⑤ COMPROBANTE DE PAGO ─────────────────────────────────────────────── */}
       <section className="space-y-3">
-        <SectionHeading emoji="📎" label="Comprobante de pago" />
+        <SectionHeading
+          emoji="📎"
+          label={esEfectivo ? "Foto del recibo en papel" : "Comprobante de pago"}
+        />
         <p className="text-xs text-slate-500">
-          Adjuntá hasta 4 archivos (imagen PNG, JPG, WEBP o PDF).
+          {esEfectivo
+            ? "Adjuntá una foto del recibo o papel entregado por quien recibió el dinero (PNG, JPG, WEBP o PDF)."
+            : "Adjuntá hasta 4 archivos (imagen PNG, JPG, WEBP o PDF)."}
         </p>
 
         <div
@@ -940,7 +1041,11 @@ export default function OrderForm() {
         {errors.comprobantes && (
           <div className="flex items-start gap-2 rounded-xl border border-rose-300 bg-rose-50 px-3.5 py-2.5 text-sm text-rose-700">
             <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
-            <span>⚠️ Debés adjuntar el comprobante de transferencia para enviar el pedido.</span>
+            <span>
+              {esEfectivo
+                ? "⚠️ Debés adjuntar una foto del recibo o papel entregado para enviar el pedido."
+                : "⚠️ Debés adjuntar el comprobante de transferencia para enviar el pedido."}
+            </span>
           </div>
         )}
 

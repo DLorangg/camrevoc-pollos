@@ -224,7 +224,6 @@ export async function registrarPagoCampamento(
   // Subir archivo al bucket comprobantes-campa si se adjuntó
   if (comprobanteFile && comprobanteFile.size > 0) {
     try {
-      const ext = comprobanteFile.name.split(".").pop() || "jpg";
       const sanitizedName = comprobanteFile.name.replace(/[^a-zA-Z0-9.-]/g, "_");
       const filePath = `${session.etapaNum}/${inscriptoId}/${Date.now()}-${sanitizedName}`;
 
@@ -251,18 +250,33 @@ export async function registrarPagoCampamento(
     }
   }
 
+  const esEfectivo = formData.get("esEfectivo") === "true";
+  const rawRecibidoPor = formData.get("recibidoPor") as string | null;
+  const recibidoPor = esEfectivo ? rawRecibidoPor?.trim() || session.coordinador : null;
+
   // Insertar en la tabla 'pagos' con estado APROBADO y subido_por COORDINADOR
-  const { error: insertError } = await supabase.from("pagos").insert({
+  const baseInsert = {
     inscripto_id: inscriptoId,
     monto,
     comprobante_url: comprobanteUrl,
     observaciones: observaciones.trim() || null,
     registrado_por: session.coordinador,
-    estado: "APROBADO",
-    subido_por: "COORDINADOR",
+    estado: "APROBADO" as const,
+    subido_por: "COORDINADOR" as const,
     verificado_por: session.coordinador,
     verificado_at: new Date().toISOString(),
+  };
+
+  let { error: insertError } = await supabase.from("pagos").insert({
+    ...baseInsert,
+    es_efectivo: esEfectivo,
+    recibido_por: recibidoPor,
   });
+
+  if (insertError && insertError.message?.includes("es_efectivo") && !esEfectivo) {
+    const retry = await supabase.from("pagos").insert(baseInsert);
+    insertError = retry.error;
+  }
 
   if (insertError) {
     console.error("[registrarPagoCampamento] Error al insertar pago:", insertError);
@@ -280,10 +294,11 @@ export async function registrarPagoCampamento(
 }
 
 /**
- * Server Action para aprobar un pago enviado por una familia.
+ * Server Action para modificar los datos de pago (efectivo y recibido_por) por parte de coordinación.
  */
-export async function aprobarPagoCampamento(
+export async function actualizarPagoCampamento(
   pagoId: string,
+  data: { es_efectivo: boolean; recibido_por: string | null },
   etapaNum: string,
 ): Promise<{ ok: boolean; error?: string }> {
   const session = await getCampaSession();
@@ -291,15 +306,65 @@ export async function aprobarPagoCampamento(
     return { ok: false, error: "Sesión no válida o expirada." };
   }
 
+  const esEfectivo = Boolean(data.es_efectivo);
+  const recibidoPor = esEfectivo ? (data.recibido_por || "").trim() : null;
+
+  if (esEfectivo && !recibidoPor) {
+    return { ok: false, error: "Para pagos en efectivo, debés indicar quién recibió el dinero." };
+  }
+
   const supabase = createCampamentoClient();
   const { error } = await supabase
     .from("pagos")
     .update({
-      estado: "APROBADO",
-      verificado_por: session.coordinador,
-      verificado_at: new Date().toISOString(),
-      motivo_rechazo: null,
+      es_efectivo: esEfectivo,
+      recibido_por: recibidoPor,
     })
+    .eq("id", pagoId);
+
+  if (error) {
+    console.error("[actualizarPagoCampamento] Error al actualizar:", error);
+    return { ok: false, error: error.message || "Error al actualizar pago." };
+  }
+
+  revalidatePath(`/campamento/etapa/${etapaNum}`);
+  return { ok: true };
+}
+
+/**
+ * Server Action para aprobar un pago enviado por una familia.
+ */
+export async function aprobarPagoCampamento(
+  pagoId: string,
+  etapaNum: string,
+  datosPago?: { es_efectivo?: boolean; recibido_por?: string | null },
+): Promise<{ ok: boolean; error?: string }> {
+  const session = await getCampaSession();
+  if (!session) {
+    return { ok: false, error: "Sesión no válida o expirada." };
+  }
+
+  const updateData: Record<string, unknown> = {
+    estado: "APROBADO",
+    verificado_por: session.coordinador,
+    verificado_at: new Date().toISOString(),
+    motivo_rechazo: null,
+  };
+
+  if (datosPago) {
+    const esEfectivo = Boolean(datosPago.es_efectivo);
+    const recibidoPor = esEfectivo ? (datosPago.recibido_por || "").trim() : null;
+    if (esEfectivo && !recibidoPor) {
+      return { ok: false, error: "Para pagos en efectivo, debés indicar quién recibió el dinero." };
+    }
+    updateData.es_efectivo = esEfectivo;
+    updateData.recibido_por = recibidoPor;
+  }
+
+  const supabase = createCampamentoClient();
+  const { error } = await supabase
+    .from("pagos")
+    .update(updateData)
     .eq("id", pagoId);
 
   if (error) {

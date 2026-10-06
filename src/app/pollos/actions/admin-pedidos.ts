@@ -27,23 +27,69 @@ async function currentOperator(): Promise<string> {
   return jar.get(OPERATOR_COOKIE)?.value ?? "Desconocido";
 }
 
+// ─── Update pedido pago ───────────────────────────────────────────────────────
+
+export async function updatePedidoPago(
+  pedidoId: string,
+  data: { es_efectivo: boolean; recibido_por: string | null },
+): Promise<{ ok: boolean; error?: string }> {
+  await assertAdmin();
+  const supabase = createServiceClient();
+
+  const esEfectivo = Boolean(data.es_efectivo);
+  const recibidoPor = esEfectivo ? (data.recibido_por || "").trim() : null;
+
+  if (esEfectivo && !recibidoPor) {
+    return { ok: false, error: "Para pagos en efectivo, debés indicar quién recibió el dinero." };
+  }
+
+  const { error } = await supabase
+    .from("pedidos")
+    .update({
+      es_efectivo: esEfectivo,
+      recibido_por: recibidoPor,
+    })
+    .eq("id", pedidoId);
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath("/pollos/admin");
+  revalidatePath("/admin");
+  return { ok: true };
+}
+
 // ─── Approve pedido ───────────────────────────────────────────────────────────
 
 export async function approvePedido(
   pedidoId: string,
+  datosPago?: { es_efectivo?: boolean; recibido_por?: string | null },
 ): Promise<{ ok: boolean; error?: string }> {
   await assertAdmin();
   const operator = await currentOperator();
   const supabase = createServiceClient();
 
+  const updateData: Record<string, unknown> = {
+    estado_pago: "Aprobado",
+    aprobado_por: operator,
+    revisado_at: new Date().toISOString(),
+  };
+
+  if (datosPago) {
+    const esEfectivo = Boolean(datosPago.es_efectivo);
+    const recibidoPor = esEfectivo ? (datosPago.recibido_por || "").trim() : null;
+    if (esEfectivo && !recibidoPor) {
+      return { ok: false, error: "Para pagos en efectivo, debés indicar quién recibió el dinero." };
+    }
+    updateData.es_efectivo = esEfectivo;
+    updateData.recibido_por = recibidoPor;
+  }
+
   // 1. Update pedido
   const { error: updateError } = await supabase
     .from("pedidos")
-    .update({
-      estado_pago: "Aprobado",
-      aprobado_por: operator,
-      revisado_at: new Date().toISOString(),
-    })
+    .update(updateData)
     .eq("id", pedidoId);
 
   if (updateError) {
@@ -85,6 +131,7 @@ export async function approvePedido(
     }
   }
 
+  revalidatePath("/pollos/admin");
   revalidatePath("/admin");
   return { ok: true };
 }
@@ -110,6 +157,7 @@ export async function rejectPedido(
 
   if (error) return { ok: false, error: error.message };
 
+  revalidatePath("/pollos/admin");
   revalidatePath("/admin");
   return { ok: true };
 }

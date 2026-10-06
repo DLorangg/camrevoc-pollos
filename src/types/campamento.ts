@@ -34,6 +34,8 @@ export interface PagoCampamento {
   verificado_por?: string | null;
   verificado_at?: string | null;
   motivo_rechazo?: string | null;
+  es_efectivo?: boolean;
+  recibido_por?: string | null;
 }
 
 export type EstadoPagoParticipante = "PENDIENTE" | "PARCIAL" | "PAGADO";

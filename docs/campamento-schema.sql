@@ -37,7 +37,9 @@ CREATE TABLE IF NOT EXISTS pagos (
   contacto_telefono TEXT,
   verificado_por TEXT,
   verificado_at TIMESTAMPTZ,
-  motivo_rechazo TEXT
+  motivo_rechazo TEXT,
+  es_efectivo BOOLEAN DEFAULT false NOT NULL,
+  recibido_por TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_pagos_inscripto_id ON pagos (inscripto_id);

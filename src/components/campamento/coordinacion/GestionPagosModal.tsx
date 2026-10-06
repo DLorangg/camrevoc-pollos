@@ -33,6 +33,8 @@ export default function GestionPagosModal({
   onClose,
 }: GestionPagosModalProps) {
   const [monto, setMonto] = useState<string>("");
+  const [esEfectivo, setEsEfectivo] = useState(false);
+  const [recibidoPor, setRecibidoPor] = useState(coordinadorActual || "");
   const [observaciones, setObservaciones] = useState<string>("");
   const [archivo, setArchivo] = useState<File | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -56,12 +58,21 @@ export default function GestionPagosModal({
       return;
     }
 
+    if (esEfectivo && !recibidoPor.trim()) {
+      setError("Por favor indicá quién recibió el dinero en efectivo.");
+      return;
+    }
+
     startTransition(async () => {
       const formData = new FormData();
       formData.set("inscriptoId", inscripto.id);
       formData.set("monto", String(montoNum));
       formData.set("observaciones", observaciones);
       formData.set("etapa", etapaNum);
+      formData.set("esEfectivo", esEfectivo ? "true" : "false");
+      if (esEfectivo) {
+        formData.set("recibidoPor", recibidoPor.trim());
+      }
       if (archivo) {
         formData.set("comprobante", archivo);
       }
@@ -71,6 +82,8 @@ export default function GestionPagosModal({
         setExito(true);
         setMonto("");
         setObservaciones("");
+        setEsEfectivo(false);
+        setRecibidoPor(coordinadorActual || "");
         setArchivo(null);
         if (fileInputRef.current) fileInputRef.current.value = "";
         setTimeout(() => {
@@ -194,6 +207,17 @@ export default function GestionPagosModal({
                             <span className="inline-flex items-center gap-1 rounded-md bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-800 uppercase tracking-wider">
                               <XCircle className="h-3 w-3 text-rose-600" />
                               Rechazado
+                            </span>
+                          )}
+
+                          {/* Badge de Medio de Pago */}
+                          {pago.es_efectivo ? (
+                            <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-900 uppercase tracking-wider border border-amber-300">
+                              💵 Efectivo {pago.recibido_por ? `· ${pago.recibido_por}` : ""}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 border border-slate-200">
+                              🏦 Transferencia
                             </span>
                           )}
                         </div>
@@ -328,10 +352,55 @@ export default function GestionPagosModal({
               )}
             </div>
 
+            {/* Checkbox Pago en Efectivo */}
+            <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-3">
+              <label className="flex items-center gap-2.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={esEfectivo}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setEsEfectivo(checked);
+                    if (checked && !recibidoPor) {
+                      setRecibidoPor(coordinadorActual || "");
+                    }
+                  }}
+                  disabled={isPending}
+                  className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                />
+                <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <span>💵</span> ¿Es pago en efectivo?
+                </span>
+              </label>
+
+              {esEfectivo && (
+                <div className="pt-2 border-t border-slate-100 space-y-1.5">
+                  <label htmlFor="recibido-por-modal" className="block text-xs font-semibold text-slate-700">
+                    ¿Quién recibió el dinero? *
+                  </label>
+                  <input
+                    id="recibido-por-modal"
+                    type="text"
+                    required={esEfectivo}
+                    value={recibidoPor}
+                    onChange={(e) => setRecibidoPor(e.target.value)}
+                    placeholder="Ej: Facu, Vasco, Lucre..."
+                    disabled={isPending}
+                    className="w-full rounded-xl border border-slate-300 bg-white py-2 px-3 text-xs font-medium text-slate-900 shadow-2xs focus:border-[#009B4D] focus:outline-none focus:ring-2 focus:ring-[#009B4D]/20 disabled:bg-slate-50"
+                  />
+                  <p className="text-[10px] text-slate-500">
+                    Nombre o apodo de quien cobró el dinero en mano. Por defecto se asigna tu usuario.
+                  </p>
+                </div>
+              )}
+            </div>
+
             {/* Comprobante */}
             <div>
               <label className="mb-1 block text-xs font-semibold text-slate-700">
-                Archivo de Comprobante (imagen o PDF)
+                {esEfectivo
+                  ? "Foto del recibo en papel o comprobante físico (opcional)"
+                  : "Archivo de Comprobante de transferencia (imagen o PDF)"}
               </label>
               <div className="flex items-center gap-2">
                 <input

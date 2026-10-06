@@ -19,12 +19,18 @@ export default function CoordinacionLoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  // Resetear selección cuando cambia la etapa
+  const [prevEtapa, setPrevEtapa] = useState(etapa);
+  if (etapa !== prevEtapa) {
+    setPrevEtapa(etapa);
+    setCoordinador("");
+    setEsOtroNombre(false);
+    setCargandoCoords(true);
+  }
+
   // Cargar coordinadores guardados al cambiar de etapa
   useEffect(() => {
     let activo = true;
-    setCargandoCoords(true);
-    setCoordinador("");
-    setEsOtroNombre(false);
 
     obtenerCoordinadoresEtapa(etapa)
       .then((coords) => {

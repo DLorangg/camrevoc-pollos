@@ -71,7 +71,10 @@ flowchart TD
 1. **Identificación y Consulta de Saldo:** La familia ingresa el DNI del participante. El sistema busca la ficha y presenta: Nombre, Etapa, Destino, Total ya abonado (solo pagos aprobados) y Saldo pendiente.
 2. **Alerta de Pagos Rechazados:** Si el participante posee pagos observados previamente por coordinación, se destaca un recuadro de advertencia con la fecha y el motivo exacto del rechazo.
 3. **Flujo de Hermanos:** La familia puede activar la opción de incluir a un hermano en la misma transferencia. Al ingresar el DNI del segundo hijo, se valida su ficha y se habilita un desglose de importes parciales (ej: \$100.000 para el hijo 1 y \$100.000 para el hijo 2).
-4. **Subida y Persistencia:** Se adjunta el archivo (imagen o PDF hasta 10 MB) y teléfono de contacto. El Server Action `subirPagoFamilia` sube el archivo a Storage y crea los registros en `pagos` con `estado = 'PENDIENTE'` y `subido_por = 'FAMILIA'`. El saldo restante no se descuenta hasta que coordinación audite el comprobante.
+4. **Modalidad Efectivo o Transferencia:**
+   - Si se abona por transferencia, se adjunta el comprobante bancario.
+   - Si se abona en mano, se marca "¿Es pago en efectivo?", se ingresa el nombre de quien cobró (`recibido_por`) y se adjunta foto del recibo de papel entregado.
+5. **Subida y Persistencia:** Se adjunta el archivo (imagen o PDF hasta 10 MB) y teléfono de contacto. El Server Action `subirPagoFamilia` sube el archivo a Storage y crea los registros en `pagos` con `estado = 'PENDIENTE'` y `subido_por = 'FAMILIA'`. El saldo restante no se descuenta hasta que coordinación audite el comprobante.
 
 ### Circuito 3: Auditoría en el Portal de Coordinación
 1. **Acceso por Etapa (`/campamento/coordinacion`):**
@@ -81,10 +84,12 @@ flowchart TD
    - Si la etapa conserva el PIN default (`crv2027-e[X]`), se muestra un banner amarillo recomendando el cambio de contraseña desde el modal integrado.
 2. **Pestaña Pagos Pendientes:**
    - Exhibe tarjetas con participante, DNI, monto informado, teléfono y enlace directo al archivo de comprobante.
+   - **Identificación del Medio de Pago:** Visualiza con claridad `💵 Efectivo · Recibió: [nombre]` o `🏦 Transferencia`.
+   - **Edición Previa:** El coordinador puede abrir el modal de edición para corregir el cobrador o cambiar la modalidad de pago, pudiendo optar por "Guardar cambios" o "Guardar y Aprobar".
    - **Aprobar:** Cambia el registro a `APROBADO`. En ese instante el monto se deduce del saldo restante del participante y se actualizan las métricas de recaudación de la etapa.
    - **Observar / Rechazar:** Abre un modal donde el coordinador escribe la causa del rechazo (ej: "No coincide el importe", "Comprobante ilegible"). El pago pasa a `RECHAZADO`.
    - **Contacto Directo:** Botón de WhatsApp con texto preconfigurado mencionando el participante y el motivo para contactar rápidamente a la familia.
 3. **Pestaña Rechazados:**
-   - Muestra el historial de pagos observados. Cuenta con la acción *"Reconsiderar / Aprobar"* para subsanar rechazos involuntarios.
+   - Muestra el historial de pagos observados, indicando el medio de pago y cobrador. Cuenta con la acción *"Reconsiderar / Aprobar"* para subsanar rechazos involuntarios.
 4. **Carga Manual de Pagos:**
-   - Desde el padrón de inscriptos, el coordinador puede presionar *"Gestionar Pagos"* sobre cualquier participante e ingresar pagos en efectivo o fuera de plataforma. Estos se registran inmediatamente como `APROBADO` con `subido_por = 'COORDINADOR'`.
+   - Desde el padrón de inscriptos, el coordinador puede presionar *"Gestionar Pagos"* sobre cualquier participante e ingresar pagos en efectivo o fuera de plataforma indicando el cobrador (por defecto su propio usuario). Estos se registran inmediatamente como `APROBADO` con `subido_por = 'COORDINADOR'`.

@@ -121,8 +121,21 @@ export async function subirPagoFamilia(
   const observaciones = ((formData.get("observaciones") as string) || "").trim();
   const itemsJson = formData.get("items") as string; // JSON de SubirPagoItem[]
 
+  const esEfectivo = formData.get("esEfectivo") === "true";
+  const rawRecibidoPor = formData.get("recibidoPor") as string | null;
+  const recibidoPor = esEfectivo ? rawRecibidoPor?.trim() || null : null;
+
+  if (esEfectivo && !recibidoPor) {
+    return { ok: false, error: "Para pagos en efectivo, debés indicar quién recibió el dinero." };
+  }
+
   if (!comprobanteFile || comprobanteFile.size === 0) {
-    return { ok: false, error: "El archivo de comprobante de transferencia es obligatorio." };
+    return {
+      ok: false,
+      error: esEfectivo
+        ? "El comprobante o recibo del pago en efectivo es obligatorio."
+        : "El archivo de comprobante de transferencia es obligatorio.",
+    };
   }
 
   let items: SubirPagoItem[] = [];
@@ -156,7 +169,6 @@ export async function subirPagoFamilia(
 
   // Subir archivo a Supabase Storage bucket: comprobantes-campa
   try {
-    const ext = comprobanteFile.name.split(".").pop() || "jpg";
     const sanitizedName = comprobanteFile.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     const filePath = `familias/${Date.now()}-${sanitizedName}`;
 
@@ -190,30 +202,38 @@ export async function subirPagoFamilia(
   }
 
   // Insertar cada pago en la tabla 'pagos' con estado PENDIENTE y subido_por FAMILIA
-  const rowsToInsert = items.map((it) => ({
+  const baseRows = items.map((it) => ({
     inscripto_id: it.inscriptoId,
     monto: Number(it.monto),
     comprobante_url: comprobanteUrl,
     observaciones: observaciones || null,
     registrado_por: null,
-    estado: "PENDIENTE",
-    subido_por: "FAMILIA",
+    estado: "PENDIENTE" as const,
+    subido_por: "FAMILIA" as const,
     contacto_telefono: telefono || null,
   }));
 
-  const { error: insertError } = await supabase.from("pagos").insert(rowsToInsert);
+  const rowsToInsert = baseRows.map((row) => ({
+    ...row,
+    es_efectivo: esEfectivo,
+    recibido_por: recibidoPor,
+  }));
+
+  let { error: insertError } = await supabase.from("pagos").insert(rowsToInsert);
+
+  if (insertError && insertError.message?.includes("es_efectivo") && !esEfectivo) {
+    console.warn("[subirPagoFamilia] Columna es_efectivo no disponible en DB, reintentando inserción básica...");
+    const retry = await supabase.from("pagos").insert(baseRows);
+    insertError = retry.error;
+  }
 
   if (insertError) {
     console.error("Error exacto Supabase al insertar pago:", insertError);
-    console.error("Detalles del error:", {
-      message: insertError.message,
-      details: insertError.details,
-      hint: insertError.hint,
-      code: insertError.code,
-    });
     return {
       ok: false,
-      error: insertError.message || "Error al registrar el pago en la base de datos.",
+      error: insertError.message?.includes("es_efectivo")
+        ? "La base de datos requiere la migración de pagos en efectivo (columna 'es_efectivo'). Contactá al administrador."
+        : insertError.message || "Error al registrar el pago en la base de datos.",
     };
   }
 

@@ -31,6 +31,8 @@ Almacena la cabecera de la compra realizada y atribuida al animador/vendedor.
 | `estado_pago` | `TEXT` | `"Pendiente" \| "Aprobado" \| "Rechazado"` | `DEFAULT 'Pendiente' NOT NULL` | Estado de conciliación del pago. |
 | `aprobado_por` | `TEXT` | `string \| null` | `NULL` | Operador que aprobó, o detalle con motivo en caso de rechazo. |
 | `revisado_at` | `TIMESTAMPTZ` | `string \| null` | `NULL` | Fecha y hora en que se auditó el pedido. |
+| `es_efectivo` | `BOOLEAN` | `boolean` | `DEFAULT false NOT NULL` | `true` si el pago se realizó en efectivo en mano; `false` si fue transferencia bancaria. |
+| `recibido_por` | `TEXT` | `string \| null` | `NULL` | Nombre/apodo de la persona que cobró el dinero en mano (obligatorio si `es_efectivo` es `true`). |
 
 > **Nota sobre `estado_entrega` en `pedidos`:** En [src/app/pollos/actions/vale-actions.ts](file:///mnt/HDD/proyectos/camrevoc-pollos/src/app/pollos/actions/vale-actions.ts) el código intenta actualizar condicionalmente una columna `estado_entrega` en `pedidos` cuando se retiran todos los vales. Sin embargo, dicha columna no forma parte de la interfaz en [src/types/database.ts](file:///mnt/HDD/proyectos/camrevoc-pollos/src/types/database.ts) y su ausencia en base de datos es capturada de forma defensiva sin interrumpir la ejecución.
 
@@ -118,6 +120,8 @@ Registro de transferencias bancarias o cuotas informadas por las familias o carg
 | `verificado_por` | `TEXT` | `string \| null` | `NULL` | Nombre del coordinador que aprobó/rechazó. |
 | `verificado_at` | `TIMESTAMPTZ` | `string \| null` | `NULL` | Momento de la auditoría. |
 | `motivo_rechazo` | `TEXT` | `string \| null` | `NULL` | Explicación requerida en caso de rechazo. |
+| `es_efectivo` | `BOOLEAN` | `boolean` | `DEFAULT false NOT NULL` | `true` si el pago fue en mano en efectivo; `false` si fue transferencia bancaria. |
+| `recibido_por` | `TEXT` | `string \| null` | `NULL` | Nombre/apodo de la persona que cobró el dinero en mano (obligatorio si `es_efectivo` es `true`). |
 
 #### 3. `etapas_pines`
 Control de credenciales de acceso por etapa para coordinadores.

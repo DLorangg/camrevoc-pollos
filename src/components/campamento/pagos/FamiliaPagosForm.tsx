@@ -51,6 +51,8 @@ export default function FamiliaPagosForm() {
 
   // Paso 4: Comprobante y datos de contacto
   const [comprobante, setComprobante] = useState<File | null>(null);
+  const [esEfectivo, setEsEfectivo] = useState(false);
+  const [recibidoPor, setRecibidoPor] = useState("");
   const [telefono, setTelefono] = useState("");
   const [observaciones, setObservaciones] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -252,8 +254,17 @@ export default function FamiliaPagosForm() {
       }
     }
 
+    if (esEfectivo && !recibidoPor.trim()) {
+      setErrorEnvio("Para pagos en efectivo, debés indicar quién recibió el dinero.");
+      return;
+    }
+
     if (!comprobante) {
-      setErrorEnvio("Debés adjuntar el archivo de comprobante de la transferencia.");
+      setErrorEnvio(
+        esEfectivo
+          ? "Debés adjuntar una foto del recibo o papel entregado por quien recibió el dinero."
+          : "Debés adjuntar el archivo de comprobante de la transferencia.",
+      );
       return;
     }
 
@@ -268,6 +279,8 @@ export default function FamiliaPagosForm() {
       formData.set("comprobante", comprobante);
       formData.set("telefono", telefono);
       formData.set("observaciones", observaciones);
+      formData.set("esEfectivo", String(esEfectivo));
+      formData.set("recibidoPor", esEfectivo ? recibidoPor.trim() : "");
 
       const res = await subirPagoFamilia(formData);
       if (res.ok) {
@@ -670,15 +683,86 @@ export default function FamiliaPagosForm() {
       {/* ── PASO 3 & 4: Monto, Datos Bancarios y Comprobante ── */}
       {confirmadoPrincipal && inscriptoPrincipal && (
         <form onSubmit={handleSubmitFinal} className="space-y-8 animate-in fade-in duration-300">
-          {/* Tarjeta de Datos Bancarios Institucionales */}
-          <section className="space-y-2">
-            <div className="flex items-center gap-2 px-1">
-              <HelpCircle className="h-4 w-4 text-emerald-700" />
-              <span className="text-xs font-semibold text-slate-600">
-                Verificá que la transferencia se haya realizado a la cuenta oficial de los campamentos:
+          {/* Forma de pago (Transferencia / Efectivo) */}
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-7 shadow-xs space-y-4">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-xs font-black text-emerald-800">
+                💵
               </span>
+              <h2 className="text-base sm:text-lg font-bold text-slate-900">
+                Forma de pago
+              </h2>
             </div>
-            <BankCardCampamento />
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 space-y-3">
+              <label className="flex items-center gap-3 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={esEfectivo}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setEsEfectivo(checked);
+                    if (!checked) setRecibidoPor("");
+                  }}
+                  disabled={isSubmitting}
+                  className="h-5 w-5 rounded-md border-slate-300 text-[#009B4D] focus:ring-[#009B4D] cursor-pointer"
+                />
+                <span className="text-sm font-semibold text-slate-800">
+                  ¿Es pago en efectivo?
+                </span>
+              </label>
+
+              {esEfectivo && (
+                <div className="pt-2 border-t border-slate-200/80 space-y-1.5 animate-in fade-in duration-200">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    ¿Quién recibió el dinero? <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Ej: Facu, Vasco, Juampi, Facu Rojas..."
+                    value={recibidoPor}
+                    onChange={(e) => setRecibidoPor(e.target.value)}
+                    disabled={isSubmitting}
+                    className="w-full rounded-xl border border-slate-300 bg-white py-2 px-3.5 text-sm text-slate-900 shadow-2xs focus:border-[#009B4D] focus:outline-none focus:ring-2 focus:ring-[#009B4D]/20"
+                  />
+                  <p className="text-xs text-slate-500">
+                    Escribí el nombre de la persona que recibió el dinero en mano.
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Tarjeta de Datos Bancarios o Aviso de Efectivo */}
+          <section className="space-y-2">
+            {esEfectivo ? (
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 sm:p-5 shadow-xs space-y-2">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-800">
+                  💵 Pago en efectivo
+                </h3>
+                <p className="text-sm text-slate-700 leading-relaxed">
+                  Entregá el dinero en mano a{" "}
+                  <strong className="text-slate-900">
+                    {recibidoPor.trim() || "quien recibió el dinero"}
+                  </strong>{" "}
+                  y solicitá el recibo o papel entregado como constancia.
+                </p>
+                <p className="text-xs text-slate-500">
+                  A continuación deberás adjuntar una foto nítida de dicho recibo en papel para que coordinación audite y apruebe el pago.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 px-1">
+                  <HelpCircle className="h-4 w-4 text-emerald-700" />
+                  <span className="text-xs font-semibold text-slate-600">
+                    Verificá que la transferencia se haya realizado a la cuenta oficial de los campamentos:
+                  </span>
+                </div>
+                <BankCardCampamento />
+              </>
+            )}
           </section>
 
           {/* Paso 3: Asignación de Montos */}
@@ -688,7 +772,7 @@ export default function FamiliaPagosForm() {
                 3
               </span>
               <h2 className="text-base sm:text-lg font-bold text-slate-900">
-                Monto transferido
+                {esEfectivo ? "Monto abonado en efectivo" : "Monto transferido"}
               </h2>
             </div>
 
@@ -758,9 +842,11 @@ export default function FamiliaPagosForm() {
                 </div>
               ))}
 
-              {/* Total acumulado de la transferencia */}
+              {/* Total acumulado */}
               <div className="rounded-xl bg-slate-50 border border-slate-200 p-3.5 flex items-center justify-between text-xs sm:text-sm">
-                <span className="font-semibold text-slate-700">Monto total de la transferencia:</span>
+                <span className="font-semibold text-slate-700">
+                  {esEfectivo ? "Monto total en efectivo:" : "Monto total de la transferencia:"}
+                </span>
                 <span className="text-base font-extrabold text-emerald-700">
                   {formatPrecio(montoTotalTransferido)}
                 </span>
@@ -775,7 +861,7 @@ export default function FamiliaPagosForm() {
                 4
               </span>
               <h2 className="text-base sm:text-lg font-bold text-slate-900">
-                Comprobante y Envío
+                {esEfectivo ? "Foto del recibo y Envío" : "Comprobante y Envío"}
               </h2>
             </div>
 
@@ -783,7 +869,9 @@ export default function FamiliaPagosForm() {
               {/* Archivo obligatorio */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Adjuntar Comprobante (imagen o PDF) <span className="text-rose-500">*</span>
+                  {esEfectivo
+                    ? "Foto del recibo en papel entregado (imagen o PDF) *"
+                    : "Adjuntar Comprobante (imagen o PDF) *"}
                 </label>
                 <div className="flex items-center gap-2">
                   <input

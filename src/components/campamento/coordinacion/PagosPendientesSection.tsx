@@ -10,12 +10,14 @@ import {
   Loader2,
   Calendar,
   AlertTriangle,
+  Pencil,
 } from "lucide-react";
 import type { PagoPendienteRevision } from "@/types/campamento";
 import { formatPrecio } from "@/config/campamento";
 import {
   aprobarPagoCampamento,
   observarPagoCampamento,
+  actualizarPagoCampamento,
 } from "@/app/campamento/actions/coordinacion-pagos";
 
 interface PagosPendientesSectionProps {
@@ -31,6 +33,7 @@ export default function PagosPendientesSection({
 }: PagosPendientesSectionProps) {
   const [procesandoId, setProcesandoId] = useState<string | null>(null);
   const [pagoRechazando, setPagoRechazando] = useState<PagoPendienteRevision | null>(null);
+  const [pagoEditando, setPagoEditando] = useState<PagoPendienteRevision | null>(null);
   const [motivoRechazo, setMotivoRechazo] = useState("");
   const [isPending, startTransition] = useTransition();
 
@@ -102,6 +105,28 @@ export default function PagosPendientesSection({
                       {pago.inscripto.apellido}, {pago.inscripto.nombre}
                     </h3>
                     <p className="text-xs text-slate-500 font-mono">DNI {pago.inscripto.dni}</p>
+
+                    {/* Medio de pago claramente visible y editable */}
+                    <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                      {pago.es_efectivo ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-amber-900 bg-amber-100 px-2 py-0.5 rounded-md border border-amber-300">
+                          💵 Efectivo · Recibió: {pago.recibido_por || "No especificado"}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                          🏦 Transferencia
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setPagoEditando(pago)}
+                        className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-100 px-1.5 py-0.5 rounded transition-colors cursor-pointer"
+                        title="Corregir medio de pago o quién recibió el dinero"
+                      >
+                        <Pencil className="h-3 w-3" />
+                        <span>Editar</span>
+                      </button>
+                    </div>
                   </div>
                   <div className="text-right">
                     <span className="text-base font-black text-emerald-700 block">
@@ -246,6 +271,164 @@ export default function PagosPendientesSection({
           </div>
         </div>
       )}
+
+      {/* Modal Editar datos de pago */}
+      {pagoEditando && (
+        <EditarPagoCampamentoModal
+          pago={pagoEditando}
+          etapaNum={etapaNum}
+          onClose={() => setPagoEditando(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── Modal para editar datos del pago ─────────────────────────────────────────
+
+function EditarPagoCampamentoModal({
+  pago,
+  etapaNum,
+  onClose,
+}: {
+  pago: PagoPendienteRevision;
+  etapaNum: string;
+  onClose: () => void;
+}) {
+  const [esEfectivo, setEsEfectivo] = useState(Boolean(pago.es_efectivo));
+  const [recibidoPor, setRecibidoPor] = useState(pago.recibido_por || "");
+  const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSubmit = async (approveAfter = false) => {
+    setError(null);
+    if (esEfectivo && !recibidoPor.trim()) {
+      setError("Indicá quién recibió el dinero en efectivo.");
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      if (approveAfter) {
+        const res = await aprobarPagoCampamento(pago.id, etapaNum, {
+          es_efectivo: esEfectivo,
+          recibido_por: esEfectivo ? recibidoPor.trim() : null,
+        });
+        if (!res.ok) throw new Error(res.error);
+      } else {
+        const res = await actualizarPagoCampamento(
+          pago.id,
+          {
+            es_efectivo: esEfectivo,
+            recibido_por: esEfectivo ? recibidoPor.trim() : null,
+          },
+          etapaNum,
+        );
+        if (!res.ok) throw new Error(res.error);
+      }
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al guardar cambios.");
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs animate-in fade-in duration-200"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl space-y-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div>
+            <h3 className="text-sm font-bold text-slate-900">
+              Editar datos del pago
+            </h3>
+            <p className="text-xs text-slate-500">
+              {pago.inscripto.apellido}, {pago.inscripto.nombre} · {formatPrecio(pago.monto)}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-xs text-slate-400 hover:text-slate-600 cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <label className="flex items-center gap-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={esEfectivo}
+              onChange={(e) => {
+                setEsEfectivo(e.target.checked);
+                if (!e.target.checked) setRecibidoPor("");
+              }}
+              disabled={isSaving}
+              className="h-4 w-4 rounded border-slate-300 text-[#009B4D] focus:ring-[#009B4D] cursor-pointer"
+            />
+            <span className="text-sm font-semibold text-slate-800">
+              ¿Es pago en efectivo?
+            </span>
+          </label>
+
+          {esEfectivo && (
+            <div className="space-y-1.5 animate-in fade-in duration-150">
+              <label className="block text-xs font-semibold text-slate-700">
+                ¿Quién recibió el dinero? <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                placeholder="Ej: Facu, Vasco, Juampi..."
+                value={recibidoPor}
+                onChange={(e) => setRecibidoPor(e.target.value)}
+                disabled={isSaving}
+                className="w-full rounded-xl border border-slate-300 p-2.5 text-xs text-slate-900 focus:border-[#009B4D] focus:outline-none focus:ring-2 focus:ring-[#009B4D]/20 shadow-2xs"
+              />
+            </div>
+          )}
+
+          {error && (
+            <p className="text-xs text-rose-600 bg-rose-50 p-2.5 rounded-xl border border-rose-200">
+              {error}
+            </p>
+          )}
+
+          <div className="flex flex-col gap-2 pt-2">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isSaving}
+                className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSubmit(false)}
+                disabled={isSaving}
+                className="flex-1 rounded-xl bg-slate-900 py-2 text-xs font-bold text-white hover:bg-slate-800 disabled:opacity-50 cursor-pointer shadow-xs"
+              >
+                {isSaving ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : "Guardar cambios"}
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleSubmit(true)}
+              disabled={isSaving}
+              className="w-full rounded-xl bg-[#009B4D] py-2.5 text-xs font-bold text-white hover:bg-[#007a3d] disabled:opacity-50 cursor-pointer shadow-xs"
+            >
+              {isSaving ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : "Guardar y Aprobar"}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

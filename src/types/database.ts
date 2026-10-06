@@ -20,6 +20,8 @@ export interface Pedido {
   estado_pago: EstadoPago;
   aprobado_por: string | null;
   revisado_at: string | null; // timestamptz (ISO-8601) o null
+  es_efectivo?: boolean;
+  recibido_por?: string | null;
 }
 
 /** Campos requeridos al crear un nuevo pedido (el resto lo genera Supabase). */

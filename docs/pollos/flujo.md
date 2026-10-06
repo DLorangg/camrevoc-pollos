@@ -80,24 +80,29 @@ flowchart TD
 ## 2. Detalle de los Pasos Operativos
 
 ### Paso 1: Venta y Carga del Pedido
-- El animador o crvquista vende los pollos. El pago se transfiere al alias institucional `GRUPOSDBNQN` del Banco Santander.
+- El animador o crvquista vende los pollos. El pago se realiza por transferencia al alias `GRUPOSDBNQN` o en **efectivo en mano**.
 - El animador entra a `/pollos`.
 - Carga su nombre como responsable de la venta, su contacto, email y etapa para acreditar sus puntos en el ranking.
 - Especifica la cantidad de pollos y la distribución en vales con los nombres de quienes retirarán.
-- Adjunta el archivo del comprobante de transferencia bancaria (obligatorio).
+- **Medio de Pago:**
+  - **Transferencia (por defecto):** Realiza la transferencia al Santander y adjunta comprobante bancario.
+  - **Efectivo:** Marca "¿Es pago en efectivo?", especifica obligatoriamente quién cobró el dinero en mano (`recibido_por`) y adjunta foto del recibo físico en papel.
+- El comprobante es 100% obligatorio en ambos casos.
 
 ### Paso 2: Generación Inmediata de Vales
 - El archivo se almacena en el bucket `comprobantes` de Supabase.
 - Se ejecuta el Server Action `createOrder`:
-  - Se registra el pedido en estado `Pendiente`.
+  - Se registra el pedido en estado `Pendiente` (incluyendo `es_efectivo` y `recibido_por`).
   - Se generan los vales con códigos únicos `CRV-XXXX` en estado `Pendiente`.
 - La pantalla muestra la confirmación inmediata con botones de WhatsApp preconfigurados para compartir cada vale al destinatario antes de que el pago sea revisado.
 
 ### Paso 3: Validación Administrativa (/pollos/admin)
 - El equipo de finanzas inicia sesión con la contraseña maestra y selecciona su nombre de operador.
-- En la pestaña **Pendientes**, revisa el comprobante y coteja con la cuenta bancaria.
+- En la pestaña **Pendientes**, revisa el comprobante y coteja con la cuenta bancaria (o con el cobrador indicado si fue en efectivo).
+- **Indicador de Cobro:** Cada tarjeta/fila muestra visualmente `💵 Efectivo · Recibió: [nombre]` o `🏦 Transferencia`.
+- **Edición Previa:** El operador cuenta con el botón **Editar** para corregir el cobrador en mano o la modalidad de pago antes de aprobar, o utilizar el atajo **Guardar y Aprobar**.
 - **Aprobación:** Al aprobar, el pedido cambia a `Aprobado`. Los vales quedan oficialmente habilitados para su canje.
-- **Rechazo:** Si el comprobante es ilegible o el monto no coincide, se rechaza indicando el motivo.
+- **Rechazo:** Si el comprobante es ilegible, no coincide el monto o el cobrador desconoce el pago, se rechaza indicando el motivo.
 
 ### Paso 4: Notificación por Email y WhatsApp
 - Al aprobar, el sistema dispara automáticamente un correo electrónico transaccional vía Resend (`pollada@camrevoc.com.ar`) a la casilla informada en el pedido.

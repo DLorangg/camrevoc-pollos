@@ -21,6 +21,8 @@ export interface CreateOrderInput {
   cantidad_total: number;
   comprobantes_urls: string[];
   vales: ValeInput[];
+  es_efectivo?: boolean;
+  recibido_por?: string | null;
 }
 
 export interface ValeCreado {
@@ -52,6 +54,16 @@ export async function createOrder(
     };
   }
 
+  const esEfectivo = Boolean(input.es_efectivo);
+  const recibidoPor = esEfectivo ? (input.recibido_por || "").trim() : null;
+
+  if (esEfectivo && !recibidoPor) {
+    return {
+      ok: false,
+      error: "Para pagos en efectivo, debés indicar quién recibió el dinero.",
+    };
+  }
+
   // Comprobante obligatorio
   if (
     !input.comprobantes_urls ||
@@ -60,7 +72,9 @@ export async function createOrder(
   ) {
     return {
       ok: false,
-      error: "El comprobante de transferencia es obligatorio para registrar el pedido.",
+      error: esEfectivo
+        ? "El comprobante/recibo del pago en efectivo es obligatorio para registrar el pedido."
+        : "El comprobante de transferencia es obligatorio para registrar el pedido.",
     };
   }
 
@@ -69,26 +83,52 @@ export async function createOrder(
   const animadorUnificado = (input.animador_vendedor || input.nombre_comprador).trim();
 
   // 1. Insertar pedido (mapeando el nombre único a ambas columnas)
-  const { data: pedido, error: pedidoError } = await supabase
+  const baseInsert = {
+    nombre_comprador: nombreUnificado,
+    whatsapp: input.whatsapp.trim(),
+    email: input.email.trim().toLowerCase(),
+    etapa: input.etapa.trim(),
+    animador_vendedor: animadorUnificado,
+    cantidad_total: input.cantidad_total,
+    comprobantes_urls: input.comprobantes_urls,
+    estado_pago: "Pendiente" as const,
+  };
+
+  let pedido: { id: string } | null = null;
+  let pedidoError: { message: string } | null = null;
+
+  const { data: insertedData, error: err } = await supabase
     .from("pedidos")
     .insert({
-      nombre_comprador: nombreUnificado,
-      whatsapp: input.whatsapp.trim(),
-      email: input.email.trim().toLowerCase(),
-      etapa: input.etapa.trim(),
-      animador_vendedor: animadorUnificado,
-      cantidad_total: input.cantidad_total,
-      comprobantes_urls: input.comprobantes_urls,
-      estado_pago: "Pendiente",
+      ...baseInsert,
+      es_efectivo: esEfectivo,
+      recibido_por: recibidoPor,
     })
     .select("id")
     .single();
+
+  if (err && err.message?.includes("es_efectivo") && !esEfectivo) {
+    // Si la base de datos aún no tiene la migración pero es transferencia, reintentar sin las columnas nuevas
+    console.warn("[createOrder] Columna es_efectivo no disponible en DB, reintentando inserción básica...");
+    const retry = await supabase
+      .from("pedidos")
+      .insert(baseInsert)
+      .select("id")
+      .single();
+    pedido = retry.data;
+    pedidoError = retry.error;
+  } else {
+    pedido = insertedData;
+    pedidoError = err;
+  }
 
   if (pedidoError || !pedido) {
     console.error("[createOrder] Error al insertar pedido:", pedidoError);
     return {
       ok: false,
-      error: "No se pudo registrar el pedido. Intentá nuevamente.",
+      error: pedidoError?.message?.includes("es_efectivo")
+        ? "La base de datos requiere la migración de pagos en efectivo (columna 'es_efectivo'). Contactá al administrador."
+        : "No se pudo registrar el pedido. Intentá nuevamente.",
     };
   }
 

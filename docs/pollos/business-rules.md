@@ -30,6 +30,12 @@ Este documento compila las reglas comerciales, operativas y de validación que g
 4. **Datos Bancarios de Destino:** La transferencia debe realizarse a la cuenta del Banco Santander de la institución:
    - Alias: `GRUPOSDBNQN`
    - Motivo sugerido: `POLLADACRV`
+5. **Modalidad de Pago en Efectivo:**
+   - En el formulario existe la opción explícita "¿Es pago en efectivo?" (por defecto desmarcada).
+   - Al marcar efectivo, se ocultan los datos de transferencia bancaria y se exige el campo **"¿Quién recibió el dinero?"** (`recibido_por`, texto libre, obligatorio).
+   - **Comprobante Obligatorio para Efectivo:** El comprobante sigue siendo 100% obligatorio (foto del recibo de papel o comprobante físico firmado extendido por quien cobró).
+   - **No Auto-aprobación:** El pedido en efectivo ingresa siempre como **`Pendiente`** y requiere auditoría de coordinación en `/pollos/admin`.
+   - **Auditoría y Edición:** En el panel de administración se distingue con badge `💵 Efectivo · Recibió: [nombre]`. El operador puede corregir el cobrador o alternar el método de pago antes de aprobar o rechazar.
 
 ---
 

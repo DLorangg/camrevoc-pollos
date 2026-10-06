@@ -48,6 +48,18 @@ Calculados dinámicamente en memoria sumando exclusivamente pagos en estado `APR
 ### Pagos en Cuotas
 Las familias pueden realizar pagos parciales sucesivos a lo largo de los meses hasta completar el total de la tarifa asignada.
 
+### Modalidad de Pago en Efectivo
+1. **Formulario Familiar (`/campamento/pagos`):**
+   - Incluye el checkbox opcional "¿Es pago en efectivo?" (por defecto desmarcado).
+   - Al marcarlo, se reemplaza la información bancaria por indicaciones de pago en mano y se exige el campo obligatorio **"¿Quién recibió el dinero?"** (`recibido_por`, texto libre).
+   - **Comprobante Obligatorio:** Sigue siendo 100% obligatorio adjuntar foto del recibo en papel o talón firmado provisto por quien cobró.
+   - **Estado Inicial:** Ingresa siempre como **`PENDIENTE`** y **no impacta en saldos** hasta su aprobación por coordinación.
+2. **Auditoría y Edición en Coordinación:**
+   - En la pestaña de pendientes y rechazados se visualiza claramente el método y el cobrador (`💵 Efectivo · Recibió: [nombre]`).
+   - El coordinador puede editar la modalidad o corregir el nombre del cobrador antes de aprobar o mediante la acción directa de aprobación.
+3. **Carga Manual Directa:**
+   - Desde el modal de gestión de pagos de cada participante, los coordinadores pueden registrar pagos en efectivo indicando quién cobró (por defecto se autocompleta con su usuario). Inicia como `APROBADO`.
+
 ---
 
 ## 4. Política de Hermanos y Transferencias Compartidas

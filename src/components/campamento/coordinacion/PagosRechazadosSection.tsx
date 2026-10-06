@@ -105,6 +105,19 @@ export default function PagosRechazadosSection({
                   </p>
                 </div>
 
+                {/* Medio de pago */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {pago.es_efectivo ? (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-amber-900 bg-amber-100 px-2 py-0.5 rounded-md border border-amber-300">
+                      💵 Efectivo · Recibió: {pago.recibido_por || "No especificado"}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                      🏦 Transferencia
+                    </span>
+                  )}
+                </div>
+
                 {/* Motivo de Rechazo destacado */}
                 <div className="rounded-xl border border-rose-200 bg-rose-50/70 p-3 text-xs text-rose-900 space-y-1">
                   <span className="font-bold uppercase tracking-wider text-[10px] text-rose-700 block">

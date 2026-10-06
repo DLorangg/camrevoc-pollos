@@ -106,6 +106,18 @@ Este documento registra las decisiones fundamentales de arquitectura, reglas de 
   5. Si el diseño de frente elegido posee frase, el dorso se inhabilita automáticamente (`atras = null`). Si no posee frase, se vota el dorso. CRV en manga y color se votan de forma independiente.
 - **Estado Actual:** Implementado en `/buzos` y `/buzos/admin`. Persistencia en tabla `buzos_votos` (`camrevoc-pollos`).
 
+### ADR-15: Soporte Transversal para Pagos en Efectivo en Pollos y Campamentos
+- **Categoría:** Pagos / Transversal (Pollos y Campamentos).
+- **Contexto:** Las operaciones contemplaban exclusivamente transferencias bancarias directas con comprobante bancario. En la práctica comunitaria, es habitual que familias o compradores abonen en efectivo en mano a coordinadores o animadores específicos.
+- **Decisión:**
+  1. Preservar intactos los flujos preexistentes (transferencia bancaria por defecto).
+  2. Agregar la opción "¿Es pago en efectivo?" en los formularios de Pollos (`OrderForm`) y Campamentos (`FamiliaPagosForm`, `GestionPagosModal`).
+  3. Exigir obligatoriamente el campo libre "¿Quién recibió el dinero?" (`recibido_por`) cuando se marca efectivo, sin relaciones rígidas a tablas de usuarios.
+  4. Mantener la obligatoriedad estricta del comprobante: para efectivo se exige foto del recibo de papel o talón firmado.
+  5. Los pagos en efectivo ingresan siempre en estado `PENDIENTE` y no impactan en saldos o vales hasta ser auditados por coordinación (sin auto-aprobación).
+  6. Destacar visualmente los pagos en efectivo en los paneles de administración y permitir que coordinación edite el medio de pago o el cobrador antes de aprobar.
+- **Estado Actual:** Resuelto / Implementado. Columnas `es_efectivo` (boolean, default false) y `recibido_por` (text, nullable) en tablas `pedidos` y `pagos`.
+
 ---
 
 ## 4. Matriz de Estado de Decisiones
@@ -126,3 +138,4 @@ Este documento registra las decisiones fundamentales de arquitectura, reglas de 
 | ADR-12 | PINs en texto plano | Campamentos | **Deuda técnica aceptada** |
 | ADR-13 | Soporte para 3 o más hermanos | Campamentos | Resuelto / Implementado |
 | ADR-14 | Votación unificada de diseño sin padrón para Buzos 2027 | Buzos | Resuelto / Implementado |
+| ADR-15 | Soporte transversal para pagos en efectivo | Transversal | Resuelto / Implementado |
