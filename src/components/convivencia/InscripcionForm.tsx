@@ -16,6 +16,8 @@ import {
   CONVIVENCIA_CONFIG,
   CONVIVENCIA_ETAPAS,
   CONVIVENCIA_MENSAJE_CERRADA,
+  CONVIVENCIA_TARIFA_TEXTO,
+  calcularPrecioConvivencia,
 } from "@/config/convivencia";
 import { validarInscripcionConvivencia, esMenor } from "@/lib/convivencia/validation";
 import { createInscripcionConvivencia } from "@/app/convivencia/actions/inscripcion";
@@ -36,6 +38,7 @@ interface IntegranteForm {
   etapa: string;
   parentesco: string;
   observacionesSalud: string;
+  esCeliaco: SiNo;
   menorAcompanado: SiNo;
   ceNombre: string;
   ceVinculo: string;
@@ -69,6 +72,7 @@ function nuevoIntegrante(): IntegranteForm {
     etapa: "",
     parentesco: "",
     observacionesSalud: "",
+    esCeliaco: "",
     menorAcompanado: "",
     ceNombre: "",
     ceVinculo: "",
@@ -239,6 +243,23 @@ function IntegranteFields({
         )}
 
         <div className="sm:col-span-2">
+          <p className="mb-1.5 text-sm font-semibold text-slate-800">¿Es celíaco/a? *</p>
+          <div className="flex gap-4 text-sm text-slate-700">
+            {(["si", "no"] as const).map((opt) => (
+              <label key={opt} className="inline-flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name={`${id}-celiaco`}
+                  checked={value.esCeliaco === opt}
+                  onChange={() => onChange({ esCeliaco: opt })}
+                />
+                {opt === "si" ? "Sí" : "No"}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="sm:col-span-2">
           <label htmlFor={`${id}-salud`} className={labelCls}>
             Observaciones de salud relevantes (opcional)
           </label>
@@ -330,9 +351,10 @@ export default function ConvivenciaInscripcionForm({ abierta }: { abierta: boole
   const [cerrada, setCerrada] = useState(!abierta);
   const [titular, setTitular] = useState<IntegranteForm>(() => nuevoIntegrante());
   const [extras, setExtras] = useState<IntegranteForm[]>([]);
-  const [hayCeliaco, setHayCeliaco] = useState<SiNo>("");
   const [errors, setErrors] = useState<string[]>([]);
-  const [exito, setExito] = useState<{ id: string; cantidad: number } | null>(null);
+  const [exito, setExito] = useState<{ id: string; cantidad: number; total: number } | null>(
+    null
+  );
   const [isPending, startTransition] = useTransition();
   // Clave de idempotencia: se genera una sola vez por formulario y se reutiliza en los
   // reintentos, de modo que un reenvío nunca duplica la inscripción.
@@ -368,7 +390,7 @@ export default function ConvivenciaInscripcionForm({ abierta }: { abierta: boole
 
         <div className="rounded-2xl border border-sky-100 bg-sky-50/60 p-4">
           <p className="mb-3 text-sm font-bold text-slate-900">
-            Total a abonar: {formatearPrecioConvivencia()} por familia
+            Total a abonar: {formatearPrecioConvivencia(exito.total)}
           </p>
           <ConvivenciaDatosActividad />
           <p className="mt-3 rounded-lg bg-amber-100 px-3 py-2 text-xs font-bold text-amber-900">
@@ -393,6 +415,8 @@ export default function ConvivenciaInscripcionForm({ abierta }: { abierta: boole
   const updateExtra = (key: string, patch: Partial<IntegranteForm>) =>
     setExtras((prev) => prev.map((e) => (e.key === key ? { ...e, ...patch } : e)));
 
+  const precioActual = calcularPrecioConvivencia(1 + extras.length);
+
   const buildPayload = (envioId: string) => {
     const mapear = (f: IntegranteForm) => ({
       nombre: f.nombre,
@@ -402,13 +426,13 @@ export default function ConvivenciaInscripcionForm({ abierta }: { abierta: boole
       etapa: f.etapa,
       parentesco: f.parentesco,
       observacionesSalud: f.observacionesSalud,
+      esCeliaco: f.esCeliaco === "si" ? true : f.esCeliaco === "no" ? false : undefined,
       menorAcompanado:
         f.menorAcompanado === "si" ? true : f.menorAcompanado === "no" ? false : undefined,
       contactoEmergencia: { nombre: f.ceNombre, vinculo: f.ceVinculo, telefono: f.ceTelefono },
     });
     return {
       envioId,
-      hayCeliaco: hayCeliaco === "si" ? true : hayCeliaco === "no" ? false : undefined,
       integrantes: [mapear(titular), ...extras.map(mapear)],
     };
   };
@@ -433,8 +457,17 @@ export default function ConvivenciaInscripcionForm({ abierta }: { abierta: boole
     startTransition(async () => {
       try {
         const res = await createInscripcionConvivencia(local.data);
-        if (res.ok && res.inscripcionId && typeof res.cantidadIntegrantes === "number") {
-          setExito({ id: res.inscripcionId, cantidad: res.cantidadIntegrantes });
+        if (
+          res.ok &&
+          res.inscripcionId &&
+          typeof res.cantidadIntegrantes === "number" &&
+          typeof res.precioTotal === "number"
+        ) {
+          setExito({
+            id: res.inscripcionId,
+            cantidad: res.cantidadIntegrantes,
+            total: res.precioTotal,
+          });
           window.scrollTo({ top: 0, behavior: "smooth" });
         } else if (res.cerrada) {
           setCerrada(true);
@@ -506,31 +539,14 @@ export default function ConvivenciaInscripcionForm({ abierta }: { abierta: boole
         Agregar integrante
       </button>
 
-      <fieldset disabled={isPending} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs sm:p-5">
-        <legend className="text-sm font-extrabold text-slate-900">Alimentación</legend>
-        <p className="mb-2 mt-1 text-sm font-semibold text-slate-800">
-          ¿Hay algún integrante celíaco? *
-        </p>
-        <div className="flex gap-4 text-sm text-slate-700">
-          {(["si", "no"] as const).map((opt) => (
-            <label key={opt} className="inline-flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="hay-celiaco"
-                checked={hayCeliaco === opt}
-                onChange={() => setHayCeliaco(opt)}
-              />
-              {opt === "si" ? "Sí" : "No"}
-            </label>
-          ))}
-        </div>
-      </fieldset>
-
       <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
         <p className="flex items-center gap-2 font-bold text-slate-800">
           <Users className="h-4 w-4 text-sky-600" />
-          {formatearPrecioConvivencia()} por familia · pago en efectivo el día de la actividad
+          Total a abonar: {formatearPrecioConvivencia(precioActual)} ({1 + extras.length}{" "}
+          {1 + extras.length === 1 ? "integrante" : "integrantes"}) · pago en efectivo el día de la
+          actividad
         </p>
+        <p className="mt-1">{CONVIVENCIA_TARIFA_TEXTO}</p>
         <p className="mt-1">
           Inscripciones abiertas hasta el {CONVIVENCIA_CONFIG.fechaCierreTexto}.
         </p>

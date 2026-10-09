@@ -6,7 +6,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, ChevronLeft, LogOut, Search, Wheat } from "lucide-react";
 import { logoutConvivenciaAdmin } from "@/app/convivencia/actions/admin-actions";
-import { CONVIVENCIA_ETAPAS } from "@/config/convivencia";
+import { CONVIVENCIA_ETAPAS, calcularPrecioConvivencia } from "@/config/convivencia";
 import type { InscripcionConvivenciaRow } from "@/types/convivencia";
 
 type Filtro = "todas" | "celiacos" | "menores-sin-adulto" | "salud";
@@ -28,6 +28,19 @@ const fmtFecha = new Intl.DateTimeFormat("es-AR", {
 function tieneMenorSinAdulto(i: InscripcionConvivenciaRow) {
   return i.convivencia_integrantes.some((m) => m.menor_acompanado === false);
 }
+/** Integrantes celíacos. Las inscripciones anteriores al cambio solo tienen el dato familiar. */
+function integrantesCeliacos(i: InscripcionConvivenciaRow) {
+  return i.convivencia_integrantes.filter((m) => m.es_celiaco === true);
+}
+function celiaquiaLegacy(i: InscripcionConvivenciaRow) {
+  return (
+    i.hay_celiaco === true && i.convivencia_integrantes.every((m) => m.es_celiaco === null)
+  );
+}
+function tieneCeliaco(i: InscripcionConvivenciaRow) {
+  return integrantesCeliacos(i).length > 0 || celiaquiaLegacy(i);
+}
+const ARS = new Intl.NumberFormat("es-AR");
 function tieneSalud(i: InscripcionConvivenciaRow) {
   return i.convivencia_integrantes.some((m) => Boolean(m.observaciones_salud));
 }
@@ -48,7 +61,11 @@ export default function ConvivenciaAdminDashboard({
     return {
       familias: inscripciones.length,
       personas,
-      celiacos: inscripciones.filter((i) => i.hay_celiaco).length,
+      celiacos: inscripciones.reduce((a, i) => a + integrantesCeliacos(i).length, 0),
+      total: inscripciones.reduce(
+        (a, i) => a + calcularPrecioConvivencia(i.convivencia_integrantes.length),
+        0
+      ),
       menoresSinAdulto: inscripciones.reduce(
         (a, i) => a + i.convivencia_integrantes.filter((m) => m.menor_acompanado === false).length,
         0
@@ -72,7 +89,7 @@ export default function ConvivenciaAdminDashboard({
     const q = norm(busqueda);
     const qDigitos = busqueda.replace(/\D/g, "");
     return inscripciones.filter((i) => {
-      if (filtro === "celiacos" && !i.hay_celiaco) return false;
+      if (filtro === "celiacos" && !tieneCeliaco(i)) return false;
       if (filtro === "menores-sin-adulto" && !tieneMenorSinAdulto(i)) return false;
       if (filtro === "salud" && !tieneSalud(i)) return false;
       if (etapa && !i.convivencia_integrantes.some((m) => m.etapa === etapa)) return false;
@@ -124,11 +141,12 @@ export default function ConvivenciaAdminDashboard({
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         {[
           ["Familias", stats.familias],
           ["Personas", stats.personas],
-          ["Familias con celíacos", stats.celiacos],
+          ["Personas celíacas", stats.celiacos],
+          ["Total a cobrar (efectivo)", `$${ARS.format(stats.total)}`],
           ["Menores sin adulto", stats.menoresSinAdulto],
         ].map(([label, n]) => (
           <div key={label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
@@ -210,11 +228,12 @@ export default function ConvivenciaAdminDashboard({
                       <p className="text-xs text-slate-500">
                         {fmtFecha.format(new Date(i.created_at))} ·{" "}
                         {i.convivencia_integrantes.length}{" "}
-                        {i.convivencia_integrantes.length === 1 ? "persona" : "personas"}
+                        {i.convivencia_integrantes.length === 1 ? "persona" : "personas"} · a cobrar $
+                        {ARS.format(calcularPrecioConvivencia(i.convivencia_integrantes.length))}
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-1.5">
-                      {i.hay_celiaco && (
+                      {tieneCeliaco(i) && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-800">
                           <Wheat className="h-3 w-3" /> Celíaco
                         </span>
@@ -238,10 +257,12 @@ export default function ConvivenciaAdminDashboard({
                   </summary>
 
                   <div className="space-y-2 border-t border-slate-100 p-4">
-                    <p className="text-xs text-slate-500">
-                      ¿Hay celíacos en la familia?{" "}
-                      <strong className="text-slate-800">{i.hay_celiaco ? "Sí" : "No"}</strong>
-                    </p>
+                    {celiaquiaLegacy(i) && (
+                      <p className="text-xs font-bold text-amber-700">
+                        Inscripción anterior: se registró que hay un celíaco en la familia, sin
+                        indicar quién.
+                      </p>
+                    )}
                     {i.convivencia_integrantes.map((m) => (
                       <div key={m.id} className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-xs text-slate-700">
                         <p className="font-bold text-slate-900">
@@ -259,6 +280,10 @@ export default function ConvivenciaAdminDashboard({
                           )}{" "}
                           · {m.edad} años · {m.es_titular ? "Titular" : `Parentesco: ${m.parentesco}`} ·{" "}
                           {m.etapa ?? "No pertenece a CAMREVOC"}
+                        </p>
+                        <p className="mt-1">
+                          <strong>¿Es celíaco/a?</strong>{" "}
+                          {m.es_celiaco === null ? "Sin dato" : m.es_celiaco ? "Sí" : "No"}
                         </p>
                         {m.observaciones_salud && (
                           <p className="mt-1">

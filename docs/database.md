@@ -73,7 +73,7 @@ Cabecera de la inscripción familiar a la Convivencia Familiar 2026. **Requiere 
 | `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | Identificador de la inscripción. |
 | `created_at` | `TIMESTAMPTZ` | `DEFAULT now() NOT NULL` | Fecha de registro (índice descendente). |
 | `envio_id` | `UUID` | `UNIQUE NOT NULL` | Clave de idempotencia generada por el navegador (evita duplicados por reintento). |
-| `hay_celiaco` | `BOOLEAN` | `NOT NULL` | Si hay algún integrante celíaco en la familia. |
+| `hay_celiaco` | `BOOLEAN` | `NULL` | **OBSOLETO.** Dato familiar de la primera versión; se conserva para no perder datos. Las inscripciones nuevas quedan en `NULL`. |
 
 #### 5. `convivencia_integrantes`
 Integrantes de cada inscripción (`ON DELETE CASCADE` desde la cabecera).
@@ -90,10 +90,11 @@ Integrantes de cada inscripción (`ON DELETE CASCADE` desde la cabecera).
 | `etapa` | `TEXT` | `CHECK` en `1ra Etapa`…`7ma Etapa`, `Animador/a`; obligatoria para el titular | `NULL` = no pertenece a CAMREVOC. |
 | `parentesco` | `TEXT` | `NULL` solo para el titular | Parentesco con el titular. |
 | `observaciones_salud` | `TEXT` | `NULL` | Observaciones opcionales. |
+| `es_celiaco` | `BOOLEAN` | `CHECK (es_celiaco IS NOT NULL) NOT VALID` | Respuesta individual a «¿Es celíaco/a?». Obligatoria en altas nuevas; `NULL` solo en filas anteriores al cambio. |
 | `menor_acompanado` | `BOOLEAN` | Solo para `edad < 18`, `NULL` en adultos | Si el menor asiste con un adulto de su familia. |
 | `emergencia_nombre`, `emergencia_vinculo`, `emergencia_telefono` | `TEXT` | Los tres `NULL` o los tres completos | Contacto de emergencia. |
 
-**Función `convivencia_registrar_inscripcion(p_envio_id, p_hay_celiaco, p_integrantes jsonb)`:** inserta cabecera + integrantes en una única transacción y es idempotente por `envio_id`. `EXECUTE` solo para `service_role`.
+**Función `convivencia_registrar_inscripcion(p_envio_id uuid, p_integrantes jsonb)`:** inserta cabecera + integrantes en una única transacción y es idempotente por `envio_id`. `EXECUTE` solo para `service_role`.
 
 **Seguridad:** RLS habilitado **sin políticas** y `REVOKE ALL` a `anon`/`authenticated` en ambas tablas: solo el Service Role (Server Actions) accede. El módulo no usa Storage ni toca `pedidos`, `vales`, `buzos_votos`.
 

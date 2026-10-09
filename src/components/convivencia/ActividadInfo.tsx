@@ -2,12 +2,13 @@ import { CalendarDays, Clock, MapPin, Banknote, Backpack } from "lucide-react";
 import {
   CONVIVENCIA_CONFIG,
   CONVIVENCIA_QUE_LLEVAR,
+  CONVIVENCIA_TARIFA_TEXTO,
 } from "@/config/convivencia";
 
 const ARS = new Intl.NumberFormat("es-AR");
 
-export function formatearPrecioConvivencia(): string {
-  return `$${ARS.format(CONVIVENCIA_CONFIG.precioPorFamilia)}`;
+export function formatearPrecioConvivencia(monto: number): string {
+  return `$${ARS.format(monto)}`;
 }
 
 /** Datos de la actividad (fecha, horario, lugar, costo y pago). Sin hooks: usable en servidor y cliente. */
@@ -36,8 +37,8 @@ export function ConvivenciaDatosActividad() {
       <li className="flex items-start gap-3">
         <Banknote className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" />
         <span>
-          <strong className="text-slate-900">Costo:</strong> {formatearPrecioConvivencia()} por
-          familia, sin importar la cantidad de integrantes. {CONVIVENCIA_CONFIG.pagoTexto}
+          <strong className="text-slate-900">Costo:</strong> {CONVIVENCIA_TARIFA_TEXTO}{" "}
+          {CONVIVENCIA_CONFIG.pagoTexto}
         </span>
       </li>
     </ul>

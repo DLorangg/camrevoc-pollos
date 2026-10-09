@@ -2,7 +2,7 @@
 
 Inscripción **por familia** a la *Convivencia Familiar CAMREVOC 2026* (sábado 17 de octubre de 2026, 10:00 a 18:00, Planta de Campamentos N.º 1, Intendente Linares 1980, Neuquén). Módulo independiente de Pollos, Campamentos y Buzos: no comparte datos, reglas ni flujos con ellos.
 
-> **La web NO gestiona pagos.** Solo informa el costo ($15.000 por familia) y que el pago es en efectivo el día de la actividad.
+> **La web NO gestiona pagos.** Solo informa el costo (tarifa escalonada: 1 integrante $5.000, 2 $10.000, 3 o más $15.000 en total) y que el pago es en efectivo el día de la actividad.
 
 ## Rutas
 
@@ -30,7 +30,7 @@ Proyecto Supabase **`camrevoc-pollos`** (base principal), tablas propias `conviv
 
 ## Habilitación manual (pendiente de quien administra Supabase)
 
-1. Ejecutar [`docs/convivencia/schema.sql`](./schema.sql) en el **SQL Editor del proyecto `camrevoc-pollos`** (es idempotente).
+1. Ejecutar [`docs/convivencia/schema.sql`](./schema.sql) en el **SQL Editor del proyecto `camrevoc-pollos`** (es idempotente). **Si ya habías ejecutado la versión anterior, volvé a ejecutar el archivo completo**: agrega `es_celiaco` por integrante, hace opcional `hay_celiaco` (sin borrar datos) y reemplaza la función de registro. Hasta ejecutarlo, el código nuevo no puede registrar inscripciones.
 2. Verificar que existan las variables de entorno del servidor `NEXT_PUBLIC_SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` (ya usadas por Pollos/Buzos).
 3. Definir la contraseña del panel: `CONVIVENCIA_ADMIN_PASSWORD` (opcional; si falta se usa `ADMIN_PASSWORD`). Sin ninguna de las dos, el login rechaza el acceso.
 4. Redesplegar si se agregó una variable de entorno.

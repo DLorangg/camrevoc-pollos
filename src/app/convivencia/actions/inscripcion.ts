@@ -3,6 +3,7 @@
 import { createConvivenciaClient } from "@/lib/supabase/convivencia";
 import {
   CONVIVENCIA_MENSAJE_CERRADA,
+  calcularPrecioConvivencia,
   isInscripcionConvivenciaAbierta,
 } from "@/config/convivencia";
 import { validarInscripcionConvivencia } from "@/lib/convivencia/validation";
@@ -14,6 +15,8 @@ export interface CrearInscripcionConvivenciaResult {
   errors?: string[];
   inscripcionId?: string;
   cantidadIntegrantes?: number;
+  /** Total a abonar en efectivo, calculado en el servidor. */
+  precioTotal?: number;
 }
 
 const ERROR_GENERICO =
@@ -39,7 +42,7 @@ export async function createInscripcionConvivencia(
   if (!validacion.ok) {
     return { ok: false, errors: validacion.errors };
   }
-  const { envioId, hayCeliaco, integrantes } = validacion.data;
+  const { envioId, integrantes } = validacion.data;
 
   const payload = integrantes.map((i) => ({
     nombre: i.nombre,
@@ -49,6 +52,7 @@ export async function createInscripcionConvivencia(
     etapa: i.etapa,
     parentesco: i.parentesco,
     observaciones_salud: i.observacionesSalud,
+    es_celiaco: i.esCeliaco,
     menor_acompanado: i.menorAcompanado,
     emergencia_nombre: i.contactoEmergencia?.nombre ?? null,
     emergencia_vinculo: i.contactoEmergencia?.vinculo ?? null,
@@ -59,7 +63,6 @@ export async function createInscripcionConvivencia(
     const supabase = createConvivenciaClient();
     const { data, error } = await supabase.rpc("convivencia_registrar_inscripcion", {
       p_envio_id: envioId,
-      p_hay_celiaco: hayCeliaco,
       p_integrantes: payload,
     });
 
@@ -85,6 +88,8 @@ export async function createInscripcionConvivencia(
       ok: true,
       inscripcionId: res.inscripcion_id,
       cantidadIntegrantes: res.cantidad_integrantes,
+      // Calculado siempre en el servidor a partir de lo realmente registrado.
+      precioTotal: calcularPrecioConvivencia(res.cantidad_integrantes),
     };
   } catch (err) {
     console.error(

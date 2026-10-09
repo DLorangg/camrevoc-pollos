@@ -12,6 +12,8 @@ export interface IntegranteConvivenciaInput {
   /** `null` para el titular; obligatorio para los demás. */
   parentesco: string | null;
   observacionesSalud: string | null;
+  /** Respuesta individual (obligatoria) a «¿Es celíaco/a?». */
+  esCeliaco: boolean;
   /** Solo aplica a menores de edad; `null` para adultos. */
   menorAcompanado: boolean | null;
   contactoEmergencia: {
@@ -24,7 +26,6 @@ export interface IntegranteConvivenciaInput {
 export interface InscripcionConvivenciaInput {
   /** Clave de idempotencia generada por el navegador para evitar duplicados por reintentos. */
   envioId: string;
-  hayCeliaco: boolean;
   /** El primer elemento es siempre el titular vinculado a CAMREVOC. */
   integrantes: IntegranteConvivenciaInput[];
 }
@@ -42,6 +43,8 @@ export interface IntegranteConvivenciaRow {
   etapa: string | null;
   parentesco: string | null;
   observaciones_salud: string | null;
+  /** `null` solo en inscripciones anteriores al cambio a respuesta individual. */
+  es_celiaco: boolean | null;
   menor_acompanado: boolean | null;
   emergencia_nombre: string | null;
   emergencia_vinculo: string | null;
@@ -52,6 +55,7 @@ export interface IntegranteConvivenciaRow {
 export interface InscripcionConvivenciaRow {
   id: string;
   created_at: string;
-  hay_celiaco: boolean;
+  /** OBSOLETO: dato familiar anterior; las nuevas inscripciones lo dejan en `null`. */
+  hay_celiaco: boolean | null;
   convivencia_integrantes: IntegranteConvivenciaRow[];
 }

@@ -12,8 +12,12 @@ export const CONVIVENCIA_CONFIG = {
   horarioTexto: "de 10:00 a 18:00 hs",
   lugarNombre: "Planta de Campamentos N.º 1",
   lugarDireccion: "Intendente Linares 1980, Neuquén",
-  /** Precio fijo por familia, sin importar la cantidad de integrantes. */
-  precioPorFamilia: 15000,
+  /** Tarifa escalonada: $5.000 por integrante hasta 2; desde 3 integrantes, total fijo. */
+  precioPorIntegrante: 5000,
+  /** Cantidad de integrantes desde la cual se cobra el total fijo. */
+  integrantesParaTotalFijo: 3,
+  /** Total fijo para familias de 3 o más integrantes. */
+  precioTotalFijo: 15000,
   /** Modalidad de pago informativa (no se registra pago en la web). */
   pagoTexto: "Pago obligatorio en efectivo el día de la actividad.",
   /**
@@ -64,6 +68,22 @@ export type ConvivenciaEtapa = (typeof CONVIVENCIA_ETAPAS)[number];
 
 /** Edad (exclusiva) a partir de la cual una persona se considera adulta. */
 export const CONVIVENCIA_EDAD_MAYORIA = 18;
+
+/**
+ * Calcula el costo total de la inscripción según la cantidad de integrantes.
+ * 1 → $5.000 · 2 → $10.000 · 3 o más → $15.000 (total fijo).
+ * Es la ÚNICA fórmula: el servidor la usa y nunca confía en un total del navegador.
+ */
+export function calcularPrecioConvivencia(cantidadIntegrantes: number): number {
+  if (!Number.isInteger(cantidadIntegrantes) || cantidadIntegrantes < 1) return 0;
+  return cantidadIntegrantes >= CONVIVENCIA_CONFIG.integrantesParaTotalFijo
+    ? CONVIVENCIA_CONFIG.precioTotalFijo
+    : cantidadIntegrantes * CONVIVENCIA_CONFIG.precioPorIntegrante;
+}
+
+/** Texto de la tarifa vigente (para mostrar antes de conocer la cantidad de integrantes). */
+export const CONVIVENCIA_TARIFA_TEXTO =
+  "1 integrante: $5.000 · 2 integrantes: $10.000 · 3 o más integrantes: $15.000 en total.";
 
 /**
  * Devuelve `true` si las inscripciones siguen abiertas.

@@ -116,6 +116,10 @@ function validarIntegrante(
   }
   const observacionesSalud = saludRaw || null;
 
+  if (typeof r.esCeliaco !== "boolean") {
+    errors.push(`${etiqueta}: indicá si es celíaco/a.`);
+  }
+
   // Menores: acompañamiento y contacto de emergencia.
   let menorAcompanado: boolean | null = null;
   let contactoEmergencia: IntegranteConvivenciaInput["contactoEmergencia"] = null;
@@ -167,6 +171,7 @@ function validarIntegrante(
     etapa,
     parentesco,
     observacionesSalud,
+    esCeliaco: r.esCeliaco as boolean,
     menorAcompanado,
     contactoEmergencia,
   };
@@ -183,10 +188,6 @@ export function validarInscripcionConvivencia(input: unknown): ResultadoValidaci
   const envioId = typeof r.envioId === "string" ? r.envioId.trim() : "";
   if (!UUID_RE.test(envioId)) {
     errors.push("No se pudo identificar el envío. Recargá la página e intentá nuevamente.");
-  }
-
-  if (typeof r.hayCeliaco !== "boolean") {
-    errors.push("Indicá si hay algún integrante celíaco.");
   }
 
   const integrantesRaw = Array.isArray(r.integrantes) ? r.integrantes : null;
@@ -217,7 +218,6 @@ export function validarInscripcionConvivencia(input: unknown): ResultadoValidaci
     ok: true,
     data: {
       envioId,
-      hayCeliaco: r.hayCeliaco as boolean,
       integrantes,
     },
   };

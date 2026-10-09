@@ -6,6 +6,11 @@
 -- DÓNDE: Supabase Dashboard → SQL Editor, ejecución MANUAL por una persona.
 --   Este script NO fue ejecutado por el código ni por el agente que lo redactó.
 -- IDEMPOTENTE: puede ejecutarse más de una vez sin duplicar ni romper objetos.
+-- ACTUALIZACIÓN (celiaquía individual + tarifa escalonada en la app): si ya ejecutaste
+--   la versión anterior de este script, volvé a ejecutar ESTE archivo completo. Agrega
+--   `es_celiaco` por integrante, hace opcional el dato familiar obsoleto `hay_celiaco`
+--   (sin borrar ni modificar datos existentes) y reemplaza la función de registro.
+--   El precio NO se guarda en la base: se calcula en el servidor (src/config/convivencia.ts).
 -- ALCANCE: crea únicamente objetos `convivencia_*`. No toca `pedidos`, `vales`,
 --   `buzos_votos`, `inscriptos`, `pagos` ni Storage.
 -- PRIVACIDAD: contiene datos personales (DNI, salud, menores). RLS habilitado
@@ -20,10 +25,14 @@ CREATE TABLE IF NOT EXISTS public.convivencia_inscripciones (
     -- Clave de idempotencia generada por el navegador: un reintento del mismo
     -- envío nunca crea una segunda inscripción.
     envio_id    UUID NOT NULL,
-    -- ¿Hay algún integrante celíaco en la familia? (dato de la inscripción familiar)
-    hay_celiaco BOOLEAN NOT NULL,
+    -- OBSOLETO: dato familiar de la primera versión. Se conserva solo para no perder
+    -- inscripciones ya guardadas; las nuevas quedan en NULL (ver integrantes.es_celiaco).
+    hay_celiaco BOOLEAN,
     CONSTRAINT convivencia_inscripciones_envio_id_key UNIQUE (envio_id)
 );
+
+-- Migración de la versión anterior: el dato familiar pasa a ser opcional (no se borra).
+ALTER TABLE public.convivencia_inscripciones ALTER COLUMN hay_celiaco DROP NOT NULL;
 
 CREATE INDEX IF NOT EXISTS idx_convivencia_inscripciones_created_at
     ON public.convivencia_inscripciones (created_at DESC);
@@ -47,6 +56,9 @@ CREATE TABLE IF NOT EXISTS public.convivencia_integrantes (
     -- Parentesco con el titular. NULL solo para el titular.
     parentesco           TEXT,
     observaciones_salud  TEXT,
+    -- ¿Es celíaco/a? Respuesta individual obligatoria para inscripciones nuevas.
+    -- NULL únicamente en filas anteriores a este cambio (ver constraint más abajo).
+    es_celiaco           BOOLEAN,
     -- Solo para menores de 18: ¿asiste con un adulto de su familia? NULL para adultos.
     menor_acompanado     BOOLEAN,
     -- Contacto de emergencia: se guarda completo o no se guarda.
@@ -69,6 +81,24 @@ CREATE TABLE IF NOT EXISTS public.convivencia_integrantes (
     )
 );
 
+-- Migración de la versión anterior: agrega la columna sin tocar las filas existentes.
+ALTER TABLE public.convivencia_integrantes ADD COLUMN IF NOT EXISTS es_celiaco BOOLEAN;
+
+-- Obligatoriedad para filas NUEVAS sin invalidar las existentes (NOT VALID no revisa
+-- filas previas). Las inscripciones anteriores conservan es_celiaco = NULL.
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+         WHERE conname = 'convivencia_integrantes_celiaco_chk'
+           AND conrelid = 'public.convivencia_integrantes'::regclass
+    ) THEN
+        ALTER TABLE public.convivencia_integrantes
+            ADD CONSTRAINT convivencia_integrantes_celiaco_chk
+            CHECK (es_celiaco IS NOT NULL) NOT VALID;
+    END IF;
+END $$;
+
 -- Un único titular por inscripción.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_convivencia_integrantes_un_titular
     ON public.convivencia_integrantes (inscripcion_id) WHERE es_titular;
@@ -88,12 +118,14 @@ REVOKE ALL ON public.convivencia_integrantes   FROM anon, authenticated;
 -- Inserta cabecera + integrantes en UNA sola transacción (una función plpgsql es
 -- atómica) y es idempotente por `envio_id`: si ya existe, devuelve la existente.
 -- Entrada p_integrantes: arreglo JSON ordenado; el elemento 0 es el titular. Claves:
---   nombre, apellido, dni, edad, etapa, parentesco, observaciones_salud,
+--   nombre, apellido, dni, edad, etapa, parentesco, observaciones_salud, es_celiaco,
 --   menor_acompanado, emergencia_nombre, emergencia_vinculo, emergencia_telefono
 -- Devuelve: {"inscripcion_id": uuid, "cantidad_integrantes": n, "ya_existia": bool}
+-- Firma anterior (con p_hay_celiaco): se elimina; reemplazada por la versión de abajo.
+DROP FUNCTION IF EXISTS public.convivencia_registrar_inscripcion(UUID, BOOLEAN, JSONB);
+
 CREATE OR REPLACE FUNCTION public.convivencia_registrar_inscripcion(
     p_envio_id    UUID,
-    p_hay_celiaco BOOLEAN,
     p_integrantes JSONB
 ) RETURNS JSONB
 LANGUAGE plpgsql
@@ -118,8 +150,8 @@ BEGIN
             'inscripcion_id', v_id, 'cantidad_integrantes', v_cantidad, 'ya_existia', true);
     END IF;
 
-    INSERT INTO public.convivencia_inscripciones (envio_id, hay_celiaco)
-    VALUES (p_envio_id, p_hay_celiaco)
+    INSERT INTO public.convivencia_inscripciones (envio_id)
+    VALUES (p_envio_id)
     ON CONFLICT (envio_id) DO NOTHING
     RETURNING id INTO v_id;
 
@@ -136,7 +168,7 @@ BEGIN
 
     INSERT INTO public.convivencia_integrantes (
         inscripcion_id, orden, es_titular, nombre, apellido, dni, edad, etapa,
-        parentesco, observaciones_salud, menor_acompanado,
+        parentesco, observaciones_salud, es_celiaco, menor_acompanado,
         emergencia_nombre, emergencia_vinculo, emergencia_telefono
     )
     SELECT
@@ -150,6 +182,7 @@ BEGIN
         NULLIF(t.elem->>'etapa', ''),
         NULLIF(t.elem->>'parentesco', ''),
         NULLIF(t.elem->>'observaciones_salud', ''),
+        (t.elem->>'es_celiaco')::BOOLEAN,
         (t.elem->>'menor_acompanado')::BOOLEAN,
         NULLIF(t.elem->>'emergencia_nombre', ''),
         NULLIF(t.elem->>'emergencia_vinculo', ''),
@@ -164,7 +197,7 @@ END;
 $$;
 
 -- Solo el service_role (Server Actions) puede invocar la función.
-REVOKE ALL ON FUNCTION public.convivencia_registrar_inscripcion(UUID, BOOLEAN, JSONB)
+REVOKE ALL ON FUNCTION public.convivencia_registrar_inscripcion(UUID, JSONB)
     FROM PUBLIC, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.convivencia_registrar_inscripcion(UUID, BOOLEAN, JSONB)
+GRANT EXECUTE ON FUNCTION public.convivencia_registrar_inscripcion(UUID, JSONB)
     TO service_role;
