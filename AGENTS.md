@@ -24,6 +24,7 @@ Bienvenido al repositorio de **CAMREVOC (Casa Salesiana Don Bosco Neuquén)**. E
   - Arquitectura transversal: `docs/architecture.md`, `docs/database.md`, `docs/decisions.md`.
   - Gran Pollada: `docs/pollos/README.md`, `docs/pollos/business-rules.md`, `docs/pollos/flujo.md`.
   - Campamentos: `docs/campamentos/README.md`, `docs/campamentos/business-rules.md`, `docs/campamentos/flujo.md`.
+  - Convivencia Familiar: `docs/convivencia/README.md`, `docs/convivencia/business-rules.md`, `docs/convivencia/flujo.md`.
   - Datos bancarios e identidad: `docs/shared/bank-and-identity.md`.
 
 ## 2. Aislamiento de Supabase y Base de Datos

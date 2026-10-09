@@ -128,6 +128,20 @@ Este documento registra las decisiones fundamentales de arquitectura, reglas de 
   4. El panel administrativo (`/pollos/admin`) y el canje físico de vales por QR (`/pollos/vale/[codigo]`) continúan funcionando con posterioridad a la fecha límite sin alteraciones.
 - **Estado Actual:** Resuelto / Implementado.
 
+### ADR-17: Convivencia Familiar 2026 como módulo independiente
+- **Categoría:** Arquitectura / Producto / Seguridad.
+- **Contexto:** Se necesitaba inscribir familias a la Convivencia del 17/10/2026 con integrantes múltiples, datos de salud y menores, sin pagos en la web.
+- **Decisión:**
+  1. Nuevo módulo `/convivencia` aislado de Pollos, Campamentos y Buzos, en el proyecto Supabase `camrevoc-pollos` con tablas propias `convivencia_inscripciones` / `convivencia_integrantes` (no se reutiliza ninguna tabla existente).
+  2. Persistencia atómica e idempotente mediante la función SQL `convivencia_registrar_inscripcion` (clave `envio_id`); el éxito solo se informa si la base lo confirma.
+  3. Cierre automático el 16/10/2026 23:59:59 ART, centralizado en `src/config/convivencia.ts` y validado con el reloj del servidor en la página y en la Server Action. La consulta administrativa no se restringe por fecha.
+  4. Datos personales (DNI, salud, menores) protegidos: RLS sin políticas y sin permisos para `anon`/`authenticated`; acceso solo vía Service Role en servidor. Sin consultas públicas.
+  5. Panel `/convivencia/admin` con contraseña propia (`CONVIVENCIA_ADMIN_PASSWORD`, o `ADMIN_PASSWORD` como fallback). La cookie `convivencia_admin_session` contiene un HMAC-SHA256 derivado de la contraseña (no un valor fijo), por lo que no puede falsificarse sin conocerla y cambiar la contraseña invalida las sesiones.
+  6. No se gestionan pagos: solo se informa $15.000 por familia, en efectivo el día del evento.
+- **Limitaciones conocidas (sin roles nuevos):** contraseña compartida única (sin usuarios individuales ni auditoría por persona) y sin límite de intentos de login.
+- **Pendiente (`REQUIERE DECISIÓN` / contenido externo):** documento de autorización firmada para menores sin adulto de su familia; al disponerse, completar `CONVIVENCIA_AUTORIZACION_MENORES` en `src/config/convivencia.ts`.
+- **Estado Actual:** Implementado en código; **la migración `docs/convivencia/schema.sql` debe ejecutarse manualmente en `camrevoc-pollos`** para operar.
+
 ---
 
 ## 4. Matriz de Estado de Decisiones
@@ -150,3 +164,4 @@ Este documento registra las decisiones fundamentales de arquitectura, reglas de 
 | ADR-14 | Votación unificada de diseño sin padrón para Buzos 2027 | Buzos | Resuelto / Implementado |
 | ADR-15 | Soporte transversal para pagos en efectivo | Transversal | Resuelto / Implementado |
 | ADR-16 | Cierre automático de venta de pollos por fecha límite | Pollos | Resuelto / Implementado |
+| ADR-17 | Convivencia Familiar 2026 como módulo independiente | Convivencia | Implementado (migración SQL pendiente de ejecución manual) |

@@ -50,10 +50,17 @@ src/app/
     │   ├── page.tsx             # Panel de cómputo y resultados (/buzos/admin)
     │   └── login/page.tsx       # Acceso administrativo con contraseña (/buzos/admin/login)
     └── actions/                 # Server Actions exclusivas de Buzos
+
+└── convivencia/                 # MÓDULO 4: Convivencia Familiar 2026
+    ├── page.tsx                 # Información + inscripción familiar pública (/convivencia)
+    ├── admin/
+    │   ├── page.tsx             # Panel de inscripciones, protegido por sesión (/convivencia/admin)
+    │   └── login/page.tsx       # Acceso con contraseña (/convivencia/admin/login)
+    └── actions/                 # Server Actions exclusivas de Convivencia (inscripcion.ts, admin-actions.ts)
 ```
 
 ### Principio de Aislamiento
-A pesar de compartir el mismo runtime de Node.js / Next.js, **Pollos, Campamentos y Buzos mantienen sus lógicas y modelos de datos desacoplados**. Cada módulo encapsula sus propias Server Actions, componentes en `src/components/[modulo]/` y configuraciones en `src/config/`. Campamentos utiliza su propio proyecto Supabase (`camrevoc-campa`), mientras que Buzos y Pollos operan sobre el proyecto principal (`camrevoc-pollos`) con tablas independientes.
+A pesar de compartir el mismo runtime de Node.js / Next.js, **Pollos, Campamentos, Buzos y Convivencia mantienen sus lógicas y modelos de datos desacoplados**. Cada módulo encapsula sus propias Server Actions, componentes en `src/components/[modulo]/` y configuraciones en `src/config/`. Campamentos utiliza su propio proyecto Supabase (`camrevoc-campa`), mientras que Buzos, Pollos y Convivencia operan sobre el proyecto principal (`camrevoc-pollos`) con tablas independientes (`convivencia_*` para Convivencia; cliente servidor propio en `src/lib/supabase/convivencia.ts`). La autenticación de `/convivencia/admin` se resuelve en el Server Component y en la Server Action (cookie `convivencia_admin_session`), igual que Buzos y Campamentos, sin pasar por `proxy.ts`.
 
 ---
 
@@ -120,4 +127,5 @@ Next.js 16 incorpora `proxy.ts` como evolución oficial para el control perimetr
 | Comprender decisiones previas o deuda técnica | `docs/decisions.md` |
 | Modificar ventas, ranking, vales o panel de pollos | `docs/pollos/README.md`, `docs/pollos/business-rules.md`, `docs/pollos/flujo.md` |
 | Modificar inscripción, pagos o coordinación de campamentos | `docs/campamentos/README.md`, `docs/campamentos/business-rules.md`, `docs/campamentos/flujo.md` |
+| Modificar la Convivencia Familiar (inscripción, panel, SQL) | `docs/convivencia/README.md`, `docs/convivencia/business-rules.md`, `docs/convivencia/flujo.md`, `docs/convivencia/schema.sql` |
 | Cambiar cuentas bancarias o identidad | `docs/shared/bank-and-identity.md` |

@@ -65,6 +65,38 @@ Almacena los votos individuales de los animadores y coordinadores para la elecci
 
 > Script DDL de creación disponible en [`docs/buzos/schema.sql`](file:///mnt/HDD/proyectos/camrevoc-pollos/docs/buzos/schema.sql).
 
+#### 4. `convivencia_inscripciones`
+Cabecera de la inscripción familiar a la Convivencia Familiar 2026. **Requiere ejecución manual** de [`docs/convivencia/schema.sql`](file:///mnt/HDD/proyectos/camrevoc-pollos/docs/convivencia/schema.sql) en este proyecto.
+
+| Columna | Tipo PostgreSQL | Restricciones / Default | Descripción |
+|---|---|---|---|
+| `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | Identificador de la inscripción. |
+| `created_at` | `TIMESTAMPTZ` | `DEFAULT now() NOT NULL` | Fecha de registro (índice descendente). |
+| `envio_id` | `UUID` | `UNIQUE NOT NULL` | Clave de idempotencia generada por el navegador (evita duplicados por reintento). |
+| `hay_celiaco` | `BOOLEAN` | `NOT NULL` | Si hay algún integrante celíaco en la familia. |
+
+#### 5. `convivencia_integrantes`
+Integrantes de cada inscripción (`ON DELETE CASCADE` desde la cabecera).
+
+| Columna | Tipo PostgreSQL | Restricciones / Default | Descripción |
+|---|---|---|---|
+| `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | Identificador. |
+| `inscripcion_id` | `UUID` | `NOT NULL REFERENCES convivencia_inscripciones(id) ON DELETE CASCADE` | Familia. |
+| `orden` | `INTEGER` | `NOT NULL CHECK (orden >= 1)`, `UNIQUE (inscripcion_id, orden)` | Posición; 1 = titular. |
+| `es_titular` | `BOOLEAN` | `NOT NULL`; un único titular por inscripción (índice parcial) | Persona vinculada a CAMREVOC. |
+| `nombre`, `apellido` | `TEXT` | `NOT NULL`, no vacíos | Datos personales. |
+| `dni` | `TEXT` | `NOT NULL CHECK (dni ~ '^[0-9]{7,9}$')`, `UNIQUE (inscripcion_id, dni)`, índice por `dni` | DNI normalizado. |
+| `edad` | `INTEGER` | `NOT NULL CHECK (edad BETWEEN 0 AND 120)` | Edad. |
+| `etapa` | `TEXT` | `CHECK` en `1ra Etapa`…`7ma Etapa`, `Animador/a`; obligatoria para el titular | `NULL` = no pertenece a CAMREVOC. |
+| `parentesco` | `TEXT` | `NULL` solo para el titular | Parentesco con el titular. |
+| `observaciones_salud` | `TEXT` | `NULL` | Observaciones opcionales. |
+| `menor_acompanado` | `BOOLEAN` | Solo para `edad < 18`, `NULL` en adultos | Si el menor asiste con un adulto de su familia. |
+| `emergencia_nombre`, `emergencia_vinculo`, `emergencia_telefono` | `TEXT` | Los tres `NULL` o los tres completos | Contacto de emergencia. |
+
+**Función `convivencia_registrar_inscripcion(p_envio_id, p_hay_celiaco, p_integrantes jsonb)`:** inserta cabecera + integrantes en una única transacción y es idempotente por `envio_id`. `EXECUTE` solo para `service_role`.
+
+**Seguridad:** RLS habilitado **sin políticas** y `REVOKE ALL` a `anon`/`authenticated` en ambas tablas: solo el Service Role (Server Actions) accede. El módulo no usa Storage ni toca `pedidos`, `vales`, `buzos_votos`.
+
 ### Storage
 - **Bucket:** `comprobantes`
 - **Configuración:** Público.

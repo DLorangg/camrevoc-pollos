@@ -9,6 +9,7 @@ import {
   Brain,
   Shirt,
   Vote,
+  Users,
 } from "lucide-react";
 
 export default function LandingPage() {
@@ -211,6 +212,43 @@ export default function LandingPage() {
               className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 hover:text-purple-700 transition-colors"
             >
               <span>🔐 Administración de Buzos</span>
+              <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+        </div>
+
+        {/* 5. Convivencia Familiar 2026 */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-lg shadow-slate-200/50 transition-all hover:border-sky-300 hover:shadow-sky-100/50 sm:p-6">
+          <Link
+            href="/convivencia"
+            className="group flex items-center gap-4"
+          >
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-700 transition-colors group-hover:bg-sky-200 sm:h-16 sm:w-16">
+              <Users className="h-7 w-7 sm:h-8 sm:w-8" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold text-slate-900 transition-colors group-hover:text-sky-700 sm:text-xl">
+                  Convivencia Familiar 👨‍👩‍👧‍👦
+                </h2>
+                <span className="rounded-full border border-sky-200 bg-sky-100 px-2.5 py-0.5 text-xs font-bold text-sky-800 shadow-2xs">
+                  Nuevo
+                </span>
+              </div>
+              <p className="mt-0.5 text-xs sm:text-sm text-slate-500">
+                Sábado 17 de octubre · Inscribí a tu familia.
+              </p>
+            </div>
+            <ArrowRight className="h-5 w-5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-1 group-hover:text-sky-600" />
+          </Link>
+
+          {/* Acceso para coordinación */}
+          <div className="mt-2.5 pt-2.5 border-t border-slate-100 text-center">
+            <Link
+              href="/convivencia/admin"
+              className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 hover:text-sky-700 transition-colors"
+            >
+              <span>🔐 Inscripciones (Coordinación)</span>
               <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
