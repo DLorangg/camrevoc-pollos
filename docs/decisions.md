@@ -118,6 +118,16 @@ Este documento registra las decisiones fundamentales de arquitectura, reglas de 
   6. Destacar visualmente los pagos en efectivo en los paneles de administración y permitir que coordinación edite el medio de pago o el cobrador antes de aprobar.
 - **Estado Actual:** Resuelto / Implementado. Columnas `es_efectivo` (boolean, default false) y `recibido_por` (text, nullable) en tablas `pedidos` y `pagos`.
 
+### ADR-16: Cierre Automático de Venta de Pollos por Fecha Límite
+- **Categoría:** Regla de Negocio / Pollos.
+- **Contexto:** La preventa de la Gran Pollada requería una fecha límite estricta de cierre para congelar encargos y coordinar los insumos con la parrilla.
+- **Decisión:**
+  1. Cierre automático programado para el **martes 27 de octubre de 2026 a las 23:59:59 (`America/Argentina/Buenos_Aires`)**.
+  2. Centralizado en `src/config/constants.ts` mediante `FECHA_CIERRE_VENTA_POLLOS_ISO` y la función `isVentaPollosCerrada()`.
+  3. Doble bloqueo: la página `/pollos` sustituye dinámicamente el formulario por el mensaje institucional de agradecimiento, y la Server Action `createOrder` valida la fecha en el servidor impidiendo cualquier inserción extemporánea.
+  4. El panel administrativo (`/pollos/admin`) y el canje físico de vales por QR (`/pollos/vale/[codigo]`) continúan funcionando con posterioridad a la fecha límite sin alteraciones.
+- **Estado Actual:** Resuelto / Implementado.
+
 ---
 
 ## 4. Matriz de Estado de Decisiones
@@ -139,3 +149,4 @@ Este documento registra las decisiones fundamentales de arquitectura, reglas de 
 | ADR-13 | Soporte para 3 o más hermanos | Campamentos | Resuelto / Implementado |
 | ADR-14 | Votación unificada de diseño sin padrón para Buzos 2027 | Buzos | Resuelto / Implementado |
 | ADR-15 | Soporte transversal para pagos en efectivo | Transversal | Resuelto / Implementado |
+| ADR-16 | Cierre automático de venta de pollos por fecha límite | Pollos | Resuelto / Implementado |

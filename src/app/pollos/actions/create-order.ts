@@ -2,6 +2,7 @@
 
 import { customAlphabet } from "nanoid";
 import { createServiceClient } from "@/lib/supabase/server";
+import { isVentaPollosCerrada } from "@/config/constants";
 import type { ValeInsert } from "@/types/database";
 
 // Alfabeto para los códigos de vales: solo mayúsculas + dígitos, sin ambiguos.
@@ -45,6 +46,14 @@ export interface CreateOrderError {
 export async function createOrder(
   input: CreateOrderInput,
 ): Promise<CreateOrderResult | CreateOrderError> {
+  // Validación de fecha límite de venta
+  if (isVentaPollosCerrada()) {
+    return {
+      ok: false,
+      error: "¡La venta de pollos ha finalizado! Gracias a todos por participar de la Gran Pollada de CAMREVOC.",
+    };
+  }
+
   // Validación básica server-side
   const sumaVales = input.vales.reduce((s, v) => s + v.cantidad_pollos, 0);
   if (sumaVales !== input.cantidad_total) {

@@ -88,6 +88,7 @@ flowchart TD
   - **Transferencia (por defecto):** Realiza la transferencia al Santander y adjunta comprobante bancario.
   - **Efectivo:** Marca "¿Es pago en efectivo?", especifica obligatoriamente quién cobró el dinero en mano (`recibido_por`) y adjunta foto del recibo físico en papel.
 - El comprobante es 100% obligatorio en ambos casos.
+- **Cierre Automático:** El plazo para registrar pedidos vence el **martes 27 de octubre de 2026 a las 23:59 (hora de Argentina)**. Cumplido el plazo, la ruta `/pollos` reemplaza el formulario por el mensaje institucional de cierre y `createOrder` bloquea la creación de nuevos pedidos.
 
 ### Paso 2: Generación Inmediata de Vales
 - El archivo se almacena en el bucket `comprobantes` de Supabase.

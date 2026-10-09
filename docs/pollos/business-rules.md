@@ -41,6 +41,11 @@ Este documento compila las reglas comerciales, operativas y de validación que g
    - **Comprobante Obligatorio para Efectivo:** El comprobante sigue siendo 100% obligatorio (foto del recibo de papel o comprobante físico firmado extendido por quien cobró).
    - **No Auto-aprobación:** El pedido en efectivo ingresa siempre como **`Pendiente`** y requiere auditoría de coordinación en `/pollos/admin`.
    - **Auditoría y Edición:** En el panel de administración se distingue con badge `💵 Efectivo · Recibió: [nombre]`. El operador puede corregir el cobrador o alternar el método de pago antes de aprobar o rechazar.
+6. **Fecha Límite y Cierre Automático de Venta:**
+   - La venta pública de pollos finaliza automáticamente el **martes 27 de octubre de 2026 a las 23:59:59 (hora de Argentina, `America/Argentina/Buenos_Aires`)**.
+   - **Comportamiento en `/pollos`:** Vencido el plazo, el formulario deja de estar disponible y se muestra el mensaje institucional: *"¡La venta de pollos ha finalizado! Gracias a todos por participar de la Gran Pollada de CAMREVOC."*
+   - **Validación de Servidor:** La Server Action `createOrder` valida la fecha de corte en el backend y rechaza cualquier nuevo pedido, impidiendo envíos extemporáneos desde pestañas retenidas.
+   - **Operaciones Preservadas:** El cierre no modifica pedidos preexistentes ni afecta el panel administrativo (`/pollos/admin`), la conciliación bancaria o el canje físico de vales.
 
 ---
 

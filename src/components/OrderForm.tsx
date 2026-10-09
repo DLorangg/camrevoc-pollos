@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef } from "react";
 import Link from "next/link";
-import { PRECIO_POLLO, DATOS_BANCARIOS, ETAPAS } from "@/config/constants";
+import { PRECIO_POLLO, DATOS_BANCARIOS, ETAPAS, isVentaPollosCerrada } from "@/config/constants";
 import { createClient } from "@/lib/supabase/client";
 import { createOrder, type ValeInput, type ValeCreado } from "@/app/pollos/actions/create-order";
 import { nanoid } from "nanoid";
@@ -697,6 +697,11 @@ export default function OrderForm() {
     e.preventDefault();
     setGlobalError(null);
 
+    if (isVentaPollosCerrada()) {
+      setGlobalError("¡La venta de pollos ha finalizado! Gracias a todos por participar de la Gran Pollada de CAMREVOC.");
+      return;
+    }
+
     if (!validate()) return;
     if (!valesBalanced) {
       setGlobalError("La distribución de vales no coincide con el total de pollos.");
@@ -768,6 +773,34 @@ export default function OrderForm() {
         email={successData.email}
         esEfectivo={esEfectivo}
       />
+    );
+  }
+
+  // ─── Venta cerrada ─────────────────────────────────────────────────────────
+  if (isVentaPollosCerrada()) {
+    return (
+      <div className="flex flex-col items-center justify-center text-center py-6 space-y-4">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-100 text-amber-800 shadow-xs">
+          <span className="text-3xl">🍗</span>
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            ¡La venta de pollos ha finalizado!
+          </h2>
+          <p className="text-sm sm:text-base text-slate-600 max-w-md mx-auto leading-relaxed">
+            Gracias a todos por participar de la Gran Pollada de CAMREVOC.
+          </p>
+        </div>
+        <div className="pt-3">
+          <Link
+            href="/"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 shadow-xs transition-colors"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span>Volver al inicio</span>
+          </Link>
+        </div>
+      </div>
     );
   }
 
