@@ -55,14 +55,14 @@ export default async function ConvivenciaPage() {
 
       <main className="mx-auto max-w-3xl space-y-8 px-4 pt-8 sm:px-6">
         {/* 1. Fotografía de portada */}
-        <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-100 shadow-xs sm:aspect-[16/5] sm:rounded-3xl">
+        <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-100 shadow-xs sm:aspect-[16/7] sm:rounded-3xl">
           <Image
             src="/images/convivencia/convivencia-2023.jpg"
             alt="Grupo de participantes en una convivencia de CAMREVOC en 2023"
             fill
             priority
             sizes="(max-width: 768px) 100vw, 768px"
-            className="object-cover object-[center_35%]"
+            className="object-cover object-[center_38%]"
           />
         </div>
 
@@ -78,16 +78,18 @@ export default async function ConvivenciaPage() {
           <p className="mx-auto max-w-lg text-sm leading-relaxed text-slate-600 sm:text-base">
             Una jornada para compartir en familia con toda la comunidad de CAMREVOC.
           </p>
-          <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500">
-            <Clock className="h-3.5 w-3.5 text-slate-400" />
-            {abierta ? (
-              <span>
-                Inscripciones abiertas hasta el{" "}
-                <strong className="text-slate-700">{CONVIVENCIA_CONFIG.fechaCierreTexto}</strong>
-              </span>
-            ) : (
-              <span className="font-bold text-amber-700">Inscripciones cerradas</span>
-            )}
+          <div className="mx-auto flex max-w-md items-start justify-center gap-1.5 text-xs text-slate-500 sm:items-center">
+            <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400 sm:mt-0" />
+            <span className="leading-relaxed">
+              {abierta ? (
+                <>
+                  Inscripciones abiertas hasta el{" "}
+                  <strong className="text-slate-700">{CONVIVENCIA_CONFIG.fechaCierreTexto}</strong>
+                </>
+              ) : (
+                <span className="font-bold text-amber-700">Inscripciones cerradas</span>
+              )}
+            </span>
           </div>
         </section>
 
