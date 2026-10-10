@@ -54,6 +54,19 @@ export default async function ConvivenciaPage() {
       </header>
 
       <main className="mx-auto max-w-3xl space-y-8 px-4 pt-8 sm:px-6">
+        {/* 1. Fotografía de portada */}
+        <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-slate-200/80 bg-slate-100 shadow-xs sm:aspect-[16/5] sm:rounded-3xl">
+          <Image
+            src="/images/convivencia/convivencia-2023.jpg"
+            alt="Grupo de participantes en una convivencia de CAMREVOC en 2023"
+            fill
+            priority
+            sizes="(max-width: 768px) 100vw, 768px"
+            className="object-cover object-[center_35%]"
+          />
+        </div>
+
+        {/* 2. Título y cabecera institucional */}
         <section className="space-y-3 text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3.5 py-1 text-xs font-bold text-sky-800 shadow-2xs">
             <Users className="h-3.5 w-3.5" />
