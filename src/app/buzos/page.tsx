@@ -4,6 +4,9 @@ import { BUZOS_CONFIG, isVotacionAbierta } from "@/config/buzos";
 import VotacionWizard from "@/components/buzos/VotacionWizard";
 import { ChevronLeft, Shirt, Clock, ShieldCheck } from "lucide-react";
 
+// El cierre depende de la hora actual: evaluar en cada request (no prerenderizar estáticamente).
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Votación Buzos 2027 · CAMREVOC",
   description:

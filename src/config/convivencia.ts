@@ -33,6 +33,7 @@ export const CONVIVENCIA_QUE_LLEVAR = [
   "Desayuno y almuerzo a la canasta.",
   "Agua saborizada.",
   "Ropa cómoda y zapatillas.",
+  "Remera de CAMREVOC.",
   "Gorra y repelente.",
   "Manta o lona para sentarse.",
   "Materiales para escribir y pintar.",
