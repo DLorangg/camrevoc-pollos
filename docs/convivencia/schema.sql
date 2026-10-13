@@ -6,10 +6,12 @@
 -- DÓNDE: Supabase Dashboard → SQL Editor, ejecución MANUAL por una persona.
 --   Este script NO fue ejecutado por el código ni por el agente que lo redactó.
 -- IDEMPOTENTE: puede ejecutarse más de una vez sin duplicar ni romper objetos.
--- ACTUALIZACIÓN (celiaquía individual + tarifa escalonada en la app): si ya ejecutaste
---   la versión anterior de este script, volvé a ejecutar ESTE archivo completo. Agrega
---   `es_celiaco` por integrante, hace opcional el dato familiar obsoleto `hay_celiaco`
---   (sin borrar ni modificar datos existentes) y reemplaza la función de registro.
+-- ACTUALIZACIONES:
+--   1) Celiaquía individual: agrega `es_celiaco` por integrante y hace opcional `hay_celiaco`.
+--   2) Acompañamiento explícito de menores: agrega `acompanado_por_adulto` por integrante,
+--      actualiza de forma idempotente la restricción `convivencia_integrantes_menor_chk`
+--      para cubrir ambos campos en adultos (sin invalidar filas históricas ni convertir NULLs),
+--      y reemplaza la función de registro atómico.
 --   El precio NO se guarda en la base: se calcula en el servidor (src/config/convivencia.ts).
 -- ALCANCE: crea únicamente objetos `convivencia_*`. No toca `pedidos`, `vales`,
 --   `buzos_votos`, `inscriptos`, `pagos` ni Storage.
@@ -59,8 +61,11 @@ CREATE TABLE IF NOT EXISTS public.convivencia_integrantes (
     -- ¿Es celíaco/a? Respuesta individual obligatoria para inscripciones nuevas.
     -- NULL únicamente en filas anteriores a este cambio (ver constraint más abajo).
     es_celiaco           BOOLEAN,
-    -- Solo para menores de 18: ¿asiste con un adulto de su familia? NULL para adultos.
+    -- HISTÓRICO: ¿asiste con un adulto de su familia? Mantenido por retrocompatibilidad.
     menor_acompanado     BOOLEAN,
+    -- ¿El menor va acompañado por una persona mayor de edad? Respuesta explícita.
+    -- NULL en inscripciones históricas previas (acompañamiento sin verificar).
+    acompanado_por_adulto BOOLEAN,
     -- Contacto de emergencia: se guarda completo o no se guarda.
     emergencia_nombre    TEXT,
     emergencia_vinculo   TEXT,
@@ -73,7 +78,7 @@ CREATE TABLE IF NOT EXISTS public.convivencia_integrantes (
         OR (NOT es_titular AND parentesco IS NOT NULL AND orden > 1)
     ),
     CONSTRAINT convivencia_integrantes_menor_chk CHECK (
-        edad < 18 OR menor_acompanado IS NULL
+        edad < 18 OR (menor_acompanado IS NULL AND acompanado_por_adulto IS NULL)
     ),
     CONSTRAINT convivencia_integrantes_emergencia_chk CHECK (
         (emergencia_nombre IS NULL AND emergencia_vinculo IS NULL AND emergencia_telefono IS NULL)
@@ -83,6 +88,24 @@ CREATE TABLE IF NOT EXISTS public.convivencia_integrantes (
 
 -- Migración de la versión anterior: agrega la columna sin tocar las filas existentes.
 ALTER TABLE public.convivencia_integrantes ADD COLUMN IF NOT EXISTS es_celiaco BOOLEAN;
+
+-- Migración: agrega columna explícita de acompañamiento por mayor de edad.
+-- Las filas históricas permanecen con NULL (sin verificar por coordinación).
+ALTER TABLE public.convivencia_integrantes ADD COLUMN IF NOT EXISTS acompanado_por_adulto BOOLEAN;
+
+-- Actualización idempotente de la restricción de menores:
+-- En bases de datos existentes creadas con la versión previa, `convivencia_integrantes_menor_chk`
+-- solo contemplaba `menor_acompanado`. La actualizamos para contemplar también `acompanado_por_adulto`.
+-- No modifica datos existentes y es segura porque en adultos ambos campos son NULL en filas históricas.
+DO $$
+BEGIN
+    ALTER TABLE public.convivencia_integrantes
+        DROP CONSTRAINT IF EXISTS convivencia_integrantes_menor_chk;
+
+    ALTER TABLE public.convivencia_integrantes
+        ADD CONSTRAINT convivencia_integrantes_menor_chk
+        CHECK (edad < 18 OR (menor_acompanado IS NULL AND acompanado_por_adulto IS NULL));
+END $$;
 
 -- Obligatoriedad para filas NUEVAS sin invalidar las existentes (NOT VALID no revisa
 -- filas previas). Las inscripciones anteriores conservan es_celiaco = NULL.
@@ -119,7 +142,7 @@ REVOKE ALL ON public.convivencia_integrantes   FROM anon, authenticated;
 -- atómica) y es idempotente por `envio_id`: si ya existe, devuelve la existente.
 -- Entrada p_integrantes: arreglo JSON ordenado; el elemento 0 es el titular. Claves:
 --   nombre, apellido, dni, edad, etapa, parentesco, observaciones_salud, es_celiaco,
---   menor_acompanado, emergencia_nombre, emergencia_vinculo, emergencia_telefono
+--   menor_acompanado, acompanado_por_adulto, emergencia_nombre, emergencia_vinculo, emergencia_telefono
 -- Devuelve: {"inscripcion_id": uuid, "cantidad_integrantes": n, "ya_existia": bool}
 -- Firma anterior (con p_hay_celiaco): se elimina; reemplazada por la versión de abajo.
 DROP FUNCTION IF EXISTS public.convivencia_registrar_inscripcion(UUID, BOOLEAN, JSONB);
@@ -169,6 +192,7 @@ BEGIN
     INSERT INTO public.convivencia_integrantes (
         inscripcion_id, orden, es_titular, nombre, apellido, dni, edad, etapa,
         parentesco, observaciones_salud, es_celiaco, menor_acompanado,
+        acompanado_por_adulto,
         emergencia_nombre, emergencia_vinculo, emergencia_telefono
     )
     SELECT
@@ -184,6 +208,7 @@ BEGIN
         NULLIF(t.elem->>'observaciones_salud', ''),
         (t.elem->>'es_celiaco')::BOOLEAN,
         (t.elem->>'menor_acompanado')::BOOLEAN,
+        (t.elem->>'acompanado_por_adulto')::BOOLEAN,
         NULLIF(t.elem->>'emergencia_nombre', ''),
         NULLIF(t.elem->>'emergencia_vinculo', ''),
         NULLIF(t.elem->>'emergencia_telefono', '')

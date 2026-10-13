@@ -9,7 +9,7 @@ import { logoutConvivenciaAdmin } from "@/app/convivencia/actions/admin-actions"
 import { CONVIVENCIA_ETAPAS, calcularPrecioConvivencia } from "@/config/convivencia";
 import type { InscripcionConvivenciaRow } from "@/types/convivencia";
 
-type Filtro = "todas" | "celiacos" | "menores-sin-adulto" | "salud";
+type Filtro = "todas" | "celiacos" | "menores-sin-adulto" | "historicos-sin-verificar" | "salud";
 
 function norm(s: string): string {
   return s
@@ -26,7 +26,14 @@ const fmtFecha = new Intl.DateTimeFormat("es-AR", {
 });
 
 function tieneMenorSinAdulto(i: InscripcionConvivenciaRow) {
-  return i.convivencia_integrantes.some((m) => m.menor_acompanado === false);
+  return i.convivencia_integrantes.some(
+    (m) => m.edad < 18 && m.acompanado_por_adulto === false
+  );
+}
+function tieneHistoricoSinVerificar(i: InscripcionConvivenciaRow) {
+  return i.convivencia_integrantes.some(
+    (m) => m.edad < 18 && m.acompanado_por_adulto === null
+  );
 }
 /** Integrantes celíacos. Las inscripciones anteriores al cambio solo tienen el dato familiar. */
 function integrantesCeliacos(i: InscripcionConvivenciaRow) {
@@ -67,7 +74,19 @@ export default function ConvivenciaAdminDashboard({
         0
       ),
       menoresSinAdulto: inscripciones.reduce(
-        (a, i) => a + i.convivencia_integrantes.filter((m) => m.menor_acompanado === false).length,
+        (a, i) =>
+          a +
+          i.convivencia_integrantes.filter(
+            (m) => m.edad < 18 && m.acompanado_por_adulto === false
+          ).length,
+        0
+      ),
+      historicosSinVerificar: inscripciones.reduce(
+        (a, i) =>
+          a +
+          i.convivencia_integrantes.filter(
+            (m) => m.edad < 18 && m.acompanado_por_adulto === null
+          ).length,
         0
       ),
     };
@@ -91,6 +110,7 @@ export default function ConvivenciaAdminDashboard({
     return inscripciones.filter((i) => {
       if (filtro === "celiacos" && !tieneCeliaco(i)) return false;
       if (filtro === "menores-sin-adulto" && !tieneMenorSinAdulto(i)) return false;
+      if (filtro === "historicos-sin-verificar" && !tieneHistoricoSinVerificar(i)) return false;
       if (filtro === "salud" && !tieneSalud(i)) return false;
       if (etapa && !i.convivencia_integrantes.some((m) => m.etapa === etapa)) return false;
       if (!q) return true;
@@ -141,17 +161,23 @@ export default function ConvivenciaAdminDashboard({
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {[
           ["Familias", stats.familias],
           ["Personas", stats.personas],
           ["Personas celíacas", stats.celiacos],
           ["Total a cobrar (efectivo)", `$${ARS.format(stats.total)}`],
           ["Menores sin adulto", stats.menoresSinAdulto],
+          ["Menores a verificar", stats.historicosSinVerificar],
         ].map(([label, n]) => (
-          <div key={label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs">
-            <p className="text-2xl font-black text-slate-900">{n}</p>
-            <p className="text-xs font-semibold text-slate-500">{label}</p>
+          <div
+            key={label}
+            className="flex min-w-0 flex-col justify-between rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs sm:p-4"
+          >
+            <p className="text-xl font-black tracking-tight text-slate-900 tabular-nums sm:text-2xl">
+              {n}
+            </p>
+            <p className="mt-1 text-xs font-semibold leading-snug text-slate-500">{label}</p>
           </div>
         ))}
       </div>
@@ -172,6 +198,7 @@ export default function ConvivenciaAdminDashboard({
               ["todas", "Todas"],
               ["celiacos", "Con celíacos"],
               ["menores-sin-adulto", "Menores sin adulto"],
+              ["historicos-sin-verificar", "Acompañamiento a verificar"],
               ["salud", "Con obs. de salud"],
             ] as const
           ).map(([val, label]) => (
@@ -243,6 +270,11 @@ export default function ConvivenciaAdminDashboard({
                           <AlertTriangle className="h-3 w-3" /> Menor sin adulto
                         </span>
                       )}
+                      {tieneHistoricoSinVerificar(i) && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-800">
+                          <AlertTriangle className="h-3 w-3" /> Acompañamiento a verificar
+                        </span>
+                      )}
                       {tieneSalud(i) && (
                         <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-bold text-sky-800">
                           Obs. de salud
@@ -257,6 +289,12 @@ export default function ConvivenciaAdminDashboard({
                   </summary>
 
                   <div className="space-y-2 border-t border-slate-100 p-4">
+                    {tieneHistoricoSinVerificar(i) && (
+                      <p className="rounded-xl border border-amber-200 bg-amber-50 p-2.5 text-xs font-semibold text-amber-900">
+                        Inscripción histórica: la coordinación debe confirmar con la familia el
+                        acompañamiento de menores de edad.
+                      </p>
+                    )}
                     {celiaquiaLegacy(i) && (
                       <p className="text-xs font-bold text-amber-700">
                         Inscripción anterior: se registró que hay un celíaco en la familia, sin
@@ -290,9 +328,22 @@ export default function ConvivenciaAdminDashboard({
                             <strong>Salud:</strong> {m.observaciones_salud}
                           </p>
                         )}
-                        {m.menor_acompanado !== null && (
-                          <p className={`mt-1 ${m.menor_acompanado ? "" : "font-bold text-rose-700"}`}>
-                            Menor {m.menor_acompanado ? "acompañado por un adulto de su familia" : "SIN adulto de su familia"}
+                        {m.edad < 18 && (
+                          <p className="mt-1">
+                            <strong>Acompañamiento:</strong>{" "}
+                            {m.acompanado_por_adulto === true ? (
+                              <span className="font-semibold text-emerald-700">
+                                Declara ir acompañado por una persona mayor de edad
+                              </span>
+                            ) : m.acompanado_por_adulto === false ? (
+                              <span className="font-bold text-rose-700">
+                                Declara asistir sin una persona mayor de edad: debe presentar autorización
+                              </span>
+                            ) : (
+                              <span className="rounded bg-amber-100 px-1.5 py-0.5 font-bold text-amber-900">
+                                Inscripción histórica: acompañamiento sin verificar
+                              </span>
+                            )}
                           </p>
                         )}
                         {m.emergencia_nombre && (

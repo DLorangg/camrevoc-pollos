@@ -7,12 +7,13 @@
 5. **DNI.** Se normaliza quitando puntos, espacios y guiones y debe tener 7 a 9 dígitos (mismo criterio que Campamentos/Buzos). No puede repetirse dentro de una misma familia. Puede repetirse entre inscripciones distintas (no se bloquea); el panel lo señala como «DNI repetido».
 6. **Edad.** Entero de 0 a 120. Menor de edad: menos de 18.
 7. **Salud.** Observaciones de salud opcionales por integrante (máx. 500 caracteres). Se pregunta a **cada integrante** (titular y adicionales) «¿Es celíaco/a?» (Sí/No obligatorio, se guarda en el registro de esa persona). El dato familiar anterior (`hay_celiaco`) es obsoleto: no se usa en inscripciones nuevas. No se promete ni se menciona ningún alimento alternativo.
-8. **Menores.** Para cada menor se consulta si asiste acompañado por sus padres (obligatorio).
-   - Si asiste **con sus padres**: no requiere autorización por este motivo (se considera acompañado por un adulto de su familia); el contacto de emergencia es opcional.
-   - Si asiste **sin sus padres**: debe llevar la **autorización impresa y firmada** (disponible en `/documents/convivencia/autorizacion-menores.pdf`), incluso si asiste acompañado por otro familiar o adulto. Se muestra el aviso y enlace de descarga en el formulario (no se exige carga digital ni se bloquea la inscripción; se entrega en mano el día de la actividad). Adicionalmente se consulta si asiste acompañado por otro adulto de su familia:
-     - Si no asiste con un adulto de su familia: el contacto de emergencia (nombre, vínculo y teléfono) es **obligatorio**.
-     - Si asiste con otro adulto de su familia: el contacto de emergencia es opcional (pero si se completa debe estar completo).
-   - Para adultos no se guardan estos datos.
+8. **Menores (acompañamiento y autorización).** Para cada persona menor de 18 años se pregunta exclusivamente: **«¿El menor va acompañado por una persona mayor de edad?»** (obligatorio).
+   - No se pregunta específicamente si va con sus padres: el requisito controlado es si asiste acompañado por una persona adulta.
+   - Si responde «Sí»: declara asistir acompañado por una persona mayor de edad; el formulario muestra el aviso recordando que la persona mayor de edad acompañante debe estar agregada como integrante de la inscripción (o ser identificable en otra inscripción familiar) y el contacto de emergencia es opcional.
+   - Si responde «No»: declara asistir sin una persona mayor de edad. Debe llevar la **autorización impresa y firmada** (disponible en `/documents/convivencia/autorizacion-menores.pdf`). El formulario muestra el aviso y enlace de descarga (no se exige carga digital ni se bloquea la inscripción; se entrega en mano el día de la actividad). El contacto de emergencia (nombre, vínculo y teléfono) es **obligatorio**.
+   - No se infiere la respuesta a partir del parentesco, de la presencia de adultos en la inscripción ni de los datos del contacto de emergencia.
+   - Para personas de 18 años o más no se solicita ni guarda este dato.
+   - **Registros históricos:** Las inscripciones previas quedan con el campo en `NULL` (acompañamiento sin verificar). La coordinación debe confirmar manualmente la situación con cada familia, especialmente en aquellas sin adultos registrados en el grupo.
 9. **No se solicita** teléfono ni correo del titular.
 10. **Cierre.** Las inscripciones cierran el **viernes 16 de octubre de 2026 a las 23:59:59 (`America/Argentina/Buenos_Aires`)**. Se controla con el reloj del servidor en la página y en la Server Action. Pasado el plazo se muestra «Las inscripciones a la Convivencia Familiar finalizaron.» y se rechazan envíos, aunque la página haya quedado abierta. Fecha configurable en `src/config/convivencia.ts`.
 11. **Consulta tras el cierre.** El panel de coordinación sigue mostrando todas las inscripciones después del cierre.

@@ -120,29 +120,17 @@ function validarIntegrante(
     errors.push(`${etiqueta}: indicá si es celíaco/a.`);
   }
 
-  // Menores: acompañamiento y contacto de emergencia.
-  let menorConPadres: boolean | null = null;
-  let menorAcompanado: boolean | null = null;
+  // Menores: acompañamiento por persona mayor de edad y contacto de emergencia.
+  let acompanadoPorAdulto: boolean | null = null;
   let contactoEmergencia: IntegranteConvivenciaInput["contactoEmergencia"] = null;
 
   if (edad !== null && edad >= 0 && edad <= 120 && esMenor(edad)) {
-    if (typeof r.menorConPadres !== "boolean") {
-      errors.push(`${etiqueta}: indicá si el menor asiste acompañado por sus padres.`);
+    if (typeof r.acompanadoPorAdulto !== "boolean") {
+      errors.push(
+        `${etiqueta}: indicá si el menor va acompañado por una persona mayor de edad.`
+      );
     } else {
-      menorConPadres = r.menorConPadres;
-      if (menorConPadres) {
-        // Si va con sus padres, está acompañado por un adulto de su familia.
-        menorAcompanado = true;
-      } else {
-        // Si no va con sus padres, se requiere saber si asiste con otro adulto de su familia.
-        if (typeof r.menorAcompanado !== "boolean") {
-          errors.push(
-            `${etiqueta}: indicá si el menor asiste acompañado por otro adulto de su familia.`
-          );
-        } else {
-          menorAcompanado = r.menorAcompanado;
-        }
-      }
+      acompanadoPorAdulto = r.acompanadoPorAdulto;
     }
 
     const ce =
@@ -153,9 +141,9 @@ function validarIntegrante(
     const ceVinculo = texto(ce.vinculo);
     const ceTelefono = texto(ce.telefono);
     const algunoCompletado = Boolean(ceNombre || ceVinculo || ceTelefono);
-    // Obligatorio si el menor NO está acompañado por un adulto de su familia; si está acompañado es opcional,
+    // Obligatorio si el menor declara que NO va acompañado por una persona mayor de edad; si va acompañado es opcional,
     // pero si se completa parcialmente debe completarse por entero.
-    const requerido = menorAcompanado === false;
+    const requerido = acompanadoPorAdulto === false;
 
     if (requerido || algunoCompletado) {
       if (!ceNombre) errors.push(`${etiqueta}: el nombre del contacto de emergencia es obligatorio.`);
@@ -184,8 +172,8 @@ function validarIntegrante(
     parentesco,
     observacionesSalud,
     esCeliaco: r.esCeliaco as boolean,
-    menorConPadres,
-    menorAcompanado,
+    acompanadoPorAdulto,
+    menorAcompanado: acompanadoPorAdulto,
     contactoEmergencia,
   };
 }

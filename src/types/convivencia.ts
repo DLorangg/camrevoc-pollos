@@ -14,10 +14,10 @@ export interface IntegranteConvivenciaInput {
   observacionesSalud: string | null;
   /** Respuesta individual (obligatoria) a «¿Es celíaco/a?». */
   esCeliaco: boolean;
-  /** Solo aplica a menores de edad; `null` para adultos. ¿Asiste con sus padres? */
-  menorConPadres?: boolean | null;
-  /** Solo aplica a menores de edad; `null` para adultos. ¿Asiste con un adulto de su familia? */
-  menorAcompanado: boolean | null;
+  /** Solo aplica a menores de edad; `null` para adultos. ¿Va acompañado por una persona mayor de edad? */
+  acompanadoPorAdulto: boolean | null;
+  /** Campo histórico conservado por compatibilidad. */
+  menorAcompanado?: boolean | null;
   contactoEmergencia: {
     nombre: string;
     vinculo: string;
@@ -47,7 +47,13 @@ export interface IntegranteConvivenciaRow {
   observaciones_salud: string | null;
   /** `null` solo en inscripciones anteriores al cambio a respuesta individual. */
   es_celiaco: boolean | null;
+  /** Campo histórico: ambiguo en inscripciones antiguas. */
   menor_acompanado: boolean | null;
+  /**
+   * Respuesta explícita a «¿El menor va acompañado por una persona mayor de edad?».
+   * `null` en inscripciones históricas previas (acompañamiento sin verificar).
+   */
+  acompanado_por_adulto: boolean | null;
   emergencia_nombre: string | null;
   emergencia_vinculo: string | null;
   emergencia_telefono: string | null;

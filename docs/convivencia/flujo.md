@@ -4,7 +4,7 @@
 
 1. La familia ve la información (fecha, horario, lugar, costo, pago en efectivo, qué llevar).
 2. Completa los datos de la **persona vinculada a CAMREVOC** y, con «Agregar integrante», al resto de la familia (sin límite; se pueden quitar).
-3. Para cada menor responde si va acompañado por sus padres; si va sin sus padres, ve el aviso obligatorio y el enlace para descargar el PDF de autorización (`/documents/convivencia/autorizacion-menores.pdf`), y responde si va acompañado por otro adulto de su familia (si no, el contacto de emergencia es obligatorio).
+3. Para cada menor responde obligatoriamente «¿El menor va acompañado por una persona mayor de edad?». Si responde «No», ve el aviso obligatorio y el enlace para descargar el PDF de autorización (`/documents/convivencia/autorizacion-menores.pdf`), y el contacto de emergencia es obligatorio. Si responde «Sí», ve el aviso recordando que la persona mayor de edad acompañante debe estar agregada como integrante (o ser identificable en otra inscripción) y el contacto de emergencia es opcional.
 4. Responde, para cada integrante, «¿Es celíaco/a?». El formulario muestra el total a abonar según la cantidad de integrantes ($5.000 / $10.000 / $15.000 desde 3) y lo actualiza al agregar o quitar personas.
 5. «Inscribir a mi familia»: el cliente valida (feedback temprano) y llama a la Server Action `createInscripcionConvivencia`.
 6. El servidor: (a) verifica el plazo, (b) revalida todo, (c) llama a `convivencia_registrar_inscripcion` (transacción atómica e idempotente).
@@ -19,6 +19,6 @@
 ## 3. Coordinación (`/convivencia/admin`)
 
 1. Login con la contraseña de coordinación (`/convivencia/admin/login`); cookie `httpOnly` de 8 horas.
-2. Panel: totales (familias, personas, personas celíacas, total a cobrar en efectivo, menores sin adulto), búsqueda por DNI o nombre/apellido, filtros (con celíacos [incluye inscripciones anteriores con dato familiar], menores sin adulto, con observaciones de salud, por etapa) y detalle desplegable por familia: fecha de creación, código corto (`#XXXXXXXX`), integrantes, respuesta individual de celiaquía, salud, acompañamiento de menores y contacto de emergencia.
+2. Panel: totales (familias, personas, personas celíacas, total a cobrar en efectivo, menores sin adulto, menores a verificar), búsqueda por DNI o nombre/apellido, filtros (con celíacos, menores sin adulto, acompañamiento a verificar [inscripciones históricas], con observaciones de salud, por etapa) y detalle desplegable por familia: fecha de creación, código corto (`#XXXXXXXX`), integrantes, respuesta individual de celiaquía, salud, estado de acompañamiento de menores («Declara ir acompañado por una persona mayor de edad», «Declara asistir sin una persona mayor de edad: debe presentar autorización» o «Inscripción histórica: acompañamiento sin verificar») y contacto de emergencia.
 3. Sin sesión válida, cualquier acceso redirige al login; la acción de consulta también verifica la sesión.
 4. Disponible también después del cierre. Solo lectura (sin pagos, estados ni autorizaciones).

@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   AlertTriangle,
   CheckCircle2,
+  Info,
   Loader2,
   Plus,
   Trash2,
@@ -39,8 +40,7 @@ interface IntegranteForm {
   parentesco: string;
   observacionesSalud: string;
   esCeliaco: SiNo;
-  menorConPadres: SiNo;
-  menorAcompanado: SiNo;
+  acompanadoPorAdulto: SiNo;
   ceNombre: string;
   ceVinculo: string;
   ceTelefono: string;
@@ -74,8 +74,7 @@ function nuevoIntegrante(): IntegranteForm {
     parentesco: "",
     observacionesSalud: "",
     esCeliaco: "",
-    menorConPadres: "",
-    menorAcompanado: "",
+    acompanadoPorAdulto: "",
     ceNombre: "",
     ceVinculo: "",
     ceTelefono: "",
@@ -93,9 +92,9 @@ function AutorizacionAviso() {
       <div className="flex items-start gap-2">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
         <p className="leading-relaxed">
-          Todo menor que participe de la convivencia sin sus padres debe llevar la autorización
-          correspondiente impresa y firmada. Descargá el documento, completalo y presentalo el día de
-          la actividad.
+          Todo menor que asista a la convivencia sin una persona mayor de edad debe llevar la
+          autorización correspondiente impresa y firmada. Descargá el documento, completalo y
+          presentalo el día de la actividad.
         </p>
       </div>
       {disponible && url && (
@@ -293,22 +292,16 @@ function IntegranteFields({
 
           <div>
             <p className="mb-1.5 text-sm font-semibold text-slate-800">
-              ¿Asiste acompañado por sus padres? *
+              ¿El menor va acompañado por una persona mayor de edad? *
             </p>
             <div className="flex gap-4 text-sm text-slate-700">
               {(["si", "no"] as const).map((opt) => (
                 <label key={opt} className="inline-flex items-center gap-2 cursor-pointer">
                   <input
                     type="radio"
-                    name={`${id}-con-padres`}
-                    checked={value.menorConPadres === opt}
-                    onChange={() =>
-                      onChange({
-                        menorConPadres: opt,
-                        // Si asiste con sus padres, está acompañado por un adulto de su familia
-                        ...(opt === "si" ? { menorAcompanado: "si" } : {}),
-                      })
-                    }
+                    name={`${id}-acompanado-adulto`}
+                    checked={value.acompanadoPorAdulto === opt}
+                    onChange={() => onChange({ acompanadoPorAdulto: opt })}
                   />
                   {opt === "si" ? "Sí" : "No"}
                 </label>
@@ -316,35 +309,23 @@ function IntegranteFields({
             </div>
           </div>
 
-          {value.menorConPadres === "no" && (
-            <>
-              <AutorizacionAviso />
-
-              <div>
-                <p className="mb-1.5 text-sm font-semibold text-slate-800">
-                  ¿Asiste acompañado por otro adulto de su familia? *
-                </p>
-                <div className="flex gap-4 text-sm text-slate-700">
-                  {(["si", "no"] as const).map((opt) => (
-                    <label key={opt} className="inline-flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name={`${id}-acompanado`}
-                        checked={value.menorAcompanado === opt}
-                        onChange={() => onChange({ menorAcompanado: opt })}
-                      />
-                      {opt === "si" ? "Sí" : "No"}
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </>
+          {value.acompanadoPorAdulto === "si" && (
+            <div className="flex items-start gap-2 rounded-xl border border-sky-200 bg-white p-3 text-xs leading-relaxed text-sky-900 shadow-2xs">
+              <Info className="mt-0.5 h-4 w-4 shrink-0 text-sky-600" />
+              <p>
+                Recordá que la persona mayor de edad que acompaña al menor también debe estar
+                agregada como integrante de esta inscripción. Si ya está anotada en otra inscripción
+                familiar, verificá que coordinación pueda identificarla.
+              </p>
+            </div>
           )}
+
+          {value.acompanadoPorAdulto === "no" && <AutorizacionAviso />}
 
           <div>
             <p className="mb-1.5 text-sm font-semibold text-slate-800">
               Contacto de emergencia{" "}
-              {value.menorConPadres === "no" && value.menorAcompanado === "no" ? "*" : "(opcional)"}
+              {value.acompanadoPorAdulto === "no" ? "*" : "(opcional)"}
             </p>
             <div className="grid gap-3 sm:grid-cols-3">
               <div>
@@ -463,21 +444,12 @@ export default function ConvivenciaInscripcionForm({ abierta }: { abierta: boole
     const mapear = (f: IntegranteForm) => {
       const edad = edadNumero(f.edad);
       const menor = edad !== null && edad >= 0 && edad <= 120 && esMenor(edad);
-      const menorConPadres = menor
-        ? f.menorConPadres === "si"
+      const acompanadoPorAdulto = menor
+        ? f.acompanadoPorAdulto === "si"
           ? true
-          : f.menorConPadres === "no"
+          : f.acompanadoPorAdulto === "no"
             ? false
             : undefined
-        : null;
-      const menorAcompanado = menor
-        ? f.menorConPadres === "si"
-          ? true
-          : f.menorAcompanado === "si"
-            ? true
-            : f.menorAcompanado === "no"
-              ? false
-              : undefined
         : null;
 
       return {
@@ -489,8 +461,7 @@ export default function ConvivenciaInscripcionForm({ abierta }: { abierta: boole
         parentesco: f.parentesco,
         observacionesSalud: f.observacionesSalud,
         esCeliaco: f.esCeliaco === "si" ? true : f.esCeliaco === "no" ? false : undefined,
-        menorConPadres,
-        menorAcompanado,
+        acompanadoPorAdulto,
         contactoEmergencia: { nombre: f.ceNombre, vinculo: f.ceVinculo, telefono: f.ceTelefono },
       };
     };

@@ -91,7 +91,8 @@ Integrantes de cada inscripción (`ON DELETE CASCADE` desde la cabecera).
 | `parentesco` | `TEXT` | `NULL` solo para el titular | Parentesco con el titular. |
 | `observaciones_salud` | `TEXT` | `NULL` | Observaciones opcionales. |
 | `es_celiaco` | `BOOLEAN` | `CHECK (es_celiaco IS NOT NULL) NOT VALID` | Respuesta individual a «¿Es celíaco/a?». Obligatoria en altas nuevas; `NULL` solo en filas anteriores al cambio. |
-| `menor_acompanado` | `BOOLEAN` | Solo para `edad < 18`, `NULL` en adultos | Si el menor asiste con un adulto de su familia. |
+| `menor_acompanado` | `BOOLEAN` | Solo para `edad < 18`, `NULL` en adultos | **HISTÓRICO.** Mantenido por retrocompatibilidad; ambiguo en registros previos. |
+| `acompanado_por_adulto` | `BOOLEAN` | Solo para `edad < 18`, `NULL` en adultos | Respuesta explícita a «¿El menor va acompañado por una persona mayor de edad?». `NULL` en inscripciones históricas previas (acompañamiento sin verificar). |
 | `emergencia_nombre`, `emergencia_vinculo`, `emergencia_telefono` | `TEXT` | Los tres `NULL` o los tres completos | Contacto de emergencia. |
 
 **Función `convivencia_registrar_inscripcion(p_envio_id uuid, p_integrantes jsonb)`:** inserta cabecera + integrantes en una única transacción y es idempotente por `envio_id`. `EXECUTE` solo para `service_role`.

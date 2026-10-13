@@ -30,7 +30,7 @@ Proyecto Supabase **`camrevoc-pollos`** (base principal), tablas propias `conviv
 
 ## Habilitación manual (pendiente de quien administra Supabase)
 
-1. Ejecutar [`docs/convivencia/schema.sql`](./schema.sql) en el **SQL Editor del proyecto `camrevoc-pollos`** (es idempotente). **Si ya habías ejecutado la versión anterior, volvé a ejecutar el archivo completo**: agrega `es_celiaco` por integrante, hace opcional `hay_celiaco` (sin borrar datos) y reemplaza la función de registro. Hasta ejecutarlo, el código nuevo no puede registrar inscripciones.
+1. Ejecutar [`docs/convivencia/schema.sql`](./schema.sql) en el **SQL Editor del proyecto `camrevoc-pollos`** (es idempotente). **Si ya habías ejecutado la versión anterior, volvé a ejecutar el archivo completo**: agrega `acompanado_por_adulto` por integrante, mantiene retrocompatibilidad y reemplaza la función de registro. Hasta ejecutarlo, las nuevas inscripciones no podrán guardar este nuevo campo.
 2. Verificar que existan las variables de entorno del servidor `NEXT_PUBLIC_SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` (ya usadas por Pollos/Buzos).
 3. Definir la contraseña del panel: `CONVIVENCIA_ADMIN_PASSWORD` (opcional; si falta se usa `ADMIN_PASSWORD`). Sin ninguna de las dos, el login rechaza el acceso.
 4. Redesplegar si se agregó una variable de entorno.
@@ -39,4 +39,4 @@ Hasta ejecutar el paso 1, enviar el formulario devuelve un error (nunca un falso
 
 ## Autorización para menores
 
-Todo menor que asista a la convivencia **sin sus padres** debe llevar la autorización impresa y firmada (incluso si va acompañado por otro familiar o adulto). El archivo se ubica en `public/documents/convivencia/autorizacion-menores.pdf` (URL pública `/documents/convivencia/autorizacion-menores.pdf`), centralizado en `CONVIVENCIA_AUTORIZACION_MENORES` de `src/config/convivencia.ts`. No se exige la carga digital ni se bloquea la inscripción: se presenta impreso el día de la actividad.
+Todo menor que asista a la convivencia **sin una persona mayor de edad** debe llevar la autorización impresa y firmada. El archivo se ubica en `public/documents/convivencia/autorizacion-menores.pdf` (URL pública `/documents/convivencia/autorizacion-menores.pdf`), centralizado en `CONVIVENCIA_AUTORIZACION_MENORES` de `src/config/convivencia.ts`. No se exige la carga digital ni se bloquea la inscripción: se presenta impreso el día de la actividad. Las inscripciones históricas anteriores a este cambio permanecen en el panel como «Inscripción histórica: acompañamiento sin verificar» para su confirmación manual por coordinación.
