@@ -40,18 +40,15 @@ export const CONVIVENCIA_QUE_LLEVAR = [
 ] as const;
 
 /**
- * Autorización para menores que asisten sin un adulto de su familia.
- * PENDIENTE: el documento todavía no fue definido. Cuando esté disponible,
- * completar `url` (enlace o archivo en /public) y poner `disponible: true`;
- * la UI mostrará automáticamente el enlace de descarga.
+ * Autorización para menores que asisten sin sus padres.
+ * Todo menor que asista a la convivencia sin sus padres debe llevar la autorización
+ * impresa y firmada, incluso si asiste acompañado por otro familiar o adulto.
+ * Ubicación del archivo: public/documents/convivencia/autorizacion-menores.pdf
  */
-export const CONVIVENCIA_AUTORIZACION_MENORES: {
-  disponible: boolean;
-  url: string | null;
-} = {
-  disponible: false,
-  url: null,
-};
+export const CONVIVENCIA_AUTORIZACION_MENORES = {
+  disponible: true,
+  url: "/documents/convivencia/autorizacion-menores.pdf",
+} as const;
 
 /** Etapas válidas para integrantes vinculados a CAMREVOC. */
 export const CONVIVENCIA_ETAPAS = [

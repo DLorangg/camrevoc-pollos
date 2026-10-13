@@ -4,7 +4,7 @@
 
 1. La familia ve la información (fecha, horario, lugar, costo, pago en efectivo, qué llevar).
 2. Completa los datos de la **persona vinculada a CAMREVOC** y, con «Agregar integrante», al resto de la familia (sin límite; se pueden quitar).
-3. Para cada menor responde si va acompañado por un adulto de su familia; si no, ve el aviso de autorización firmada (pendiente) y completa el contacto de emergencia.
+3. Para cada menor responde si va acompañado por sus padres; si va sin sus padres, ve el aviso obligatorio y el enlace para descargar el PDF de autorización (`/documents/convivencia/autorizacion-menores.pdf`), y responde si va acompañado por otro adulto de su familia (si no, el contacto de emergencia es obligatorio).
 4. Responde, para cada integrante, «¿Es celíaco/a?». El formulario muestra el total a abonar según la cantidad de integrantes ($5.000 / $10.000 / $15.000 desde 3) y lo actualiza al agregar o quitar personas.
 5. «Inscribir a mi familia»: el cliente valida (feedback temprano) y llama a la Server Action `createInscripcionConvivencia`.
 6. El servidor: (a) verifica el plazo, (b) revalida todo, (c) llama a `convivencia_registrar_inscripcion` (transacción atómica e idempotente).

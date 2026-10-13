@@ -39,6 +39,7 @@ interface IntegranteForm {
   parentesco: string;
   observacionesSalud: string;
   esCeliaco: SiNo;
+  menorConPadres: SiNo;
   menorAcompanado: SiNo;
   ceNombre: string;
   ceVinculo: string;
@@ -73,6 +74,7 @@ function nuevoIntegrante(): IntegranteForm {
     parentesco: "",
     observacionesSalud: "",
     esCeliaco: "",
+    menorConPadres: "",
     menorAcompanado: "",
     ceNombre: "",
     ceVinculo: "",
@@ -87,19 +89,28 @@ function edadNumero(v: string): number | null {
 function AutorizacionAviso() {
   const { disponible, url } = CONVIVENCIA_AUTORIZACION_MENORES;
   return (
-    <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
-      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-      <p>
-        Si el menor no asiste con un adulto de su familia, deberá presentar una{" "}
-        <strong>autorización firmada</strong>.{" "}
-        {disponible && url ? (
-          <a href={url} target="_blank" rel="noopener noreferrer" className="font-bold underline">
-            Descargar autorización
+    <div className="space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-900">
+      <div className="flex items-start gap-2">
+        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+        <p className="leading-relaxed">
+          Todo menor que participe de la convivencia sin sus padres debe llevar la autorización
+          correspondiente impresa y firmada. Descargá el documento, completalo y presentalo el día de
+          la actividad.
+        </p>
+      </div>
+      {disponible && url && (
+        <div className="pl-6">
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            download
+            className="inline-flex items-center font-bold text-amber-950 underline hover:text-amber-800"
+          >
+            Descargar autorización para menores (PDF)
           </a>
-        ) : (
-          "El documento se publicará más adelante en esta página."
-        )}
-      </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -279,18 +290,25 @@ function IntegranteFields({
           <p className="text-xs font-bold uppercase tracking-wider text-sky-900">
             Menor de edad
           </p>
+
           <div>
             <p className="mb-1.5 text-sm font-semibold text-slate-800">
-              ¿Asiste acompañado por un adulto de su familia? *
+              ¿Asiste acompañado por sus padres? *
             </p>
             <div className="flex gap-4 text-sm text-slate-700">
               {(["si", "no"] as const).map((opt) => (
                 <label key={opt} className="inline-flex items-center gap-2 cursor-pointer">
                   <input
                     type="radio"
-                    name={`${id}-acompanado`}
-                    checked={value.menorAcompanado === opt}
-                    onChange={() => onChange({ menorAcompanado: opt })}
+                    name={`${id}-con-padres`}
+                    checked={value.menorConPadres === opt}
+                    onChange={() =>
+                      onChange({
+                        menorConPadres: opt,
+                        // Si asiste con sus padres, está acompañado por un adulto de su familia
+                        ...(opt === "si" ? { menorAcompanado: "si" } : {}),
+                      })
+                    }
                   />
                   {opt === "si" ? "Sí" : "No"}
                 </label>
@@ -298,11 +316,35 @@ function IntegranteFields({
             </div>
           </div>
 
-          {value.menorAcompanado === "no" && <AutorizacionAviso />}
+          {value.menorConPadres === "no" && (
+            <>
+              <AutorizacionAviso />
+
+              <div>
+                <p className="mb-1.5 text-sm font-semibold text-slate-800">
+                  ¿Asiste acompañado por otro adulto de su familia? *
+                </p>
+                <div className="flex gap-4 text-sm text-slate-700">
+                  {(["si", "no"] as const).map((opt) => (
+                    <label key={opt} className="inline-flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`${id}-acompanado`}
+                        checked={value.menorAcompanado === opt}
+                        onChange={() => onChange({ menorAcompanado: opt })}
+                      />
+                      {opt === "si" ? "Sí" : "No"}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
 
           <div>
             <p className="mb-1.5 text-sm font-semibold text-slate-800">
-              Contacto de emergencia {value.menorAcompanado === "no" ? "*" : "(opcional)"}
+              Contacto de emergencia{" "}
+              {value.menorConPadres === "no" && value.menorAcompanado === "no" ? "*" : "(opcional)"}
             </p>
             <div className="grid gap-3 sm:grid-cols-3">
               <div>
@@ -418,19 +460,40 @@ export default function ConvivenciaInscripcionForm({ abierta }: { abierta: boole
   const precioActual = calcularPrecioConvivencia(1 + extras.length);
 
   const buildPayload = (envioId: string) => {
-    const mapear = (f: IntegranteForm) => ({
-      nombre: f.nombre,
-      apellido: f.apellido,
-      dni: f.dni,
-      edad: f.edad,
-      etapa: f.etapa,
-      parentesco: f.parentesco,
-      observacionesSalud: f.observacionesSalud,
-      esCeliaco: f.esCeliaco === "si" ? true : f.esCeliaco === "no" ? false : undefined,
-      menorAcompanado:
-        f.menorAcompanado === "si" ? true : f.menorAcompanado === "no" ? false : undefined,
-      contactoEmergencia: { nombre: f.ceNombre, vinculo: f.ceVinculo, telefono: f.ceTelefono },
-    });
+    const mapear = (f: IntegranteForm) => {
+      const edad = edadNumero(f.edad);
+      const menor = edad !== null && edad >= 0 && edad <= 120 && esMenor(edad);
+      const menorConPadres = menor
+        ? f.menorConPadres === "si"
+          ? true
+          : f.menorConPadres === "no"
+            ? false
+            : undefined
+        : null;
+      const menorAcompanado = menor
+        ? f.menorConPadres === "si"
+          ? true
+          : f.menorAcompanado === "si"
+            ? true
+            : f.menorAcompanado === "no"
+              ? false
+              : undefined
+        : null;
+
+      return {
+        nombre: f.nombre,
+        apellido: f.apellido,
+        dni: f.dni,
+        edad: f.edad,
+        etapa: f.etapa,
+        parentesco: f.parentesco,
+        observacionesSalud: f.observacionesSalud,
+        esCeliaco: f.esCeliaco === "si" ? true : f.esCeliaco === "no" ? false : undefined,
+        menorConPadres,
+        menorAcompanado,
+        contactoEmergencia: { nombre: f.ceNombre, vinculo: f.ceVinculo, telefono: f.ceTelefono },
+      };
+    };
     return {
       envioId,
       integrantes: [mapear(titular), ...extras.map(mapear)],

@@ -14,7 +14,9 @@ export interface IntegranteConvivenciaInput {
   observacionesSalud: string | null;
   /** Respuesta individual (obligatoria) a «¿Es celíaco/a?». */
   esCeliaco: boolean;
-  /** Solo aplica a menores de edad; `null` para adultos. */
+  /** Solo aplica a menores de edad; `null` para adultos. ¿Asiste con sus padres? */
+  menorConPadres?: boolean | null;
+  /** Solo aplica a menores de edad; `null` para adultos. ¿Asiste con un adulto de su familia? */
   menorAcompanado: boolean | null;
   contactoEmergencia: {
     nombre: string;

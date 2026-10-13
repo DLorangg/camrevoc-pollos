@@ -292,7 +292,7 @@ export default function ConvivenciaAdminDashboard({
                         )}
                         {m.menor_acompanado !== null && (
                           <p className={`mt-1 ${m.menor_acompanado ? "" : "font-bold text-rose-700"}`}>
-                            Menor {m.menor_acompanado ? "acompañado por un adulto de su familia" : "SIN adulto de su familia (debe presentar autorización firmada)"}
+                            Menor {m.menor_acompanado ? "acompañado por un adulto de su familia" : "SIN adulto de su familia"}
                           </p>
                         )}
                         {m.emergencia_nombre && (

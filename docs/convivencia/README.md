@@ -37,6 +37,6 @@ Proyecto Supabase **`camrevoc-pollos`** (base principal), tablas propias `conviv
 
 Hasta ejecutar el paso 1, enviar el formulario devuelve un error (nunca un falso éxito) y el panel muestra un aviso de consulta fallida.
 
-## Pendiente: autorización para menores
+## Autorización para menores
 
-El documento de autorización firmada para menores sin adulto de su familia **aún no existe**. El formulario muestra un aviso informativo y está preparado: al tener el archivo/enlace, completar `CONVIVENCIA_AUTORIZACION_MENORES` en `src/config/convivencia.ts` (`disponible: true`, `url`). No se reutiliza el documento de 2024.
+Todo menor que asista a la convivencia **sin sus padres** debe llevar la autorización impresa y firmada (incluso si va acompañado por otro familiar o adulto). El archivo se ubica en `public/documents/convivencia/autorizacion-menores.pdf` (URL pública `/documents/convivencia/autorizacion-menores.pdf`), centralizado en `CONVIVENCIA_AUTORIZACION_MENORES` de `src/config/convivencia.ts`. No se exige la carga digital ni se bloquea la inscripción: se presenta impreso el día de la actividad.

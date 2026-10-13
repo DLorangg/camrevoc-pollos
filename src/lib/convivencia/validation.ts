@@ -121,16 +121,28 @@ function validarIntegrante(
   }
 
   // Menores: acompañamiento y contacto de emergencia.
+  let menorConPadres: boolean | null = null;
   let menorAcompanado: boolean | null = null;
   let contactoEmergencia: IntegranteConvivenciaInput["contactoEmergencia"] = null;
 
   if (edad !== null && edad >= 0 && edad <= 120 && esMenor(edad)) {
-    if (typeof r.menorAcompanado !== "boolean") {
-      errors.push(
-        `${etiqueta}: indicá si el menor asiste acompañado por un adulto de su familia.`
-      );
+    if (typeof r.menorConPadres !== "boolean") {
+      errors.push(`${etiqueta}: indicá si el menor asiste acompañado por sus padres.`);
     } else {
-      menorAcompanado = r.menorAcompanado;
+      menorConPadres = r.menorConPadres;
+      if (menorConPadres) {
+        // Si va con sus padres, está acompañado por un adulto de su familia.
+        menorAcompanado = true;
+      } else {
+        // Si no va con sus padres, se requiere saber si asiste con otro adulto de su familia.
+        if (typeof r.menorAcompanado !== "boolean") {
+          errors.push(
+            `${etiqueta}: indicá si el menor asiste acompañado por otro adulto de su familia.`
+          );
+        } else {
+          menorAcompanado = r.menorAcompanado;
+        }
+      }
     }
 
     const ce =
@@ -141,7 +153,7 @@ function validarIntegrante(
     const ceVinculo = texto(ce.vinculo);
     const ceTelefono = texto(ce.telefono);
     const algunoCompletado = Boolean(ceNombre || ceVinculo || ceTelefono);
-    // Obligatorio si el menor NO está acompañado; si está acompañado es opcional,
+    // Obligatorio si el menor NO está acompañado por un adulto de su familia; si está acompañado es opcional,
     // pero si se completa parcialmente debe completarse por entero.
     const requerido = menorAcompanado === false;
 
@@ -172,6 +184,7 @@ function validarIntegrante(
     parentesco,
     observacionesSalud,
     esCeliaco: r.esCeliaco as boolean,
+    menorConPadres,
     menorAcompanado,
     contactoEmergencia,
   };
