@@ -50,15 +50,15 @@ export const OPCIONES_FRENTE: OpcionFrente[] = [
   // A) Diseños SIN Frase (Habilitan la elección de un diseño para la espalda)
   {
     id: "DONBOSCO_MANGA",
-    nombre: "Don Bosco en Manga",
-    descripcion: "Logo CAMREVOC en el pecho y Don Bosco estampado en la manga.",
+    nombre: "Lado del corazón",
+    descripcion: "Logo CAMREVOC ubicado del lado del corazón en el pecho.",
     archivo: "DONBOSCO MANGA.png",
     tieneFrase: false,
   },
   {
     id: "CRV_MANGA",
-    nombre: "CRV en Manga",
-    descripcion: "Logo CAMREVOC en el pecho y siglas CRV estampadas en la manga.",
+    nombre: "CRV en Medio",
+    descripcion: "Logo CAMREVOC centrado en el medio del pecho.",
     archivo: "CRV MANGA.png",
     tieneFrase: false,
   },

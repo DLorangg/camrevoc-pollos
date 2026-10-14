@@ -24,8 +24,9 @@ El wizard de votación opera en las siguientes etapas secuenciales:
 
 ### Paso 1: Frente del Buzo
 Existen dos tipos de propuestas en `public/Buzos/Delante/`:
-1. **Diseños SIN frase:** (`DONBOSCO MANGA.png`, `CRV MANGA.png`).
-   - Poseen el logo institucional en el pecho y distintivo en manga.
+1. **Diseños SIN frase:** Determinan la ubicación del logo institucional en el frente de la prenda:
+   - **«Lado del corazón»** (`id: "DONBOSCO_MANGA"`): Logo CAMREVOC ubicado del lado del corazón en el pecho (`DONBOSCO MANGA.png`).
+   - **«CRV en Medio»** (`id: "CRV_MANGA"`): Logo CAMREVOC centrado en el medio del pecho (`CRV MANGA.png`).
    - **Regla:** Habilitan el **Paso 2 (Espalda)** para que la persona elija qué frase/diseño posterior prefiere.
 2. **Diseños CON frase:** (`FRASE 1.png`, `FRASE 3.png`, `FRASE 4.png`, `FRASE 5.png`, `FRASE 6.png`, `FRASE 7.png`, `FRENTE 8.png`).
    - Ya contienen el lema o tipografía estampada al frente.
@@ -59,6 +60,7 @@ Existen dos tipos de propuestas en `public/Buzos/Delante/`:
 - Resumen visual con imágenes y textos obligatorios:
   - *«El resultado de esta votación define un único diseño para todos los buzos 2027.»*
   - *«Podés modificar tu voto mientras la votación esté abierta.»*
+- Acción de inspección («Ver propuesta») para revisar frente y dorso en tamaño ampliado antes de confirmar.
 - Al confirmar, se realiza un `upsert` atómico en la base de datos y se muestra la pantalla de agradecimiento sin revelar cómputos ni porcentajes a los votantes.
 
 ---
@@ -77,10 +79,12 @@ Existen dos tipos de propuestas en `public/Buzos/Delante/`:
 
 - **Ruta:** `/buzos/admin` (con login en `/buzos/admin/login`).
 - **Autenticación:** Protegido por contraseña mediante la variable de entorno `BUZOS_ADMIN_PASSWORD` (con fallback a `ADMIN_PASSWORD`).
-- **Visualización:**
+- **Visualización e Inspección:**
+  - **Visor Modal Ampliado:** Coordinación cuenta con la acción «Ver propuesta» tanto en los rankings agrupados (Frente / Espalda) como en la tabla de auditoría de votos individuales (mostrando la combinación exacta de frente y espalda elegida por cada DNI).
+  - Componente modal adaptable (`PropuestaModal`): soporta vistas simultáneas frente/espalda en computadoras y navegación por pestañas en celulares, respetando proporciones (`object-contain`) y permitiendo cierre ágil por botón, clic fuera o tecla `Escape`.
   - Cantidad total de votantes únicos (DNI).
   - Resultados clasificados por Frente (votos y %).
   - Resultados clasificados por Espalda (votos y %, con mención a quienes omitieron por frente con frase).
-  - Resultados de Logo en Manga (Sí vs. No con barras comparativas).
+  - Resultados de Logo en Manga (Sí vs. No con barras comparativas independientes).
   - Resultados clasificados por Color (votos y %).
-  - Tabla de auditoría con el detalle de cada voto y fecha de última modificación.
+  - Tabla de auditoría con el detalle de cada voto, acceso a la propuesta y fecha de última modificación.

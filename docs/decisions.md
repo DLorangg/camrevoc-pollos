@@ -104,6 +104,7 @@ Este documento registra las decisiones fundamentales de arquitectura, reglas de 
   3. Los buzos y campamentos se mantienen desacoplados por ahora (no vincular saldos a favor ni pedidos).
   4. La votación tiene fecha de cierre estricta configurable y panel administrativo `/buzos/admin` protegido por contraseña.
   5. Si el diseño de frente elegido posee frase, el dorso se inhabilita automáticamente (`atras = null`). Si no posee frase, se vota el dorso. CRV en manga y color se votan de forma independiente.
+  6. La ubicación del logo institucional en el frente se expresa como «CRV EN MEDIO» (`id: "CRV_MANGA"`) o «Lado del corazón» (`id: "DONBOSCO_MANGA"`), conservando identificadores, nombres de archivos y estructura de base de datos intactos. Se incorpora un visor modal ampliado reutilizable (`PropuestaModal`) para inspeccionar propuestas individuales y combinadas tanto en el wizard de votación como en el panel de coordinación.
 - **Estado Actual:** Implementado en `/buzos` y `/buzos/admin`. Persistencia en tabla `buzos_votos` (`camrevoc-pollos`).
 
 ### ADR-15: Soporte Transversal para Pagos en Efectivo en Pollos y Campamentos

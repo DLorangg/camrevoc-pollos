@@ -38,7 +38,10 @@ export interface ResultadosBuzosAdmin {
     id: string;
     dni: string;
     frenteNombre: string;
+    frenteArchivo?: string;
+    frenteTieneFrase?: boolean;
     atrasNombre: string;
+    atrasArchivo?: string;
     crvManga: boolean;
     colorNombre: string;
     colorHex?: string;
@@ -201,7 +204,10 @@ export async function obtenerResultadosAdmin(): Promise<{
         id: r.id,
         dni: r.dni,
         frenteNombre: f ? f.nombre : r.frente,
+        frenteArchivo: f?.archivo,
+        frenteTieneFrase: f?.tieneFrase,
         atrasNombre: a ? a.nombre : "No corresponde (frente con frase)",
+        atrasArchivo: a?.archivo,
         crvManga: Boolean(r.crv_manga),
         colorNombre: c ? c.nombre : r.color,
         colorHex: c?.hex,

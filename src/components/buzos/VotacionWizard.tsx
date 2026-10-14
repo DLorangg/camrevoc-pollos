@@ -15,13 +15,14 @@ import {
   obtenerVotoPorDni,
   registrarVoto,
 } from "@/app/buzos/actions/voto-actions";
+import PropuestaModal, { PropuestaModalData } from "@/components/buzos/PropuestaModal";
 import {
   Check,
   ChevronLeft,
   ChevronRight,
   AlertCircle,
   Loader2,
-  Maximize2,
+  Eye,
   X,
   Vote,
   Clock,
@@ -60,8 +61,8 @@ export default function VotacionWizard({
   const [errorDni, setErrorDni] = useState<string | null>(null);
   const [errorSubmit, setErrorSubmit] = useState<string | null>(null);
 
-  // Modal para ver imagen ampliada
-  const [imagenModal, setImagenModal] = useState<{ src: string; titulo: string } | null>(null);
+  // Modal para ver propuesta ampliada
+  const [propuestaModal, setPropuestaModal] = useState<PropuestaModalData | null>(null);
 
   // ─── Helpers de Lógica ───────────────────────────────────────────────────────
   const frenteActual = getFrenteById(frenteSeleccionado);
@@ -184,6 +185,12 @@ export default function VotacionWizard({
   if (paso === "EXITO") {
     return (
       <div className="rounded-3xl border border-emerald-200 bg-white p-6 sm:p-9 text-center shadow-xl shadow-emerald-500/5 space-y-6 max-w-xl mx-auto animate-in fade-in zoom-in-95 duration-300">
+        {/* Modal Visor Ampliado de Propuestas */}
+        <PropuestaModal
+          data={propuestaModal}
+          onClose={() => setPropuestaModal(null)}
+        />
+
         <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
           <Check className="h-8 w-8 stroke-[3]" />
         </div>
@@ -202,9 +209,38 @@ export default function VotacionWizard({
 
         {/* Resumen de la elección */}
         <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5 text-left space-y-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
-            Resumen de tu elección
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Resumen de tu elección
+            </h3>
+            {frenteActual && (
+              <button
+                type="button"
+                onClick={() =>
+                  setPropuestaModal({
+                    titulo: "Tu elección de buzo",
+                    subtitulo: `Voto registrado · DNI ${dni}`,
+                    frente: {
+                      src: `/Buzos/Delante/${frenteActual.archivo}`,
+                      nombre: frenteActual.nombre,
+                    },
+                    espalda: {
+                      src: atrasActual ? `/Buzos/Atras/${atrasActual.archivo}` : undefined,
+                      nombre: atrasActual?.nombre,
+                      noCorresponde: frenteTieneFrase,
+                    },
+                    color: colorActual ? { nombre: colorActual.nombre, hex: colorActual.hex } : undefined,
+                    crvManga: crvManga ?? undefined,
+                  })
+                }
+                className="inline-flex items-center gap-1 rounded-lg border border-purple-200 bg-white px-2 py-0.5 text-[11px] font-bold text-purple-700 hover:bg-purple-50 transition-colors cursor-pointer shadow-2xs"
+                title="Ver propuesta completa ampliada"
+              >
+                <Eye className="h-3 w-3" />
+                <span>Ver propuesta</span>
+              </button>
+            )}
+          </div>
 
           <div className="space-y-2 text-xs sm:text-sm">
             <div className="flex items-center justify-between py-1 border-b border-slate-200/60">
@@ -263,43 +299,6 @@ export default function VotacionWizard({
     );
   }
 
-  // ─── Modal Imagen Ampliada ──────────────────────────────────────────────────
-  const renderModalImagen = () => {
-    if (!imagenModal) return null;
-    return (
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-xs animate-in fade-in duration-200"
-        onClick={() => setImagenModal(null)}
-      >
-        <div
-          className="relative max-h-[90vh] max-w-2xl w-full bg-slate-900 rounded-3xl p-4 shadow-2xl overflow-hidden flex flex-col items-center"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="w-full flex items-center justify-between pb-3 border-b border-slate-800">
-            <h4 className="text-sm font-bold text-white truncate">{imagenModal.titulo}</h4>
-            <button
-              type="button"
-              onClick={() => setImagenModal(null)}
-              className="rounded-full bg-slate-800 p-1.5 text-slate-400 hover:text-white transition-colors cursor-pointer"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-          <div className="relative w-full h-[65vh] mt-2">
-            <Image
-              src={imagenModal.src}
-              alt={imagenModal.titulo}
-              fill
-              className="object-contain"
-              sizes="(max-width: 768px) 100vw, 800px"
-              priority
-            />
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   // ─── Indicador de Pasos Superior ────────────────────────────────────────────
   const pasosTotal = frenteTieneFrase ? 4 : 5;
   let pasoNumero = 1;
@@ -312,7 +311,11 @@ export default function VotacionWizard({
 
   return (
     <div className="space-y-6">
-      {renderModalImagen()}
+      {/* Modal Visor Ampliado de Propuestas */}
+      <PropuestaModal
+        data={propuestaModal}
+        onClose={() => setPropuestaModal(null)}
+      />
 
       {/* Stepper y Alerta de modificación */}
       {paso !== "DNI" && (
@@ -474,12 +477,20 @@ export default function VotacionWizard({
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setImagenModal({ src: imageSrc, titulo: opcion.nombre });
+                        setPropuestaModal({
+                          titulo: opcion.nombre,
+                          subtitulo: "Diseño de Frente",
+                          frente: {
+                            src: imageSrc,
+                            nombre: opcion.nombre,
+                          },
+                        });
                       }}
-                      className="rounded-lg p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                      title="Ver imagen ampliada"
+                      className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-bold text-slate-600 hover:text-purple-700 hover:bg-purple-50 hover:border-purple-200 transition-colors cursor-pointer"
+                      title="Ver propuesta ampliada"
                     >
-                      <Maximize2 className="h-3.5 w-3.5" />
+                      <Eye className="h-3 w-3" />
+                      <span>Ver propuesta</span>
                     </button>
                   </div>
 
@@ -576,12 +587,20 @@ export default function VotacionWizard({
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setImagenModal({ src: imageSrc, titulo: opcion.nombre });
+                        setPropuestaModal({
+                          titulo: opcion.nombre,
+                          subtitulo: "Diseño de Espalda",
+                          espalda: {
+                            src: imageSrc,
+                            nombre: opcion.nombre,
+                          },
+                        });
                       }}
-                      className="rounded-lg p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                      title="Ver imagen ampliada"
+                      className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-bold text-slate-600 hover:text-purple-700 hover:bg-purple-50 hover:border-purple-200 transition-colors cursor-pointer"
+                      title="Ver propuesta ampliada"
                     >
-                      <Maximize2 className="h-3.5 w-3.5" />
+                      <Eye className="h-3 w-3" />
+                      <span>Ver propuesta</span>
                     </button>
                   </div>
 
@@ -826,24 +845,67 @@ export default function VotacionWizard({
               <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
                 Votante
               </span>
-              <span className="font-mono text-sm font-extrabold text-slate-900">
-                DNI {dni}
-              </span>
+              <div className="flex items-center gap-2.5">
+                <span className="font-mono text-sm font-extrabold text-slate-900">
+                  DNI {dni}
+                </span>
+                {frenteActual && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPropuestaModal({
+                        titulo: "Tu elección de buzo",
+                        subtitulo: `Revisión previa a confirmación · DNI ${dni}`,
+                        frente: {
+                          src: `/Buzos/Delante/${frenteActual.archivo}`,
+                          nombre: frenteActual.nombre,
+                        },
+                        espalda: {
+                          src: atrasActual ? `/Buzos/Atras/${atrasActual.archivo}` : undefined,
+                          nombre: atrasActual?.nombre,
+                          noCorresponde: frenteTieneFrase,
+                        },
+                        color: colorActual ? { nombre: colorActual.nombre, hex: colorActual.hex } : undefined,
+                        crvManga: crvManga ?? undefined,
+                      })
+                    }
+                    className="inline-flex items-center gap-1 rounded-lg border border-purple-200 bg-purple-50 px-2 py-0.5 text-[11px] font-bold text-purple-700 hover:bg-purple-100 transition-colors cursor-pointer shadow-2xs"
+                    title="Ver propuesta completa ampliada"
+                  >
+                    <Eye className="h-3 w-3" />
+                    <span>Ver propuesta</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Frente */}
             <div className="flex items-center justify-between py-2 border-b border-slate-100">
               <div className="flex items-center gap-3">
                 {frenteActual && (
-                  <div className="relative h-12 w-12 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPropuestaModal({
+                        titulo: frenteActual.nombre,
+                        subtitulo: "Diseño de Frente",
+                        frente: {
+                          src: `/Buzos/Delante/${frenteActual.archivo}`,
+                          nombre: frenteActual.nombre,
+                        },
+                      })
+                    }
+                    className="group relative h-12 w-12 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200 hover:border-purple-400 transition-colors cursor-pointer"
+                    title="Ampliar diseño de frente"
+                  >
                     <Image
                       src={`/Buzos/Delante/${frenteActual.archivo}`}
                       alt={frenteActual.nombre}
                       fill
-                      className="object-contain p-1"
+                      className="object-contain p-1 group-hover:scale-105 transition-transform"
                       sizes="48px"
                     />
-                  </div>
+                  </button>
                 )}
                 <div>
                   <p className="text-xs text-slate-500">Diseño Frente</p>
@@ -863,15 +925,29 @@ export default function VotacionWizard({
             <div className="flex items-center justify-between py-2 border-b border-slate-100">
               <div className="flex items-center gap-3">
                 {atrasActual ? (
-                  <div className="relative h-12 w-12 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPropuestaModal({
+                        titulo: atrasActual.nombre,
+                        subtitulo: "Diseño de Espalda",
+                        espalda: {
+                          src: `/Buzos/Atras/${atrasActual.archivo}`,
+                          nombre: atrasActual.nombre,
+                        },
+                      })
+                    }
+                    className="group relative h-12 w-12 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200 hover:border-purple-400 transition-colors cursor-pointer"
+                    title="Ampliar diseño de espalda"
+                  >
                     <Image
                       src={`/Buzos/Atras/${atrasActual.archivo}`}
                       alt={atrasActual.nombre}
                       fill
-                      className="object-contain p-1"
+                      className="object-contain p-1 group-hover:scale-105 transition-transform"
                       sizes="48px"
                     />
-                  </div>
+                  </button>
                 ) : (
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-400 shrink-0">
                     <Shirt className="h-5 w-5" />

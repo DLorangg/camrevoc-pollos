@@ -3,8 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { ResultadosBuzosAdmin, logoutBuzosAdmin } from "@/app/buzos/actions/admin-actions";
+import PropuestaModal, { PropuestaModalData } from "@/components/buzos/PropuestaModal";
 import {
   Shirt,
   Users,
@@ -16,6 +17,7 @@ import {
   Palette,
   Layers,
   ChevronLeft,
+  Eye,
 } from "lucide-react";
 
 interface AdminDashboardProps {
@@ -25,6 +27,7 @@ interface AdminDashboardProps {
 export default function AdminDashboard({ resultados }: AdminDashboardProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [modalPropuesta, setModalPropuesta] = useState<PropuestaModalData | null>(null);
 
   const handleLogout = () => {
     startTransition(async () => {
@@ -42,6 +45,12 @@ export default function AdminDashboard({ resultados }: AdminDashboardProps) {
 
   return (
     <div className="space-y-8">
+      {/* Modal Visor Ampliado de Propuestas */}
+      <PropuestaModal
+        data={modalPropuesta}
+        onClose={() => setModalPropuesta(null)}
+      />
+
       {/* Top Header con acciones */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
         <div className="flex items-start gap-3">
@@ -195,19 +204,51 @@ export default function AdminDashboard({ resultados }: AdminDashboardProps) {
                       {idx + 1}
                     </span>
                     {f.archivo && (
-                      <div className="relative h-8 w-8 shrink-0 rounded-md bg-white overflow-hidden border border-slate-200">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setModalPropuesta({
+                            titulo: f.nombre,
+                            subtitulo: "Propuesta de Frente · Resultados agrupados",
+                            frente: {
+                              src: `/Buzos/Delante/${f.archivo}`,
+                              nombre: f.nombre,
+                            },
+                          })
+                        }
+                        className="group relative h-8 w-8 shrink-0 rounded-md bg-white overflow-hidden border border-slate-200 hover:border-purple-500 transition-colors cursor-pointer"
+                        title={`Ampliar propuesta ${f.nombre}`}
+                      >
                         <Image
                           src={`/Buzos/Delante/${f.archivo}`}
                           alt={f.nombre}
                           fill
-                          className="object-contain p-0.5"
+                          className="object-contain p-0.5 group-hover:scale-105 transition-transform"
                           sizes="32px"
                         />
-                      </div>
+                      </button>
                     )}
                     <span className="font-bold text-slate-900 truncate">{f.nombre}</span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0 ml-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setModalPropuesta({
+                          titulo: f.nombre,
+                          subtitulo: "Propuesta de Frente · Resultados agrupados",
+                          frente: {
+                            src: `/Buzos/Delante/${f.archivo}`,
+                            nombre: f.nombre,
+                          },
+                        })
+                      }
+                      className="inline-flex items-center gap-1 rounded-lg border border-purple-200 bg-purple-50 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[11px] font-bold text-purple-700 hover:bg-purple-100 transition-colors cursor-pointer shadow-2xs"
+                      title={`Ver propuesta ${f.nombre}`}
+                    >
+                      <Eye className="h-3 w-3" />
+                      <span>Ver propuesta</span>
+                    </button>
                     <span className="font-extrabold text-purple-700">{f.votos} votos</span>
                     <span className="text-slate-400 text-xs">({f.porcentaje}%)</span>
                   </div>
@@ -245,19 +286,51 @@ export default function AdminDashboard({ resultados }: AdminDashboardProps) {
                       {idx + 1}
                     </span>
                     {a.archivo && (
-                      <div className="relative h-8 w-8 shrink-0 rounded-md bg-white overflow-hidden border border-slate-200">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setModalPropuesta({
+                            titulo: a.nombre,
+                            subtitulo: "Propuesta de Espalda · Resultados agrupados",
+                            espalda: {
+                              src: `/Buzos/Atras/${a.archivo}`,
+                              nombre: a.nombre,
+                            },
+                          })
+                        }
+                        className="group relative h-8 w-8 shrink-0 rounded-md bg-white overflow-hidden border border-slate-200 hover:border-purple-500 transition-colors cursor-pointer"
+                        title={`Ampliar propuesta ${a.nombre}`}
+                      >
                         <Image
                           src={`/Buzos/Atras/${a.archivo}`}
                           alt={a.nombre}
                           fill
-                          className="object-contain p-0.5"
+                          className="object-contain p-0.5 group-hover:scale-105 transition-transform"
                           sizes="32px"
                         />
-                      </div>
+                      </button>
                     )}
                     <span className="font-bold text-slate-900 truncate">{a.nombre}</span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0 ml-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setModalPropuesta({
+                          titulo: a.nombre,
+                          subtitulo: "Propuesta de Espalda · Resultados agrupados",
+                          espalda: {
+                            src: `/Buzos/Atras/${a.archivo}`,
+                            nombre: a.nombre,
+                          },
+                        })
+                      }
+                      className="inline-flex items-center gap-1 rounded-lg border border-purple-200 bg-purple-50 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[11px] font-bold text-purple-700 hover:bg-purple-100 transition-colors cursor-pointer shadow-2xs"
+                      title={`Ver propuesta ${a.nombre}`}
+                    >
+                      <Eye className="h-3 w-3" />
+                      <span>Ver propuesta</span>
+                    </button>
                     <span className="font-extrabold text-purple-700">{a.votos} votos</span>
                     <span className="text-slate-400 text-xs">({a.porcentaje}%)</span>
                   </div>
@@ -416,6 +489,7 @@ export default function AdminDashboard({ resultados }: AdminDashboardProps) {
                   <th className="py-2.5 px-3">Espalda</th>
                   <th className="py-2.5 px-3 text-center">CRV Manga</th>
                   <th className="py-2.5 px-3">Color</th>
+                  <th className="py-2.5 px-3 text-center">Propuesta</th>
                   <th className="py-2.5 px-3 text-right">Última Modif.</th>
                 </tr>
               </thead>
@@ -446,6 +520,38 @@ export default function AdminDashboard({ resultados }: AdminDashboardProps) {
                         )}
                         <span>{v.colorNombre}</span>
                       </div>
+                    </td>
+                    <td className="py-3 px-3 text-center">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setModalPropuesta({
+                            titulo: `Voto DNI ${v.dni}`,
+                            subtitulo: "Propuesta completa elegida por el votante",
+                            frente: v.frenteArchivo
+                              ? {
+                                  src: `/Buzos/Delante/${v.frenteArchivo}`,
+                                  nombre: v.frenteNombre,
+                                }
+                              : undefined,
+                            espalda: {
+                              src: v.atrasArchivo ? `/Buzos/Atras/${v.atrasArchivo}` : undefined,
+                              nombre: v.atrasNombre,
+                              noCorresponde: v.frenteTieneFrase || !v.atrasArchivo,
+                            },
+                            color: {
+                              nombre: v.colorNombre,
+                              hex: v.colorHex,
+                            },
+                            crvManga: v.crvManga,
+                          })
+                        }
+                        className="inline-flex items-center gap-1 rounded-lg border border-purple-200 bg-purple-50 px-2.5 py-1 text-[11px] font-bold text-purple-700 hover:bg-purple-100 transition-colors cursor-pointer shadow-2xs"
+                        title={`Ver propuesta completa del DNI ${v.dni}`}
+                      >
+                        <Eye className="h-3 w-3" />
+                        <span>Ver propuesta</span>
+                      </button>
                     </td>
                     <td className="py-3 px-3 text-right text-slate-400 font-mono text-[11px]">
                       {new Date(v.updatedAt).toLocaleDateString("es-AR", {
