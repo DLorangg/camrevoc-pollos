@@ -2,6 +2,7 @@
 
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import * as XLSX from "xlsx";
 import { createConvivenciaClient } from "@/lib/supabase/convivencia";
 import type { InscripcionConvivenciaRow } from "@/types/convivencia";
 
@@ -112,3 +113,97 @@ export async function obtenerInscripcionesConvivencia(): Promise<{
     return { ok: false, error: "Ocurrió un error inesperado al consultar las inscripciones." };
   }
 }
+
+// ─── Exportación a Excel (.xlsx) ─────────────────────────────────────────────
+
+export interface ExportarInscriptosResult {
+  ok: boolean;
+  base64?: string;
+  filename?: string;
+  total?: number;
+  error?: string;
+}
+
+export async function exportarInscriptosConvivencia(): Promise<ExportarInscriptosResult> {
+  const isAuth = await verificarConvivenciaAdminSession();
+  if (!isAuth) {
+    return { ok: false, error: "No autorizado. Iniciá sesión como administrador." };
+  }
+
+  try {
+    const supabase = createConvivenciaClient();
+    // Se seleccionan estrictamente nombre, apellido y DNI; sin datos de salud ni contactos de emergencia.
+    const { data, error } = await supabase
+      .from("convivencia_integrantes")
+      .select("nombre, apellido, dni");
+
+    if (error) {
+      console.error("[exportarInscriptosConvivencia] Error de consulta:", {
+        code: error.code,
+        message: error.message,
+      });
+      return {
+        ok: false,
+        error:
+          "No se pudieron consultar los integrantes. Verificá que la migración de Convivencia Familiar esté ejecutada en Supabase.",
+      };
+    }
+
+    const integrantes = (data ?? []) as Array<{ nombre: string; apellido: string; dni: string }>;
+
+    if (integrantes.length === 0) {
+      return {
+        ok: true,
+        total: 0,
+      };
+    }
+
+    // Ordenar alfabéticamente por apellido y luego por nombre
+    integrantes.sort((a, b) => {
+      const compApellido = a.apellido.localeCompare(b.apellido, "es", { sensitivity: "base" });
+      if (compApellido !== 0) return compApellido;
+      return a.nombre.localeCompare(b.nombre, "es", { sensitivity: "base" });
+    });
+
+    const rows = [
+      ["Nombre", "Apellido", "DNI"],
+      ...integrantes.map((i) => [i.nombre.trim(), i.apellido.trim(), String(i.dni).trim()]),
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+
+    // Configurar celdas de DNI explícitamente como texto ('s') y formato '@' para preservar ceros iniciales
+    for (let r = 1; r <= integrantes.length; r++) {
+      const cellRef = XLSX.utils.encode_cell({ c: 2, r });
+      if (ws[cellRef]) {
+        ws[cellRef].t = "s";
+        ws[cellRef].z = "@";
+      }
+    }
+
+    ws["!cols"] = [{ wch: 22 }, { wch: 22 }, { wch: 16 }];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Inscriptos");
+
+    const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+    const base64 = Buffer.from(buf).toString("base64");
+
+    return {
+      ok: true,
+      total: integrantes.length,
+      base64,
+      filename: "convivencia-familiar-2026-inscriptos.xlsx",
+    };
+  } catch (err) {
+    console.error(
+      "[exportarInscriptosConvivencia] Error inesperado:",
+      err instanceof Error ? err.message : "desconocido"
+    );
+    return {
+      ok: false,
+      error: "Ocurrió un error inesperado al generar el archivo Excel de inscriptos.",
+    };
+  }
+}
+

@@ -19,3 +19,5 @@
 11. **Consulta tras el cierre.** El panel de coordinación sigue mostrando todas las inscripciones después del cierre.
 12. **Sin duplicados por reintento.** Cada envío lleva una clave de idempotencia; reintentar el mismo envío devuelve la inscripción ya creada.
 13. **Éxito solo si hubo persistencia.** La pantalla de confirmación aparece únicamente cuando la base confirmó el registro.
+14. **Exportación de nómina de inscriptos (Excel).** Disponible exclusivamente para coordinación autenticada en `/convivencia/admin`. Genera un archivo `.xlsx` (`convivencia-familiar-2026-inscriptos.xlsx`) que incluye una fila por cada persona registrada en la actividad (titulares y todos los familiares adicionales). Contiene estrictamente las columnas `Nombre`, `Apellido` y `DNI`, ordenadas alfabéticamente por apellido y nombre. El DNI se exporta con formato explícito de texto para preservar ceros iniciales. Por privacidad y resguardo de información personal sensible, **no incluye** observaciones de salud, celiaquía, contactos de emergencia ni ningún otro dato adicional. Si no hay integrantes registrados, no genera archivos vacíos e informa en el panel.
+

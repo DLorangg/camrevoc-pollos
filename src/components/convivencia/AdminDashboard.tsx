@@ -4,8 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, ChevronLeft, LogOut, Search, Wheat } from "lucide-react";
-import { logoutConvivenciaAdmin } from "@/app/convivencia/actions/admin-actions";
+import { AlertTriangle, ChevronLeft, FileSpreadsheet, Loader2, LogOut, Search, Wheat } from "lucide-react";
+import {
+  logoutConvivenciaAdmin,
+  exportarInscriptosConvivencia,
+} from "@/app/convivencia/actions/admin-actions";
 import { CONVIVENCIA_ETAPAS, calcularPrecioConvivencia } from "@/config/convivencia";
 import type { InscripcionConvivenciaRow } from "@/types/convivencia";
 
@@ -62,6 +65,67 @@ export default function ConvivenciaAdminDashboard({
   const [filtro, setFiltro] = useState<Filtro>("todas");
   const [etapa, setEtapa] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportNotice, setExportNotice] = useState<{
+    tipo: "error" | "info" | "success";
+    mensaje: string;
+  } | null>(null);
+
+  const handleExportarExcel = async () => {
+    setExportNotice(null);
+    setIsExporting(true);
+    try {
+      const res = await exportarInscriptosConvivencia();
+      if (!res.ok) {
+        setExportNotice({
+          tipo: "error",
+          mensaje: res.error || "No se pudo generar la exportación a Excel.",
+        });
+        return;
+      }
+
+      if (!res.total || res.total === 0 || !res.base64) {
+        setExportNotice({
+          tipo: "info",
+          mensaje: "No hay integrantes registrados para exportar.",
+        });
+        return;
+      }
+
+      const binaryString = window.atob(res.base64);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = res.filename || "convivencia-familiar-2026-inscriptos.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+      setExportNotice({
+        tipo: "success",
+        mensaje: `Se descargó la nómina con ${res.total} ${
+          res.total === 1 ? "integrante" : "integrantes"
+        }.`,
+      });
+    } catch (err) {
+      console.error("[handleExportarExcel] Error al exportar:", err);
+      setExportNotice({
+        tipo: "error",
+        mensaje: "Ocurrió un error inesperado al descargar el archivo.",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const stats = useMemo(() => {
     const personas = inscripciones.reduce((a, i) => a + i.convivencia_integrantes.length, 0);
@@ -154,12 +218,50 @@ export default function ConvivenciaAdminDashboard({
         </button>
       </div>
 
-      <div>
-        <h1 className="text-2xl font-black text-slate-900">Convivencia Familiar 2026</h1>
-        <p className="text-sm text-slate-500">
-          Inscripciones registradas. Contiene datos personales: uso exclusivo de coordinación.
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-black text-slate-900">Convivencia Familiar 2026</h1>
+          <p className="text-sm text-slate-500">
+            Inscripciones registradas. Contiene datos personales: uso exclusivo de coordinación.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleExportarExcel}
+          disabled={isExporting}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-emerald-700 disabled:opacity-50 cursor-pointer transition-colors shrink-0"
+        >
+          {isExporting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <FileSpreadsheet className="h-4 w-4" />
+          )}
+          {isExporting ? "Generando Excel…" : "Exportar a Excel"}
+        </button>
       </div>
+
+      {exportNotice && (
+        <div
+          role="status"
+          className={`flex items-center justify-between gap-2 rounded-xl border p-3 text-xs font-semibold ${
+            exportNotice.tipo === "error"
+              ? "border-rose-200 bg-rose-50 text-rose-800"
+              : exportNotice.tipo === "info"
+              ? "border-amber-200 bg-amber-50 text-amber-800"
+              : "border-emerald-200 bg-emerald-50 text-emerald-800"
+          }`}
+        >
+          <span>{exportNotice.mensaje}</span>
+          <button
+            type="button"
+            onClick={() => setExportNotice(null)}
+            aria-label="Cerrar aviso"
+            className="cursor-pointer px-1 text-xs font-bold opacity-60 hover:opacity-100"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {[
