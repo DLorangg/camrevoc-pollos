@@ -144,6 +144,18 @@ Este documento registra las decisiones fundamentales de arquitectura, reglas de 
 - **Pendiente (`REQUIERE DECISIÓN` / contenido externo):** documento de autorización firmada para menores sin adulto de su familia; al disponerse, completar `CONVIVENCIA_AUTORIZACION_MENORES` en `src/config/convivencia.ts`.
 - **Estado Actual:** Implementado en código; **la migración `docs/convivencia/schema.sql` debe ejecutarse manualmente en `camrevoc-pollos`** para operar.
 
+### ADR-18: Panel General de Consulta y Exportación de Campamentos 2027
+- **Categoría:** Arquitectura / Campamentos / Seguridad.
+- **Contexto:** Se requería una herramienta para que tesorería y coordinación general (2 o 3 personas autorizadas) pudieran auditar en tiempo real la recaudación y las inscripciones de los dos campamentos (Junín y Regina) y todas las etapas de forma consolidada, con búsqueda global, ficha individual y exportación a Excel.
+- **Decisión:**
+  1. Nueva ruta `/campamento/admin-general` y login en `/campamento/admin-general/login`, estrictamente de **solo lectura** (no muta inscripciones, no registra pagos ni aprueba/rechaza comprobantes).
+  2. Autenticación independiente con contraseña específica `CAMPAMENTO_ADMIN_GENERAL_PASSWORD` sin fallback inseguro (si falta, deniega el acceso). Sesión mediante cookie HTTP-Only con token HMAC-SHA256 (`campa_admin_general_session`), verificada en tiempo constante con `timingSafeEqual`.
+  3. Desacoplamiento total: las sesiones de coordinación por etapa (`campa_etapa_session`) no tienen acceso al panel general ni viceversa.
+  4. Lógica de teléfonos: como `inscriptos` no posee teléfono propio, se toma el último teléfono registrado en `pagos.contacto_telefono` ordenado temporalmente, conservando en la ficha el historial completo sin sobreescribir con registros vacíos.
+  5. Comprobantes compartidos: se indexan pagos que comparten la misma `comprobante_url`, señalando los inscriptos vinculados sin fusionar fichas ni duplicar totales contables.
+  6. Exportación a Excel (`.xlsx`): reutiliza `xlsx` generando el archivo en el servidor con DNI formateado como texto (`t: 's'`, `z: '@'`) para preservar ceros iniciales, filtros cruzados por campamento/etapa y orden alfabético.
+- **Estado Actual:** Resuelto / Implementado.
+
 ---
 
 ## 4. Matriz de Estado de Decisiones
@@ -167,3 +179,4 @@ Este documento registra las decisiones fundamentales de arquitectura, reglas de 
 | ADR-15 | Soporte transversal para pagos en efectivo | Transversal | Resuelto / Implementado |
 | ADR-16 | Cierre automático de venta de pollos por fecha límite | Pollos | Resuelto / Implementado |
 | ADR-17 | Convivencia Familiar 2026 como módulo independiente | Convivencia | Implementado (migración SQL pendiente de ejecución manual) |
+| ADR-18 | Panel General de Consulta y Exportación de Campamentos 2027 | Campamentos | Resuelto / Implementado |

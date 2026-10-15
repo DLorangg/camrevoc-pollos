@@ -81,3 +81,15 @@ Las familias pueden realizar pagos parciales sucesivos a lo largo de los meses h
    - **Clasificación:** Deuda técnica de seguridad aceptada temporalmente.
 5. **Auto-Registro de Coordinadores:** Los coordinadores escriben su nombre al iniciar sesión por primera vez; el sistema los registra automáticamente en `coordinadores_etapa` para que en futuras sesiones figuren como botones de selección rápida.
 6. **Pagos Manuales:** Un coordinador puede cargar un pago recibido en efectivo o canal externo desde el modal del participante. Estos pagos se insertan de forma inmediata como `estado = 'APROBADO'` y `subido_por = 'COORDINADOR'`.
+
+---
+
+## 6. Panel General de Coordinación y Tesorería (/campamento/admin-general)
+
+1. **Acceso y Perfil de Solo Lectura:** El panel general permite consultar la nómina completa de ambos campamentos (Junín y Regina) y todas sus etapas. No permite editar inscriptos, registrar pagos ni modificar estados contables.
+2. **Seguridad y Credenciales:** Protegido por la variable de entorno `CAMPAMENTO_ADMIN_GENERAL_PASSWORD` mediante cookie HTTP-Only con token HMAC-SHA256 (`campa_admin_general_session`). Las contraseñas y tokens se comparan en tiempo constante mediante hashes SHA-256 fijos (32 bytes) y `crypto.timingSafeEqual`. Sin fallbacks inseguros: si la variable no está configurada, el acceso se rechaza. Las credenciales de etapa de `/campamento/coordinacion` no otorgan acceso al panel general.
+3. **Cálculo de Recaudación y Saldos:** Respeta estrictamente que solo los pagos en estado `APROBADO` (o legados sin estado) descuentan saldo e integran la recaudación. Los pagos en estado `PENDIENTE` o `RECHAZADO` no se computan como dinero ingresado. Si un inscripto posee tarifa nula o en cero en base de datos, aplica un fallback defensivo coherente con su destino (Junín $550.000 / Regina $200.000).
+4. **Teléfonos de Contacto:** Como la tabla `inscriptos` no posee teléfono propio, el sistema muestra el último teléfono informado en un pago según el orden temporal de los registros (`created_at` descendente) con orden secundario determinístico por `id` descendente, conservando en la ficha el historial de teléfonos anteriores. Si un pago no registró teléfono, no sobreescribe un teléfono anterior válido.
+5. **Comprobantes Compartidos:** En pagos con comprobante compartido entre hermanos o familiares, el panel señala la relación verificable mediante la URL compartida del comprobante, detallando en la ficha a los demás inscriptos asociados sin fusionar fichas ni duplicar montos contables.
+6. **Exportación a Excel:** Permite exportar la nómina total o filtrada a `.xlsx` respetando todos los filtros activos en pantalla (campamento, etapa, búsqueda y estado contable incluyendo *Comprobante compartido*). El DNI se exporta con formato explícito de texto (`t: 's'`, `z: '@'`) para preservar ceros iniciales, ordenado alfabéticamente por apellido y nombre.
+

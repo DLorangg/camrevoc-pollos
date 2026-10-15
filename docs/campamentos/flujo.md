@@ -93,3 +93,14 @@ flowchart TD
    - Muestra el historial de pagos observados, indicando el medio de pago y cobrador. Cuenta con la acción *"Reconsiderar / Aprobar"* para subsanar rechazos involuntarios.
 4. **Carga Manual de Pagos:**
    - Desde el padrón de inscriptos, el coordinador puede presionar *"Gestionar Pagos"* sobre cualquier participante e ingresar pagos en efectivo o fuera de plataforma indicando el cobrador (por defecto su propio usuario). Estos se registran inmediatamente como `APROBADO` con `subido_por = 'COORDINADOR'`.
+
+### Circuito 4: Consulta y Exportación General (/campamento/admin-general)
+1. **Acceso Seguro:** Ingreso en `/campamento/admin-general/login` con la contraseña general del módulo (`CAMPAMENTO_ADMIN_GENERAL_PASSWORD`), generando una cookie de sesión protegida con token HMAC-SHA256 (`campa_admin_general_session`). No permite acceso con credenciales de etapa.
+2. **Dashboard de Solo Lectura:** Vista consolidada de todos los inscriptos de ambos campamentos (Junín de los Andes y Villa Regina) y todas las etapas, con métricas agregadas (inscriptos, recaudado aprobado, saldo por cobrar y % de meta). No permite editar datos ni alterar estados de pago.
+3. **Navegación y Filtros Cruzados:**
+   - Selector de Campamento (Todos, Junín, Regina).
+   - Selector dinámico de Etapa según el campamento seleccionado.
+   - Filtros por estado de pago (Al día, Parcial, Sin pagos, Con dificultad económica, Pagos en revisión, Comprobante compartido).
+   - Buscador reactivo por DNI, apellido, nombre o teléfono informado en pagos.
+4. **Ficha Individual:** Modal con la información personal y médica de la inscripción, desglose contable, último teléfono informado con fecha de registro, historial de pagos con enlaces a comprobantes en Storage y detalle de participantes vinculados por comprobantes compartidos.
+5. **Exportación a Excel:** Generación en el servidor de archivos `.xlsx` para todos los inscriptos o el subconjunto filtrado. Preserva ceros a la izquierda en DNI mediante formato de celda de texto (`t: 's'`, `z: '@'`) y ordena alfabéticamente por apellido y nombre.

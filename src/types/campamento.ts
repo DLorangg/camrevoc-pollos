@@ -68,3 +68,62 @@ export interface MetricasEtapa {
   pagosRechazadosCount: number;
 }
 
+// ─── Tipos para el Panel General de Campamentos (/campamento/admin-general) ───
+
+export interface TelefonoInformado {
+  telefono: string;
+  fecha: string;
+  pagoId: string;
+}
+
+export interface OtroInscriptoComprobante {
+  inscriptoId: string;
+  nombre: string;
+  apellido: string;
+  dni: string;
+  etapa: string;
+  destino: string;
+  monto: number;
+}
+
+export interface InscriptoAdminGeneral extends InscriptoConPagos {
+  /** Suma de pagos en estado PENDIENTE informados y aún no aprobados. */
+  montoPendienteRevision: number;
+  /** Último teléfono válido informado en un pago, con su fecha de registro. */
+  ultimoTelefono: { telefono: string; fecha: string } | null;
+  /** Historial completo de teléfonos informados en sus pagos (ordenados de más reciente a más antiguo). */
+  historialTelefonos: TelefonoInformado[];
+  /** Indica si alguno de sus comprobantes es compartido con otros inscriptos. */
+  tieneComprobanteCompartido: boolean;
+  /** Mapa de comprobante_url -> participantes vinculados a esa misma transferencia. */
+  comprobantesCompartidosDetalle: Record<string, OtroInscriptoComprobante[]>;
+}
+
+export interface DesgloseMetricasCampamento {
+  totalInscriptos: number;
+  totalRecaudado: number;
+  totalPresupuestado: number;
+  totalSaldoPendiente: number;
+  porcentajeCobranza: number;
+  conteoPagados: number;
+  conteoParciales: number;
+  conteoPendientes: number;
+}
+
+export interface MetricasAdminGeneral {
+  totalInscriptos: number;
+  totalRecaudado: number;
+  totalPresupuestado: number;
+  totalSaldoPendiente: number;
+  porcentajeCobranza: number;
+  conteoPagados: number;
+  conteoParciales: number;
+  conteoPendientes: number;
+  conteoDificultad: number;
+  conteoConPagosRevision: number;
+  totalMontoRevision: number;
+  porDestino: Record<string, DesgloseMetricasCampamento>;
+  porEtapa: Record<string, DesgloseMetricasCampamento>;
+}
+
+

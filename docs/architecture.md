@@ -42,6 +42,9 @@ src/app/
 │   ├── pagos/page.tsx           # Portal familiar de consulta de saldo y subida de pago (/campamento/pagos)
 │   ├── coordinacion/page.tsx    # Portal de acceso por PIN para coordinadores (/campamento/coordinacion)
 │   ├── etapa/[etapa]/page.tsx   # Dashboard de gestión y auditoría por etapa (/campamento/etapa/[etapa])
+│   ├── admin-general/           # Panel general consolidado de solo lectura (/campamento/admin-general)
+│   │   ├── page.tsx             # Dashboard general Junín & Regina
+│   │   └── login/page.tsx       # Acceso administrativo con contraseña general (/campamento/admin-general/login)
 │   └── actions/                 # Server Actions exclusivas de Campamentos
 │
 └── buzos/                       # MÓDULO 3: Buzos 2027 (Elección Colectiva)

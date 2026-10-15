@@ -20,7 +20,9 @@ El módulo **Campamentos** centraliza la inscripción institucional, el reporte 
 | `/campamento/inscripcion` | Público | Ficha de confirmación de asistencia, rol, datos médicos básicos y donaciones. | [InscripcionForm.tsx](file:///mnt/HDD/proyectos/camrevoc-pollos/src/components/campamento/InscripcionForm.tsx) |
 | `/campamento/pagos` | Público | Consulta de saldo por DNI, desglose de hermanos y subida de comprobantes. | [FamiliaPagosForm.tsx](file:///mnt/HDD/proyectos/camrevoc-pollos/src/components/campamento/pagos/FamiliaPagosForm.tsx) |
 | `/campamento/coordinacion` | Público / Login | Acceso por etapa mediante selección de nombre y PIN de seguridad. | [CoordinacionLoginForm.tsx](file:///mnt/HDD/proyectos/camrevoc-pollos/src/components/campamento/coordinacion/CoordinacionLoginForm.tsx) |
-| `/campamento/etapa/[etapa]` | Protegido (Cookie) | Dashboard de etapa: padrón, auditoría de pagos pendientes, rechazados y cambio de PIN. | [EtapaDashboard.tsx](file:///mnt/HDD/proyectos/camrevoc-pollos/src/components/campamento/coordinacion/EtapaDashboard.tsx) |
+| `/campamento/etapa/[etapa]` | Protegido (Cookie de etapa) | Dashboard de etapa: padrón, auditoría de pagos pendientes, rechazados y cambio de PIN. | [EtapaDashboard.tsx](file:///mnt/HDD/proyectos/camrevoc-pollos/src/components/campamento/coordinacion/EtapaDashboard.tsx) |
+| `/campamento/admin-general/login` | Público | Acceso administrativo con contraseña general para tesorería/coordinación general. | [AdminGeneralLoginForm.tsx](file:///mnt/HDD/proyectos/camrevoc-pollos/src/components/campamento/admin-general/AdminGeneralLoginForm.tsx) |
+| `/campamento/admin-general` | Protegido (Cookie HMAC) | Panel general consolidado de solo lectura: métricas globales, Junín y Regina, todas las etapas, fichas individuales y exportación a Excel. | [AdminGeneralDashboard.tsx](file:///mnt/HDD/proyectos/camrevoc-pollos/src/components/campamento/admin-general/AdminGeneralDashboard.tsx) |
 
 ---
 
@@ -35,8 +37,8 @@ El módulo **Campamentos** centraliza la inscripción institucional, el reporte 
    - Auditan los comprobantes subidos por las familias (aprueban o rechazan con motivo).
    - Cargan manualmente pagos recibidos fuera del circuito web.
    - Monitorean alertas de dificultades económicas informadas y requerimientos nutricionales especiales.
-3. **Tesorería General (Proyectado / Pendiente):**
-   - Vista administrativa global consolidando recaudación de las 7 etapas y exportaciones contables.
+3. **Tesorería / Coordinación General (Implementado):**
+   - Panel de consulta unificada y exportación contable (`/campamento/admin-general`), consolidando la recaudación de ambos campamentos (Junín y Regina) y las 7 etapas. Acceso de solo lectura protegido por contraseña general (`CAMPAMENTO_ADMIN_GENERAL_PASSWORD`) mediante sesión con HMAC-SHA256.
 
 ---
 
@@ -58,6 +60,13 @@ Ubicadas en [src/app/campamento/actions/](file:///mnt/HDD/proyectos/camrevoc-pol
   - `aprobarPagoCampamento(pagoId, etapaNum)`: Pasa el pago a `'APROBADO'`, guardando auditor y timestamp; descuenta del saldo restante.
   - `observarPagoCampamento(pagoId, motivo, etapaNum)`: Pasa el pago a `'RECHAZADO'` registrando el motivo explicativo obligatorio.
   - `registrarPagoCampamento(formData)`: Registra un pago manual directo ingresado por el coordinador (`estado = 'APROBADO'`, `subido_por = 'COORDINADOR'`).
+- **`admin-general-auth.ts`:**
+  - `loginAdminGeneral(password)`: Valida la contraseña contra `CAMPAMENTO_ADMIN_GENERAL_PASSWORD` y setea la cookie criptográfica `campa_admin_general_session`.
+  - `logoutAdminGeneral()`: Destruye la cookie de sesión general.
+  - `verificarAdminGeneralSession()`: Verifica la cookie con `timingSafeEqual`.
+- **`admin-general-actions.ts`:**
+  - `obtenerDatosAdminGeneral()`: Consulta inscriptos y pagos de `camrevoc-campa`, calcula saldos, identifica el último teléfono informado, detecta comprobantes compartidos y computa métricas globales y por campamento/etapa.
+  - `exportarCampamentoExcelAction(filtros)`: Genera y descarga el archivo `.xlsx` estructurado por participante, con formato texto para DNI y orden alfabético.
 
 ---
 
