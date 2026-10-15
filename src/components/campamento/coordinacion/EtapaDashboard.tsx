@@ -400,8 +400,6 @@ export default function EtapaDashboard({
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {inscriptosFiltrados.map((item) => {
-                    const esOmnivoro = item.regimen_alimentario === "Omnívoro";
-
                     return (
                       <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
                         {/* Participante */}
@@ -433,33 +431,9 @@ export default function EtapaDashboard({
                           </span>
                         </td>
 
-                        {/* Alertas sutiles */}
-                        <td className="px-4 py-3.5 space-y-1">
-                          {item.dificultad_pago && (
-                            <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-900">
-                              <AlertTriangle className="h-3 w-3" />
-                              Dificultad de pago
-                            </span>
-                          )}
-                          {!esOmnivoro && (
-                            <div className="flex items-center gap-1">
-                              <span className="inline-flex items-center gap-1 rounded-md bg-teal-100 px-2 py-0.5 text-[11px] font-bold text-teal-900">
-                                <Utensils className="h-3 w-3" />
-                                {item.regimen_alimentario}
-                              </span>
-                              {item.detalle_alimentario && (
-                                <span
-                                  className="text-[10px] text-slate-500 italic max-w-[140px] truncate block"
-                                  title={item.detalle_alimentario}
-                                >
-                                  ({item.detalle_alimentario})
-                                </span>
-                              )}
-                            </div>
-                          )}
-                          {esOmnivoro && !item.dificultad_pago && (
-                            <span className="text-[11px] text-slate-400">—</span>
-                          )}
+                        {/* Alertas y Dieta */}
+                        <td className="px-4 py-3.5">
+                          <AlertasYDietaCell item={item} />
                         </td>
 
                         {/* Estado de Pago */}
@@ -532,6 +506,103 @@ export default function EtapaDashboard({
           onClose={() => setModalPinAbierto(false)}
           onSuccess={() => setEsDefaultPin(false)}
         />
+      )}
+    </div>
+  );
+}
+
+// ─── Subcomponente para Alertas y Dieta con detalle expandible ───────────────
+
+function AlertasYDietaCell({ item }: { item: InscriptoConPagos }) {
+  const [expandido, setExpandido] = useState(false);
+
+  const esOmnivoro = item.regimen_alimentario === "Omnívoro";
+  const detalle = item.detalle_alimentario?.trim() || "";
+  const tieneDetalle = detalle.length > 0;
+  const esLargo = detalle.length > 25;
+
+  // Si no hay dificultad de pago, es omnívoro y no tiene observación -> mostrar guión
+  if (!item.dificultad_pago && esOmnivoro && !tieneDetalle) {
+    return <span className="text-[11px] text-slate-400">—</span>;
+  }
+
+  return (
+    <div className="space-y-1 text-xs max-w-[260px]">
+      {/* Alerta dificultad de pago */}
+      {item.dificultad_pago && (
+        <div>
+          <span className="inline-flex items-center gap-1 rounded-md bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-900">
+            <AlertTriangle className="h-3 w-3 shrink-0" />
+            Dificultad de pago
+          </span>
+        </div>
+      )}
+
+      {/* Régimen alimentario y detalles */}
+      {(!esOmnivoro || tieneDetalle) && (
+        <div className="space-y-1">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span
+              className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-bold ${
+                esOmnivoro
+                  ? "bg-slate-100 text-slate-700"
+                  : "bg-teal-100 text-teal-900"
+              }`}
+            >
+              <Utensils className="h-3 w-3 shrink-0" />
+              {item.regimen_alimentario}
+            </span>
+
+            {/* Detalle corto: se muestra inline sin truncar */}
+            {tieneDetalle && !esLargo && (
+              <span className="text-[10px] text-slate-500 italic">
+                ({detalle})
+              </span>
+            )}
+
+            {/* Detalle largo contraído: preview con puntos suspensivos + botón Ver detalle */}
+            {tieneDetalle && esLargo && !expandido && (
+              <span className="inline-flex items-center gap-1 flex-wrap">
+                <span
+                  className="text-[10px] text-slate-500 italic max-w-[130px] truncate block"
+                  title={detalle}
+                >
+                  ({detalle})
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setExpandido(true)}
+                  aria-expanded={false}
+                  className="inline-flex items-center text-[10px] font-bold text-teal-700 hover:text-teal-900 underline hover:no-underline cursor-pointer transition-colors"
+                >
+                  Ver detalle
+                </button>
+              </span>
+            )}
+          </div>
+
+          {/* Detalle largo expandido: cuadro accesible de lectura completa */}
+          {tieneDetalle && esLargo && expandido && (
+            <div className="mt-1 rounded-xl border border-teal-200 bg-teal-50/90 p-2 text-xs text-teal-950 shadow-2xs space-y-1 animate-in fade-in duration-150">
+              <div className="flex items-center justify-between gap-2 border-b border-teal-200/60 pb-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-teal-800">
+                  Observación dietaria
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setExpandido(false)}
+                  aria-expanded={true}
+                  className="text-[10px] font-bold text-teal-700 hover:text-teal-950 hover:underline cursor-pointer"
+                >
+                  Cerrar ✕
+                </button>
+              </div>
+              <p className="text-[11px] leading-relaxed whitespace-pre-wrap font-normal text-slate-800">
+                {detalle}
+              </p>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

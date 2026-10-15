@@ -27,6 +27,7 @@ La temporada se divide de forma estricta entre dos destinos:
 3. **Régimen Alimentario y Salud:**
    - Opciones: *Omnívoro, Vegetariano, Celíaco, Vegano, Otros*.
    - Si se selecciona `"Otros"`, el campo de detalle de alimentos prohibidos y alergias es **estrictamente obligatorio**.
+   - **Visualización en Coordinación:** Las observaciones y restricciones dietarias (`detalle_alimentario`) son visibles para todos los inscriptos, incluidos participantes omnívoros que hayan aclarado notas particulares. En textos extensos, la tabla muestra una vista previa resumida con control desplegable accesible («Ver detalle») sin alterar el ancho de las columnas.
 4. **Dificultad de Pago:** Campo booleano declarativo (`dificultad_pago`). No bloquea la inscripción ni modifica la tarifa; sirve como bandera visual de alerta para el acompañamiento pastoral y seguimiento de coordinación.
 5. **Sección Solidaria:** Opción voluntaria (`quiere_aportar` y `contacto_donacion`) para familias interesadas en donar dinero, mercadería o materiales para los campamentos.
 
@@ -36,7 +37,7 @@ La temporada se divide de forma estricta entre dos destinos:
 
 ### Estados Individuales de un Pago (`pagos.estado`)
 - **`PENDIENTE`:** Registrado por la familia mediante `/campamento/pagos`. **No descuenta del saldo restante** hasta que un coordinador lo valide.
-- **`APROBADO`:** Convalidado por un coordinador (o cargado manualmente por este). Se descuenta de forma inmediata del saldo adeudado del participante y actualiza las métricas de recaudación de la etapa.
+- **`APROBADO`:** Convalidado por un coordinador (o cargado manualmente por este). Se descuenta de forma inmediata del saldo adeudado del participante y actualiza las métricas de recaudación de la etapa. Al aprobar o reconsiderar un pago, el coordinador puede ingresar una observación interna opcional en `pagos.observaciones` (ej: pago conjunto de hermanos); si se deja vacía, se preserva cualquier observación preexistente.
 - **`RECHAZADO`:** Desestimado por coordinación debido a monto no acreditado o comprobante ilegible. Requiere obligatoriamente un texto en `motivo_rechazo`. No impacta en saldos.
 
 ### Estados Calculados del Participante

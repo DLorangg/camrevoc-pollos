@@ -298,7 +298,7 @@ export async function registrarPagoCampamento(
  */
 export async function actualizarPagoCampamento(
   pagoId: string,
-  data: { es_efectivo: boolean; recibido_por: string | null },
+  data: { es_efectivo: boolean; recibido_por: string | null; observaciones?: string | null },
   etapaNum: string,
 ): Promise<{ ok: boolean; error?: string }> {
   const session = await getCampaSession();
@@ -313,13 +313,19 @@ export async function actualizarPagoCampamento(
     return { ok: false, error: "Para pagos en efectivo, debés indicar quién recibió el dinero." };
   }
 
+  const updateData: Record<string, unknown> = {
+    es_efectivo: esEfectivo,
+    recibido_por: recibidoPor,
+  };
+
+  if (data.observaciones !== undefined) {
+    updateData.observaciones = data.observaciones?.trim() || null;
+  }
+
   const supabase = createCampamentoClient();
   const { error } = await supabase
     .from("pagos")
-    .update({
-      es_efectivo: esEfectivo,
-      recibido_por: recibidoPor,
-    })
+    .update(updateData)
     .eq("id", pagoId);
 
   if (error) {
@@ -333,11 +339,12 @@ export async function actualizarPagoCampamento(
 
 /**
  * Server Action para aprobar un pago enviado por una familia.
+ * Permite registrar opcionalmente una observación de coordinación (ej: pago conjunto de hermanos).
  */
 export async function aprobarPagoCampamento(
   pagoId: string,
   etapaNum: string,
-  datosPago?: { es_efectivo?: boolean; recibido_por?: string | null },
+  datosPago?: { es_efectivo?: boolean; recibido_por?: string | null; observaciones?: string | null },
 ): Promise<{ ok: boolean; error?: string }> {
   const session = await getCampaSession();
   if (!session) {
@@ -352,13 +359,22 @@ export async function aprobarPagoCampamento(
   };
 
   if (datosPago) {
-    const esEfectivo = Boolean(datosPago.es_efectivo);
-    const recibidoPor = esEfectivo ? (datosPago.recibido_por || "").trim() : null;
-    if (esEfectivo && !recibidoPor) {
-      return { ok: false, error: "Para pagos en efectivo, debés indicar quién recibió el dinero." };
+    if (datosPago.es_efectivo !== undefined) {
+      const esEfectivo = Boolean(datosPago.es_efectivo);
+      const recibidoPor = esEfectivo ? (datosPago.recibido_por || "").trim() : null;
+      if (esEfectivo && !recibidoPor) {
+        return { ok: false, error: "Para pagos en efectivo, debés indicar quién recibió el dinero." };
+      }
+      updateData.es_efectivo = esEfectivo;
+      updateData.recibido_por = recibidoPor;
     }
-    updateData.es_efectivo = esEfectivo;
-    updateData.recibido_por = recibidoPor;
+
+    if (datosPago.observaciones !== undefined) {
+      const obsTrimmed = datosPago.observaciones?.trim();
+      if (obsTrimmed && obsTrimmed.length > 0) {
+        updateData.observaciones = obsTrimmed;
+      }
+    }
   }
 
   const supabase = createCampamentoClient();

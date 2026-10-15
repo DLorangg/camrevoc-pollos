@@ -85,12 +85,12 @@ flowchart TD
 2. **Pestaña Pagos Pendientes:**
    - Exhibe tarjetas con participante, DNI, monto informado, teléfono y enlace directo al archivo de comprobante.
    - **Identificación del Medio de Pago:** Visualiza con claridad `💵 Efectivo · Recibió: [nombre]` o `🏦 Transferencia`.
-   - **Edición Previa:** El coordinador puede abrir el modal de edición para corregir el cobrador o cambiar la modalidad de pago, pudiendo optar por "Guardar cambios" o "Guardar y Aprobar".
-   - **Aprobar:** Cambia el registro a `APROBADO`. En ese instante el monto se deduce del saldo restante del participante y se actualizan las métricas de recaudación de la etapa.
+   - **Edición Previa:** El coordinador puede abrir el modal de edición para corregir el cobrador o cambiar la modalidad de pago, pudiendo optar por "Guardar cambios" o "Guardar y Aprobar", además de actualizar o agregar observaciones.
+   - **Aprobar:** Abre un modal de confirmación donde el coordinador puede incluir una observación opcional (ej: «Paga junto con su hermano; el comprobante corresponde a ambos») antes de validar. Cambia el registro a `APROBADO`, deduce el importe del saldo restante del participante y actualiza las métricas de recaudación de la etapa.
    - **Observar / Rechazar:** Abre un modal donde el coordinador escribe la causa del rechazo (ej: "No coincide el importe", "Comprobante ilegible"). El pago pasa a `RECHAZADO`.
    - **Contacto Directo:** Botón de WhatsApp con texto preconfigurado mencionando el participante y el motivo para contactar rápidamente a la familia.
 3. **Pestaña Rechazados:**
-   - Muestra el historial de pagos observados, indicando el medio de pago y cobrador. Cuenta con la acción *"Reconsiderar / Aprobar"* para subsanar rechazos involuntarios.
+   - Muestra el historial de pagos observados, indicando el medio de pago, cobrador, motivo del rechazo y observaciones asociadas. Cuenta con la acción *"Reconsiderar / Aprobar"* con opción de agregar o modificar la observación respaldatoria para subsanar rechazos involuntarios e impactar el saldo.
 4. **Carga Manual de Pagos:**
    - Desde el padrón de inscriptos, el coordinador puede presionar *"Gestionar Pagos"* sobre cualquier participante e ingresar pagos en efectivo o fuera de plataforma indicando el cobrador (por defecto su propio usuario). Estos se registran inmediatamente como `APROBADO` con `subido_por = 'COORDINADOR'`.
 
