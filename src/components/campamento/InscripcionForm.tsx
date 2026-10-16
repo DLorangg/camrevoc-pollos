@@ -378,11 +378,7 @@ export default function InscripcionForm() {
           id="regimen"
           value={regimenAlimentario}
           onChange={(e) => {
-            const nuevoRegimen = e.target.value as RegimenAlimentario;
-            setRegimenAlimentario(nuevoRegimen);
-            if (nuevoRegimen !== "Otros") {
-              setDetalleAlimentario("");
-            }
+            setRegimenAlimentario(e.target.value as RegimenAlimentario);
           }}
           disabled={isPending}
           className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-xs focus:border-[#009B4D] focus:outline-none focus:ring-2 focus:ring-[#009B4D]/20 disabled:bg-slate-50"
@@ -393,30 +389,51 @@ export default function InscripcionForm() {
             </option>
           ))}
         </select>
+
+        <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-600 space-y-1 leading-relaxed">
+          <p>
+            <strong className="font-semibold text-slate-800">Omnívoro:</strong>{" "}
+            Come de todo, tanto alimentos de origen animal como vegetal, y no tiene restricciones alimentarias particulares.
+          </p>
+          <p>
+            Seleccioná <strong className="font-semibold text-slate-800">«Otros»</strong> solamente cuando tu alimentación no encaje en las categorías disponibles, y especificala en el campo de detalle.
+          </p>
+        </div>
       </div>
 
-      {/* Detalles alimentarios / alergias (Solo visible si es 'Otros') */}
-      {regimenAlimentario === "Otros" && (
-        <div className="animate-in fade-in duration-200">
-          <label
-            htmlFor="detalleAlimentario"
-            className="mb-1.5 block text-sm font-medium text-slate-700"
-          >
-            Explicar qué alimentos no puede consumir o detalles de alergias{" "}
-            <span className="text-rose-500">*</span>
-          </label>
-          <textarea
-            id="detalleAlimentario"
-            required
-            value={detalleAlimentario}
-            onChange={(e) => setDetalleAlimentario(e.target.value)}
-            disabled={isPending}
-            placeholder="Especificá los alimentos o alergias..."
-            rows={2}
-            className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-xs focus:border-[#009B4D] focus:outline-none focus:ring-2 focus:ring-[#009B4D]/20 disabled:bg-slate-50 resize-none"
-          />
-        </div>
-      )}
+      {/* Detalles alimentarios / alergias */}
+      <div>
+        <label
+          htmlFor="detalleAlimentario"
+          className="mb-1.5 block text-sm font-medium text-slate-700"
+        >
+          {regimenAlimentario === "Otros" ? (
+            <>
+              Explicar qué alimentos no puede consumir o detalles de alergias{" "}
+              <span className="text-rose-500">*</span>
+            </>
+          ) : (
+            <>
+              Alergias, intolerancias o restricciones particulares{" "}
+              <span className="font-normal text-slate-400">(opcional)</span>
+            </>
+          )}
+        </label>
+        <textarea
+          id="detalleAlimentario"
+          required={regimenAlimentario === "Otros"}
+          value={detalleAlimentario}
+          onChange={(e) => setDetalleAlimentario(e.target.value)}
+          disabled={isPending}
+          placeholder={
+            regimenAlimentario === "Otros"
+              ? "Especificá tu alimentación, alimentos que no podés consumir o alergias..."
+              : "Si tenés alguna alergia, intolerancia o restricción puntual, indicala acá..."
+          }
+          rows={2}
+          className="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-xs focus:border-[#009B4D] focus:outline-none focus:ring-2 focus:ring-[#009B4D]/20 disabled:bg-slate-50 resize-none"
+        />
+      </div>
 
       {/* Sección solidaria */}
       <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">

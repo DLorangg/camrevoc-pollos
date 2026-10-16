@@ -26,7 +26,8 @@ La temporada se divide de forma estricta entre dos destinos:
 2. **Roles:** Tres opciones excluyentes: `CRVQUISTA`, `ANIMADOR` o `COORDINADOR`.
 3. **Régimen Alimentario y Salud:**
    - Opciones: *Omnívoro, Vegetariano, Celíaco, Vegano, Otros*.
-   - Si se selecciona `"Otros"`, el campo de detalle de alimentos prohibidos y alergias es **estrictamente obligatorio**.
+   - El formulario muestra debajo del selector una explicación de *Omnívoro* («Come de todo, tanto alimentos de origen animal como vegetal, y no tiene restricciones alimentarias particulares») y aclara que *Otros* debe seleccionarse únicamente cuando la alimentación no encaje en las categorías disponibles.
+   - Si se selecciona `"Otros"`, el campo de detalle (`detalle_alimentario`) es **estrictamente obligatorio**. Para las demás opciones (incluido `"Omnívoro"`), el campo permanece disponible de forma **opcional** para informar alergias, intolerancias o restricciones particulares.
    - **Visualización en Coordinación:** Las observaciones y restricciones dietarias (`detalle_alimentario`) son visibles para todos los inscriptos, incluidos participantes omnívoros que hayan aclarado notas particulares. En textos extensos, la tabla muestra una vista previa resumida con control desplegable accesible («Ver detalle») sin alterar el ancho de las columnas.
 4. **Dificultad de Pago:** Campo booleano declarativo (`dificultad_pago`). No bloquea la inscripción ni modifica la tarifa; sirve como bandera visual de alerta para el acompañamiento pastoral y seguimiento de coordinación.
 5. **Sección Solidaria:** Opción voluntaria (`quiere_aportar` y `contacto_donacion`) para familias interesadas en donar dinero, mercadería o materiales para los campamentos.
