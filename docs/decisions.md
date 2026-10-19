@@ -45,8 +45,8 @@ Este documento registra las decisiones fundamentales de arquitectura, reglas de 
 
 ### ADR-06: Fecha Oficial de la Pollada
 - **Categoría:** Regla de Negocio / Comunicación.
-- **Contexto:** Existía una discrepancia entre la plantilla de correo de Resend (que mencionaba el sábado 11 de octubre de 2025) y la pantalla web del vale (que mencionaba el sábado 10 de octubre).
-- **Decisión Humana Definitiva:** La fecha oficial de retiro de los pollos es el **10 de octubre**.
+- **Contexto:** Existía una discrepancia entre la plantilla de correo de Resend (que mencionaba el sábado 11 de octubre de 2025) y la pantalla web del vale (que mencionaba el sábado 31 de octubre).
+- **Decisión Humana Definitiva:** La fecha oficial de retiro de los pollos es el **31 de octubre**.
 - **Estado Actual:** Definida como regla de negocio vinculante. La plantilla de correo debe ajustarse cuando se modifique código funcional.
 
 ### ADR-07: Comprobante de Transferencia 100% Obligatorio
@@ -167,7 +167,7 @@ Este documento registra las decisiones fundamentales de arquitectura, reglas de 
 | ADR-03 | Estrategia de subida de Storage asimétrica | General | Resuelto / Operativo |
 | ADR-04 | Carga de ventas por animador/crvquista | Pollos | Decisión definitiva / Implementado |
 | ADR-05 | Canje por QR sin login (autorización práctica) | Pollos | Decisión definitiva / Implementado |
-| ADR-06 | Fecha oficial de retiro: 10 de octubre | Pollos | Decisión definitiva (pendiente update email) |
+| ADR-06 | Fecha oficial de retiro: 31 de octubre | Pollos | Decisión definitiva (pendiente update email) |
 | ADR-07 | Comprobante 100% obligatorio | Pollos / Campa | Resuelto / Implementado |
 | ADR-08 | Normalización algorítmica de ranking | Pollos | Resuelto / Implementado |
 | ADR-09 | Generación inmediata de vales en Pendiente | Pollos | Resuelto / Implementado |

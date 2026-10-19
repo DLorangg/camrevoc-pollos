@@ -83,11 +83,11 @@ export default async function ValePage({ params }: Props) {
   if (yaEntregado) {
     const hora = vale.entregado_at
       ? new Date(vale.entregado_at).toLocaleString("es-AR", {
-          hour: "2-digit",
-          minute: "2-digit",
-          day: "2-digit",
-          month: "2-digit",
-        })
+        hour: "2-digit",
+        minute: "2-digit",
+        day: "2-digit",
+        month: "2-digit",
+      })
       : "—";
 
     return (
@@ -205,7 +205,7 @@ export default async function ValePage({ params }: Props) {
           {/* Aviso para quien retira */}
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-xs text-amber-900 leading-relaxed text-left shadow-xs">
             <p>
-              ⚠️ <strong>Aviso para quien retira:</strong> Presentá esta pantalla o mostrá el código QR el sábado 10 de octubre. <strong>NO toques el botón de abajo</strong>; es de uso exclusivo para el equipo de entrega de CamReVoc.
+              ⚠️ <strong>Aviso para quien retira:</strong> Presentá esta pantalla o mostrá el código QR el sábado 31 de octubre. <strong>NO toques el botón de abajo</strong>; es de uso exclusivo para el equipo de entrega de CamReVoc.
             </p>
           </div>
 

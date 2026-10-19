@@ -51,8 +51,8 @@ flowchart TD
         D3["Animador/Comprador reenvía QR por WhatsApp"]
     end
 
-    %% Paso 5: Retiro Físico (10 de Octubre)
-    subgraph P5["PASO 5 — Día del Retiro (10 de Octubre)"]
+    %% Paso 5: Retiro Físico (31 de Octubre)
+    subgraph P5["PASO 5 — Día del Retiro (31 de Octubre)"]
         E1["Destinatario muestra QR en su celular"]
         E2{"¿Cómo se valida?"}
         E3["Opción A: Escaneo de QR web\nPresiona 'Confirmar Entrega' (sin login)"]
@@ -110,8 +110,8 @@ flowchart TD
 - El correo contiene los enlaces hacia `/pollos/vale/[codigo]`.
 - El animador o comprador también puede compartir el enlace individual del vale por WhatsApp a cada destinatario.
 
-### Paso 5: El Día del Retiro (10 de Octubre)
-- El sábado **10 de octubre**, el destinatario se presenta en el puesto de entrega mostrando la pantalla del vale con el código QR.
+### Paso 5: El Día del Retiro (31 de Octubre)
+- El sábado **31 de octubre**, el destinatario se presenta en el puesto de entrega mostrando la pantalla del vale con el código QR.
 - **Canje Autónomo por QR (Sin Login):** Cualquier persona puede abrir el enlace del vale desde su dispositivo y confirmar la entrega presionando el botón *"✅ CONFIRMAR ENTREGA DE POLLOS"* con confirmación en modal. Esto permite que los colaboradores de la parrilla entreguen sin necesitar claves de administración.
 - **Canje desde el Panel:** Alternativamente, un operador en `/pollos/admin` puede buscar el pedido por nombre, vendedor o código y marcar el vale individual como entregado.
 - Al canjearse todos los vales de un pedido, este cambia su estado visual a **Entregado** y se traslada a la pestaña correspondiente en el panel.
@@ -125,4 +125,4 @@ flowchart TD
 | **Momento de emisión de vales** | Se indicaba que los vales se generaban tras la aprobación administrativa. | Los vales se generan e insertan **al momento de crear el pedido** en estado `Pendiente`. |
 | **Separación Comprador/Vendedor** | Se describían campos independientes para quién compra y quién vende. | El formulario unificó los datos en el vendedor responsable (`nombre_comprador` = `animador_vendedor`). |
 | **Autenticación en la entrega** | Se especulaba si el canje requería cookies de administrador. | El canje web es **público y sin login**, operando el QR como autorización práctica deliberada. |
-| **Fecha de retiro** | En algunas plantillas figuraba 11 de octubre de 2025. | La fecha definitiva fijada por decisión humana es el **10 de octubre**. |
+| **Fecha de retiro** | En algunas plantillas figuraba 11 de octubre de 2025. | La fecha definitiva fijada por decisión humana es el **31 de octubre**. |

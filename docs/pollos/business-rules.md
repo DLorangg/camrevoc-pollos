@@ -72,7 +72,7 @@ Este documento compila las reglas comerciales, operativas y de validación que g
 
 ## 5. Retiro y Canje de Vales el Día del Evento
 
-1. **Fecha Oficial de Retiro:** **10 de octubre**.
+1. **Fecha Oficial de Retiro:** **31 de octubre**.
 2. **Canje Mediante QR sin Login (Decisión Operativa Intencional):**
    - El código QR del vale funciona como **mecanismo práctico de autorización para el retiro**.
    - Cualquier persona que disponga del QR (el destinatario o el colaborador en la mesa) puede acceder a `/pollos/vale/[codigo]` y confirmar la entrega.

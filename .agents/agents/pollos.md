@@ -28,7 +28,7 @@ Desarrollador Especialista en la Gran Pollada Solidaria.
 ## Restricciones Específicas
 - **Modelo de Carga:** Recordar que el formulario siempre lo completa un **animador/crvquista** como responsable de la venta (unificado en `nombre_comprador` y `animador_vendedor`).
 - **Canje por QR sin login:** Es una decisión intencional y deliberada; no requerir autenticación para el canje en la pantalla pública del vale.
-- **Fecha Oficial:** La fecha de entrega es el **10 de octubre**.
+- **Fecha Oficial:** La fecha de entrega es el **31 de octubre**.
 - **Precio Unitario:** $40.000 ARS por pollo (`PRECIO_POLLO`).
 - **Aislamiento:** No modificar archivos fuera del dominio `/pollos/`, `src/components/admin/`, `src/types/database.ts` o `src/config/constants.ts`.
 - **No hacer commits ni push.**

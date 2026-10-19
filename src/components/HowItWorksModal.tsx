@@ -165,7 +165,7 @@ export default function HowItWorksModal() {
                     5️⃣
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-900">Retiro el Sábado 10 de Octubre</h4>
+                    <h4 className="font-bold text-slate-900">Retiro el Sábado 31 de Octubre</h4>
                     <p className="mt-0.5 text-xs text-slate-600 leading-relaxed">
                       En el puesto de entrega escaneamos el QR directamente desde el celular y entregamos los pollos.
                     </p>
