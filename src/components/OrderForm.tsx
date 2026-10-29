@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef } from "react";
 import Link from "next/link";
-import { PRECIO_POLLO, DATOS_BANCARIOS, ETAPAS, isVentaPollosCerrada } from "@/config/constants";
+import { PRECIO_POLLO, DATOS_BANCARIOS, ETAPAS } from "@/config/constants";
 import { createClient } from "@/lib/supabase/client";
 import { createOrder, type ValeInput, type ValeCreado } from "@/app/pollos/actions/create-order";
 import { nanoid } from "nanoid";
@@ -557,20 +557,26 @@ interface FormErrors {
 const inputCls =
   "w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 shadow-xs placeholder-slate-400 transition-colors focus:border-[#009B4D] focus:outline-none focus:ring-2 focus:ring-[#009B4D]/20 disabled:bg-slate-50";
 
-export default function OrderForm() {
+export interface OrderFormProps {
+  stockDisponible: number;
+}
+
+export default function OrderForm({ stockDisponible }: OrderFormProps) {
+  const initialQty = Math.min(1, Math.max(0, stockDisponible));
+
   // Fields
   const [nombreComprador, setNombreComprador] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [email, setEmail] = useState("");
   const [etapa, setEtapa] = useState("");
-  const [cantidadTotal, setCantidadTotal] = useState(1);
-  const [cantidadInputStr, setCantidadInputStr] = useState("1");
+  const [cantidadTotal, setCantidadTotal] = useState(initialQty);
+  const [cantidadInputStr, setCantidadInputStr] = useState(String(initialQty));
   const [esEfectivo, setEsEfectivo] = useState(false);
   const [recibidoPor, setRecibidoPor] = useState("");
 
   // Vales distribution
   const [vales, setVales] = useState<ValeRow[]>([
-    { id: nanoid(6), cantidad_pollos: 1, destinatario: "" },
+    { id: nanoid(6), cantidad_pollos: initialQty, destinatario: "" },
   ]);
 
   // File upload
@@ -604,7 +610,17 @@ export default function OrderForm() {
 
     if (clean !== "") {
       const num = parseInt(clean, 10);
-      if (num > 0) {
+      if (num > stockDisponible) {
+        setErrors((prev) => ({
+          ...prev,
+          cantidad_total: `Solo quedan ${stockDisponible} ${stockDisponible === 1 ? "unidad disponible" : "unidades disponibles"}.`,
+        }));
+      } else if (num > 0) {
+        setErrors((prev) => {
+          const copy = { ...prev };
+          delete copy.cantidad_total;
+          return copy;
+        });
         setCantidadTotal(num);
         syncSingleVale(num, nombreComprador);
       }
@@ -613,19 +629,29 @@ export default function OrderForm() {
 
   const handleCantidadBlur = () => {
     if (!cantidadInputStr || parseInt(cantidadInputStr, 10) < 1) {
-      setCantidadInputStr("1");
-      setCantidadTotal(1);
-      syncSingleVale(1, nombreComprador);
+      const fallback = Math.min(1, Math.max(0, stockDisponible));
+      setCantidadInputStr(String(fallback));
+      setCantidadTotal(fallback);
+      syncSingleVale(fallback, nombreComprador);
     } else {
-      const num = parseInt(cantidadInputStr, 10);
+      let num = parseInt(cantidadInputStr, 10);
+      if (num > stockDisponible) {
+        num = stockDisponible;
+      }
       setCantidadInputStr(String(num));
       setCantidadTotal(num);
       syncSingleVale(num, nombreComprador);
     }
+    setErrors((prev) => {
+      const copy = { ...prev };
+      delete copy.cantidad_total;
+      return copy;
+    });
   };
 
   const incrementCantidad = () => {
     const current = parseInt(cantidadInputStr, 10) || cantidadTotal || 1;
+    if (current >= stockDisponible) return;
     const next = current + 1;
     setCantidadTotal(next);
     setCantidadInputStr(String(next));
@@ -674,7 +700,11 @@ export default function OrderForm() {
       errs.email = "Ingresá un email válido.";
     }
     if (!etapa) errs.etapa = "La etapa es obligatoria.";
-    if (cantidadTotal < 1) errs.cantidad_total = "Mínimo 1 pollo.";
+    if (cantidadTotal < 1) {
+      errs.cantidad_total = "Mínimo 1 pollo.";
+    } else if (cantidadTotal > stockDisponible) {
+      errs.cantidad_total = `Solo quedan ${stockDisponible} ${stockDisponible === 1 ? "pollo disponible" : "pollos disponibles"}.`;
+    }
     if (esEfectivo && !recibidoPor.trim()) {
       errs.recibido_por = "Indicá quién recibió el dinero en efectivo.";
     }
@@ -697,8 +727,13 @@ export default function OrderForm() {
     e.preventDefault();
     setGlobalError(null);
 
-    if (isVentaPollosCerrada()) {
-      setGlobalError("¡La venta de pollos ha finalizado! Gracias a todos por participar de la Gran Pollada de CAMREVOC.");
+    if (stockDisponible <= 0) {
+      setGlobalError("¡El stock de pollos se encuentra agotado! Gracias a todos por participar de la Gran Pollada de CAMREVOC.");
+      return;
+    }
+
+    if (cantidadTotal > stockDisponible) {
+      setGlobalError(`Solo quedan ${stockDisponible} ${stockDisponible === 1 ? "pollo disponible" : "pollos disponibles"}. Por favor ajustá la cantidad solicitada.`);
       return;
     }
 
@@ -776,8 +811,8 @@ export default function OrderForm() {
     );
   }
 
-  // ─── Venta cerrada ─────────────────────────────────────────────────────────
-  if (isVentaPollosCerrada()) {
+  // ─── Stock agotado ────────────────────────────────────────────────────────
+  if (stockDisponible <= 0) {
     return (
       <div className="flex flex-col items-center justify-center text-center py-6 space-y-4">
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-100 text-amber-800 shadow-xs">
@@ -785,10 +820,10 @@ export default function OrderForm() {
         </div>
         <div className="space-y-2">
           <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-            ¡La venta de pollos ha finalizado!
+            ¡Stock agotado!
           </h2>
           <p className="text-sm sm:text-base text-slate-600 max-w-md mx-auto leading-relaxed">
-            Gracias a todos por participar de la Gran Pollada de CAMREVOC.
+            Se han vendido todos los pollos disponibles. Gracias a todos por participar de la Gran Pollada de CAMREVOC.
           </p>
         </div>
         <div className="pt-3">
@@ -877,7 +912,16 @@ export default function OrderForm() {
 
       {/* ② TU PEDIDO Y VALES ───────────────────────────────────────────────── */}
       <section className="space-y-4">
-        <SectionHeading emoji="🐔" label="Tu pedido y vales" />
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <SectionHeading emoji="🐔" label="Tu pedido y vales" />
+          {/* Badge de stock restante */}
+          <div className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-xl border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-950 shadow-2xs">
+            <span className="text-sm">🍗</span>
+            <span>
+              Disponibles: <strong className="font-extrabold text-amber-950">{stockDisponible}</strong> {stockDisponible === 1 ? "unidad" : "unidades"}
+            </span>
+          </div>
+        </div>
 
         <Field label="Cantidad de pollos" required error={errors.cantidad_total}>
           <div className="flex flex-col gap-3.5 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5 sm:p-4 shadow-xs">
@@ -909,8 +953,8 @@ export default function OrderForm() {
               <button
                 type="button"
                 onClick={incrementCantidad}
-                disabled={isBusy}
-                className="flex h-12 w-12 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-700 shadow-xs hover:bg-slate-100 active:scale-95 transition-all cursor-pointer"
+                disabled={isBusy || cantidadTotal >= stockDisponible}
+                className="flex h-12 w-12 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-700 shadow-xs hover:bg-slate-100 active:scale-95 disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
                 title="Aumentar cantidad"
                 aria-label="Aumentar cantidad"
               >

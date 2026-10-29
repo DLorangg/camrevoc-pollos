@@ -119,15 +119,17 @@ Este documento registra las decisiones fundamentales de arquitectura, reglas de 
   6. Destacar visualmente los pagos en efectivo en los paneles de administración y permitir que coordinación edite el medio de pago o el cobrador antes de aprobar.
 - **Estado Actual:** Resuelto / Implementado. Columnas `es_efectivo` (boolean, default false) y `recibido_por` (text, nullable) en tablas `pedidos` y `pagos`.
 
-### ADR-16: Cierre Automático de Venta de Pollos por Fecha Límite
+### ADR-16: Cierre Automático de Venta de Pollos por Stock Máximo (288 unidades)
 - **Categoría:** Regla de Negocio / Pollos.
-- **Contexto:** La preventa de la Gran Pollada requería una fecha límite estricta de cierre para congelar encargos y coordinar los insumos con la parrilla.
+- **Contexto:** Se reabrió la preventa de la Gran Pollada sustituyendo la condición de fecha límite por un tope estricto de producción de 288 pollos (con 269 ya vendidos y 19 disponibles inicialmente).
 - **Decisión:**
-  1. Cierre automático programado para el **martes 27 de octubre de 2026 a las 23:59:59 (`America/Argentina/Buenos_Aires`)**.
-  2. Centralizado en `src/config/constants.ts` mediante `FECHA_CIERRE_VENTA_POLLOS_ISO` y la función `isVentaPollosCerrada()`.
-  3. Doble bloqueo: la página `/pollos` sustituye dinámicamente el formulario por el mensaje institucional de agradecimiento, y la Server Action `createOrder` valida la fecha en el servidor impidiendo cualquier inserción extemporánea.
-  4. El panel administrativo (`/pollos/admin`) y el canje físico de vales por QR (`/pollos/vale/[codigo]`) continúan funcionando con posterioridad a la fecha límite sin alteraciones.
-- **Estado Actual:** Resuelto / Implementado.
+  1. Cierre automático por agotamiento de stock al alcanzar las **288 unidades** (`STOCK_MAXIMO_POLLOS` en `src/config/constants.ts`).
+  2. El stock ocupado se calcula computando todos los pedidos con `estado_pago != 'Rechazado'` (`Aprobado` + `Pendiente`), liberando unidades si un pedido es rechazado.
+  3. Doble validación y manejo de indisponibilidad: la página `/pollos` muestra las unidades restantes y limita la selección del formulario; la Server Action `createOrder` valida nuevamente el stock disponible antes de aceptar cualquier pedido. Si la consulta a la base de datos falla, se muestra un estado de indisponibilidad temporal con botón de reintento y se bloquean las compras (nunca se asume stock agotado ni se permite comprar a ciegas).
+  4. Para evitar sobreventas por concurrencia simultánea a nivel de base de datos, se elaboró el script `docs/sql/2026-cierre-stock-pollos.sql` con un trigger en PostgreSQL serializado mediante `pg_advisory_xact_lock` (con `SECURITY INVOKER` y `search_path` defensivo).
+  5. El panel administrativo (`/pollos/admin`) y el canje físico de vales por QR (`/pollos/vale/[codigo]`) continúan funcionando con normalidad.
+- **Deuda Técnica Identificada:** En `createOrder`, la creación del pedido y sus vales opera mediante llamadas REST sucesivas en lugar de una transacción única en PostgreSQL. Se proyecta unificar en RPC `crear_pedido_con_vales_v1`.
+- **Estado Actual:** Resuelto / Implementado en código local (script SQL de trigger pendiente de ejecución manual por el administrador).
 
 ### ADR-17: Convivencia Familiar 2026 como módulo independiente
 - **Categoría:** Arquitectura / Producto / Seguridad.
@@ -177,6 +179,6 @@ Este documento registra las decisiones fundamentales de arquitectura, reglas de 
 | ADR-13 | Soporte para 3 o más hermanos | Campamentos | Resuelto / Implementado |
 | ADR-14 | Votación unificada de diseño sin padrón para Buzos 2027 | Buzos | Resuelto / Implementado |
 | ADR-15 | Soporte transversal para pagos en efectivo | Transversal | Resuelto / Implementado |
-| ADR-16 | Cierre automático de venta de pollos por fecha límite | Pollos | Resuelto / Implementado |
+| ADR-16 | Cierre automático de venta de pollos por stock máximo (288 unidades) | Pollos | Resuelto / Implementado (script SQL pendiente de ejecución) |
 | ADR-17 | Convivencia Familiar 2026 como módulo independiente | Convivencia | Implementado (migración SQL pendiente de ejecución manual) |
 | ADR-18 | Panel General de Consulta y Exportación de Campamentos 2027 | Campamentos | Resuelto / Implementado |

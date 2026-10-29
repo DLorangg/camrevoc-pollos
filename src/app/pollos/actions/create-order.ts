@@ -2,7 +2,7 @@
 
 import { customAlphabet } from "nanoid";
 import { createServiceClient } from "@/lib/supabase/server";
-import { isVentaPollosCerrada } from "@/config/constants";
+import { obtenerStockPollos } from "@/lib/services/stock-pollos";
 import type { ValeInsert } from "@/types/database";
 
 // Alfabeto para los códigos de vales: solo mayúsculas + dígitos, sin ambiguos.
@@ -46,11 +46,26 @@ export interface CreateOrderError {
 export async function createOrder(
   input: CreateOrderInput,
 ): Promise<CreateOrderResult | CreateOrderError> {
-  // Validación de fecha límite de venta
-  if (isVentaPollosCerrada()) {
+  // Validación de stock disponible en el servidor
+  const stock = await obtenerStockPollos();
+  if (!stock.ok) {
     return {
       ok: false,
-      error: "¡La venta de pollos ha finalizado! Gracias a todos por participar de la Gran Pollada de CAMREVOC.",
+      error: "No se pudo verificar el stock disponible en este momento. Por favor intentá nuevamente en unos instantes.",
+    };
+  }
+
+  if (stock.stockAgotado) {
+    return {
+      ok: false,
+      error: "¡El stock de pollos se encuentra agotado! Gracias a todos por participar de la Gran Pollada de CAMREVOC.",
+    };
+  }
+
+  if (input.cantidad_total > stock.stockRestante) {
+    return {
+      ok: false,
+      error: `No hay suficiente stock disponible. Solicitaste ${input.cantidad_total} pollos pero solo quedan ${stock.stockRestante} ${stock.stockRestante === 1 ? "unidad disponible" : "unidades disponibles"}.`,
     };
   }
 
@@ -133,6 +148,12 @@ export async function createOrder(
 
   if (pedidoError || !pedido) {
     console.error("[createOrder] Error al insertar pedido:", pedidoError);
+    if (pedidoError?.message?.includes("STOCK_AGOTADO")) {
+      return {
+        ok: false,
+        error: "Lo sentimos, el stock disponible cambió en este momento y no alcanza para tu pedido. Por favor verificá las unidades restantes e intentá nuevamente.",
+      };
+    }
     return {
       ok: false,
       error: pedidoError?.message?.includes("es_efectivo")

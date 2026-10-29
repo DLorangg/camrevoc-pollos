@@ -36,6 +36,8 @@ Almacena la cabecera de la compra realizada y atribuida al animador/vendedor.
 
 > **Nota sobre `estado_entrega` en `pedidos`:** En [src/app/pollos/actions/vale-actions.ts](file:///mnt/HDD/proyectos/camrevoc-pollos/src/app/pollos/actions/vale-actions.ts) el código intenta actualizar condicionalmente una columna `estado_entrega` en `pedidos` cuando se retiran todos los vales. Sin embargo, dicha columna no forma parte de la interfaz en [src/types/database.ts](file:///mnt/HDD/proyectos/camrevoc-pollos/src/types/database.ts) y su ausencia en base de datos es capturada de forma defensiva sin interrumpir la ejecución.
 
+> **Control Atómico de Stock Máximo (288 pollos):** Para blindar la concurrencia a nivel de base de datos e impedir sobreventas por inserciones simultáneas, se diseñó el trigger `trigger_check_stock_pollos` con bloqueo consultivo transaccional (`pg_advisory_xact_lock(20261029)`). Dicho script se encuentra en [`docs/sql/2026-cierre-stock-pollos.sql`](file:///mnt/HDD/proyectos/camrevoc-pollos/docs/sql/2026-cierre-stock-pollos.sql) para ejecución manual por administración.
+
 #### 2. `vales`
 Almacena los vales individuales emitidos para cada pedido.
 

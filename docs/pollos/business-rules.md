@@ -41,10 +41,12 @@ Este documento compila las reglas comerciales, operativas y de validación que g
    - **Comprobante Obligatorio para Efectivo:** El comprobante sigue siendo 100% obligatorio (foto del recibo de papel o comprobante físico firmado extendido por quien cobró).
    - **No Auto-aprobación:** El pedido en efectivo ingresa siempre como **`Pendiente`** y requiere auditoría de coordinación en `/pollos/admin`.
    - **Auditoría y Edición:** En el panel de administración se distingue con badge `💵 Efectivo · Recibió: [nombre]`. El operador puede corregir el cobrador o alternar el método de pago antes de aprobar o rechazar.
-6. **Fecha Límite y Cierre Automático de Venta:**
-   - La venta pública de pollos finaliza automáticamente el **martes 27 de octubre de 2026 a las 23:59:59 (hora de Argentina, `America/Argentina/Buenos_Aires`)**.
-   - **Comportamiento en `/pollos`:** Vencido el plazo, el formulario deja de estar disponible y se muestra el mensaje institucional: *"¡La venta de pollos ha finalizado! Gracias a todos por participar de la Gran Pollada de CAMREVOC."*
-   - **Validación de Servidor:** La Server Action `createOrder` valida la fecha de corte en el backend y rechaza cualquier nuevo pedido, impidiendo envíos extemporáneos desde pestañas retenidas.
+6. **Límite de Stock y Cierre Automático de Venta:**
+   - La venta pública de pollos opera con un **límite máximo estricto de 288 pollos** (`STOCK_MAXIMO_POLLOS` en [src/config/constants.ts](file:///mnt/HDD/proyectos/camrevoc-pollos/src/config/constants.ts)).
+   - **Cómputo de Stock Ocupado:** Se calcula sumando `cantidad_total` de todos los pedidos cuyo `estado_pago` no sea `Rechazado` (es decir, computa tanto pedidos `Aprobado` como pedidos `Pendiente` en revisión, para evitar sobreventas mientras finanzas concilia los pagos). Los pedidos `Rechazado` liberan automáticamente el stock.
+   - **Comportamiento en `/pollos` y Manejo de Errores:** La página consulta el stock disponible en tiempo real en cada solicitud. Mientras haya stock, informa las unidades restantes y limita la selección del formulario a ese remanente. Al agotarse las 288 unidades (`stockRestante <= 0`), el formulario se oculta automáticamente y se muestra el mensaje institucional de agradecimiento y stock agotado. Si la consulta a la base de datos falla por problemas de conectividad o infraestructura, el sistema no asume stock agotado ni permite compras a ciegas: muestra una pantalla de indisponibilidad temporal con opción de reintentar.
+   - **Validación Definitiva en el Servidor:** La Server Action `createOrder` valida nuevamente el stock en el backend antes de registrar cualquier pedido, rechazando solicitudes si el stock no se puede verificar o si excede las unidades disponibles.
+   - **Garantía Atómica para Concurrencia:** Se preparó el script [docs/sql/2026-cierre-stock-pollos.sql](file:///mnt/HDD/proyectos/camrevoc-pollos/docs/sql/2026-cierre-stock-pollos.sql) con un trigger en PostgreSQL serializado mediante `pg_advisory_xact_lock` (modo `SECURITY INVOKER` y `search_path` defensivo).
    - **Operaciones Preservadas:** El cierre no modifica pedidos preexistentes ni afecta el panel administrativo (`/pollos/admin`), la conciliación bancaria o el canje físico de vales.
 
 ---

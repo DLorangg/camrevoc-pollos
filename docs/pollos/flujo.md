@@ -88,13 +88,15 @@ flowchart TD
   - **Transferencia (por defecto):** Realiza la transferencia al Santander y adjunta comprobante bancario.
   - **Efectivo:** Marca "¿Es pago en efectivo?", especifica obligatoriamente quién cobró el dinero en mano (`recibido_por`) y adjunta foto del recibo físico en papel.
 - El comprobante es 100% obligatorio en ambos casos.
-- **Cierre Automático:** El plazo para registrar pedidos vence el **martes 27 de octubre de 2026 a las 23:59 (hora de Argentina)**. Cumplido el plazo, la ruta `/pollos` reemplaza el formulario por el mensaje institucional de cierre y `createOrder` bloquea la creación de nuevos pedidos.
+- **Cierre Automático por Stock:** La venta pública de pollos opera con un cupo máximo de **288 pollos**. La página `/pollos` refleja en tiempo real las unidades restantes y limita la selección. Al agotarse el stock (`stockRestante <= 0`), la interfaz oculta el formulario y muestra la notificación de stock agotado. En el backend, `createOrder` valida de forma estricta el stock antes de registrar cada pedido.
 
 ### Paso 2: Generación Inmediata de Vales
 - El archivo se almacena en el bucket `comprobantes` de Supabase.
 - Se ejecuta el Server Action `createOrder`:
+  - Se valida el stock disponible (rechazando si hay error de consulta o falta de cupo).
   - Se registra el pedido en estado `Pendiente` (incluyendo `es_efectivo` y `recibido_por`).
   - Se generan los vales con códigos únicos `CRV-XXXX` en estado `Pendiente`.
+  - *Nota de Consistencia:* Actualmente la inserción del pedido y la de los vales se realizan en llamadas REST sucesivas con borrado compensatorio ante fallos. Para una atomicidad ACID integral, se proyecta una función RPC única en PostgreSQL.
 - La pantalla muestra la confirmación inmediata con botones de WhatsApp preconfigurados para compartir cada vale al destinatario antes de que el pago sea revisado.
 
 ### Paso 3: Validación Administrativa (/pollos/admin)
