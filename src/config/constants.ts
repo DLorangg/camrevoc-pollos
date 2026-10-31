@@ -39,4 +39,4 @@ export type Etapa = (typeof ETAPAS)[number];
  * Límite máximo de pollos disponibles para la venta.
  * Las ventas se cierran automáticamente al alcanzarse las 288 unidades.
  */
-export const STOCK_MAXIMO_POLLOS = 288;
+export const STOCK_MAXIMO_POLLOS = 302;
