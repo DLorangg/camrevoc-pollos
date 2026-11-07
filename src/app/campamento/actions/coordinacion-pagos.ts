@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createCampamentoClient } from "@/lib/supabase/campamento";
 import { getCampaSession } from "./coordinacion-auth";
-import { normalizarEtapa, COORDINADORES_POR_ETAPA } from "@/config/campamento-coordinadores";
+import { COORDINADORES_POR_ETAPA } from "@/config/campamento-coordinadores";
 import type {
   InscriptoCampamento,
   PagoCampamento,
@@ -12,6 +12,110 @@ import type {
   PagoPendienteRevision,
   PagoRechazadoRevision,
 } from "@/types/campamento";
+
+function crearMetricasVacias(): MetricasEtapa {
+  return {
+    totalInscriptos: 0,
+    totalRecaudado: 0,
+    totalPresupuestado: 0,
+    porcentajeCobranza: 0,
+    pagosPendientesCount: 0,
+    pagosRechazadosCount: 0,
+  };
+}
+
+/**
+ * Valida estrictamente un identificador de etapa ("1".."7", "1ra".."7ma", "1ra Etapa".."7ma Etapa")
+ * rechazando cadenas ambiguas o manipuladas antes de ejecutar cualquier consulta.
+ */
+function validarEtapaParam(etapaParam: unknown): string | null {
+  if (typeof etapaParam !== "string") return null;
+  const trimmed = etapaParam.trim();
+  const match = trimmed.match(/^([1-7])(?:(?:ra|da|ta|ma)(?:\s+etapa)?)?$/i);
+  if (!match) return null;
+  const etapaNum = match[1];
+  return COORDINADORES_POR_ETAPA[etapaNum] ? etapaNum : null;
+}
+
+/**
+ * Comprueba en el servidor que un inscripto existe y pertenece exactamente a la etapa autorizada.
+ */
+async function verificarInscriptoPerteneceAEtapa(
+  supabase: ReturnType<typeof createCampamentoClient>,
+  inscriptoIdRaw: unknown,
+  etapaAutorizada: string,
+): Promise<{ ok: true; inscriptoId: string } | { ok: false; error: string }> {
+  if (typeof inscriptoIdRaw !== "string" || !inscriptoIdRaw.trim()) {
+    return { ok: false, error: "Identificador de inscripto inválido." };
+  }
+  const inscriptoId = inscriptoIdRaw.trim();
+
+  const { data: inscripto, error: inscriptoError } = await supabase
+    .from("inscriptos")
+    .select("id, etapa")
+    .eq("id", inscriptoId)
+    .maybeSingle();
+
+  if (inscriptoError || !inscripto || !inscripto.id) {
+    return {
+      ok: false,
+      error: "No se pudo verificar el inscripto para la etapa autorizada.",
+    };
+  }
+
+  const etapaInscripto = validarEtapaParam(inscripto.etapa);
+  if (!etapaInscripto || etapaInscripto !== etapaAutorizada) {
+    return {
+      ok: false,
+      error: "No se pudo verificar el inscripto para la etapa autorizada.",
+    };
+  }
+
+  return { ok: true, inscriptoId: inscripto.id };
+}
+
+/**
+ * Comprueba en el servidor que tanto el pago como su inscripto asociado existen
+ * y pertenecen exactamente a la etapa de la sesión autenticada.
+ */
+async function verificarPagoPerteneceAEtapa(
+  supabase: ReturnType<typeof createCampamentoClient>,
+  pagoIdRaw: unknown,
+  etapaAutorizada: string,
+): Promise<{ ok: true; pagoId: string; inscriptoId: string } | { ok: false; error: string }> {
+  if (typeof pagoIdRaw !== "string" || !pagoIdRaw.trim()) {
+    return { ok: false, error: "Identificador de pago inválido." };
+  }
+  const pagoId = pagoIdRaw.trim();
+
+  const { data: pago, error: pagoError } = await supabase
+    .from("pagos")
+    .select("id, inscripto_id")
+    .eq("id", pagoId)
+    .maybeSingle();
+
+  if (pagoError || !pago || !pago.id || !pago.inscripto_id) {
+    return {
+      ok: false,
+      error: "No se pudo verificar el pago para la etapa autorizada.",
+    };
+  }
+
+  const checkInscripto = await verificarInscriptoPerteneceAEtapa(
+    supabase,
+    pago.inscripto_id,
+    etapaAutorizada,
+  );
+
+  if (!checkInscripto.ok) {
+    return {
+      ok: false,
+      error: "No se pudo verificar el pago para la etapa autorizada.",
+    };
+  }
+
+  return { ok: true, pagoId: pago.id, inscriptoId: checkInscripto.inscriptoId };
+}
 
 /**
  * Obtiene los inscriptos de una etapa junto con sus pagos registrados y las métricas acumuladas.
@@ -25,42 +129,72 @@ export async function getInscriptosEtapa(etapaParam: string): Promise<{
   metricas: MetricasEtapa;
   etapaConfig?: typeof COORDINADORES_POR_ETAPA[string];
 }> {
-  const etapaNum = normalizarEtapa(etapaParam);
+  // 1. Validar parámetro de etapa antes de ejecutar consultas
+  const etapaNum = validarEtapaParam(etapaParam);
   if (!etapaNum) {
     return {
       ok: false,
-      error: "Etapa no válida",
+      error: "Etapa no válida.",
       inscriptos: [],
       pagosPendientes: [],
       pagosRechazados: [],
-      metricas: { totalInscriptos: 0, totalRecaudado: 0, totalPresupuestado: 0, porcentajeCobranza: 0, pagosPendientesCount: 0, pagosRechazadosCount: 0 },
+      metricas: crearMetricasVacias(),
     };
   }
 
-  const etapaConfig = COORDINADORES_POR_ETAPA[etapaNum];
+  // 2. Verificar sesión activa y firmada del coordinador
+  const session = await getCampaSession();
+  if (!session) {
+    return {
+      ok: false,
+      error: "Sesión no válida o expirada. Por favor iniciá sesión nuevamente.",
+      inscriptos: [],
+      pagosPendientes: [],
+      pagosRechazados: [],
+      metricas: crearMetricasVacias(),
+    };
+  }
+
+  // 3. Comprobar que session.etapaNum coincida exactamente con etapaNum solicitado
+  const sessionEtapaNum = validarEtapaParam(session.etapaNum);
+  if (!sessionEtapaNum || sessionEtapaNum !== etapaNum) {
+    return {
+      ok: false,
+      error: "No tenés permisos para consultar los inscriptos de otra etapa.",
+      inscriptos: [],
+      pagosPendientes: [],
+      pagosRechazados: [],
+      metricas: crearMetricasVacias(),
+    };
+  }
+
+  const etapaConfig = COORDINADORES_POR_ETAPA[sessionEtapaNum];
   const supabase = createCampamentoClient();
 
-  // Traer inscriptos de la etapa. En la BD se guardan como "1ra Etapa", "2da Etapa", etc.
+  // Traer inscriptos de la etapa autorizada. En la BD se guardan como "1ra Etapa", "2da Etapa", etc.
   const { data: inscriptosRaw, error: inscriptosError } = await supabase
     .from("inscriptos")
     .select("*")
-    .ilike("etapa", `${etapaNum}%`)
+    .ilike("etapa", `${sessionEtapaNum}%`)
     .order("apellido", { ascending: true })
     .order("nombre", { ascending: true });
 
   if (inscriptosError) {
-    console.error("[getInscriptosEtapa] Error al obtener inscriptos:", inscriptosError);
+    console.error("[getInscriptosEtapa] Error al consultar inscriptos en la base de datos.");
     return {
       ok: false,
       error: "Error al consultar la base de datos de inscriptos.",
       inscriptos: [],
       pagosPendientes: [],
       pagosRechazados: [],
-      metricas: { totalInscriptos: 0, totalRecaudado: 0, totalPresupuestado: 0, porcentajeCobranza: 0, pagosPendientesCount: 0, pagosRechazadosCount: 0 },
+      metricas: crearMetricasVacias(),
     };
   }
 
-  const inscriptosList = (inscriptosRaw || []) as InscriptoCampamento[];
+  const inscriptosList = ((inscriptosRaw || []) as InscriptoCampamento[]).filter((ins) => {
+    const numIns = validarEtapaParam(ins.etapa);
+    return numIns === sessionEtapaNum;
+  });
 
   if (inscriptosList.length === 0) {
     return {
@@ -68,14 +202,7 @@ export async function getInscriptosEtapa(etapaParam: string): Promise<{
       inscriptos: [],
       pagosPendientes: [],
       pagosRechazados: [],
-      metricas: {
-        totalInscriptos: 0,
-        totalRecaudado: 0,
-        totalPresupuestado: 0,
-        porcentajeCobranza: 0,
-        pagosPendientesCount: 0,
-        pagosRechazadosCount: 0,
-      },
+      metricas: crearMetricasVacias(),
       etapaConfig,
     };
   }
@@ -94,7 +221,7 @@ export async function getInscriptosEtapa(etapaParam: string): Promise<{
     .order("created_at", { ascending: false });
 
   if (pagosError) {
-    console.warn("[getInscriptosEtapa] Advertencia al obtener pagos:", pagosError);
+    console.warn("[getInscriptosEtapa] Advertencia al obtener pagos de la etapa.");
   }
 
   const pagosList = (pagosRaw || []) as PagoCampamento[];
@@ -203,29 +330,52 @@ export async function registrarPagoCampamento(
   formData: FormData,
 ): Promise<{ ok: boolean; error?: string }> {
   const session = await getCampaSession();
-  if (!session) {
+  const etapaAutorizada = session ? validarEtapaParam(session.etapaNum) : null;
+  if (!session || !etapaAutorizada) {
     return { ok: false, error: "Sesión no válida o expirada. Por favor iniciá sesión nuevamente." };
   }
 
-  const inscriptoId = formData.get("inscriptoId") as string;
+  const etapaForm = formData.get("etapa");
+  if (etapaForm !== null && etapaForm !== "") {
+    const etapaSolicitada = validarEtapaParam(etapaForm);
+    if (!etapaSolicitada || etapaSolicitada !== etapaAutorizada) {
+      return { ok: false, error: "No tenés permisos para registrar pagos en otra etapa." };
+    }
+  }
+
+  const inscriptoIdRaw = formData.get("inscriptoId");
   const montoStr = formData.get("monto") as string;
   const observaciones = (formData.get("observaciones") as string) || "";
-  const etapa = formData.get("etapa") as string;
   const comprobanteFile = formData.get("comprobante") as File | null;
 
   const monto = Number(montoStr);
-  if (!inscriptoId || isNaN(monto) || monto <= 0) {
+  if (typeof inscriptoIdRaw !== "string" || !inscriptoIdRaw.trim()) {
+    return { ok: false, error: "Identificador de inscripto inválido." };
+  }
+  if (!Number.isFinite(monto) || monto <= 0) {
     return { ok: false, error: "El monto ingresado debe ser mayor a 0." };
   }
 
   const supabase = createCampamentoClient();
+
+  // Verificar en base de datos que el inscripto existe y pertenece a la etapa de la sesión
+  const checkInscripto = await verificarInscriptoPerteneceAEtapa(
+    supabase,
+    inscriptoIdRaw,
+    etapaAutorizada,
+  );
+  if (!checkInscripto.ok) {
+    return { ok: false, error: checkInscripto.error };
+  }
+
+  const inscriptoId = checkInscripto.inscriptoId;
   let comprobanteUrl: string | null = null;
 
   // Subir archivo al bucket comprobantes-campa si se adjuntó
   if (comprobanteFile && comprobanteFile.size > 0) {
     try {
       const sanitizedName = comprobanteFile.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-      const filePath = `${session.etapaNum}/${inscriptoId}/${Date.now()}-${sanitizedName}`;
+      const filePath = `${etapaAutorizada}/${inscriptoId}/${Date.now()}-${sanitizedName}`;
 
       const arrayBuffer = await comprobanteFile.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
@@ -237,16 +387,33 @@ export async function registrarPagoCampamento(
           upsert: true,
         });
 
-      if (uploadError) {
-        console.error("[registrarPagoCampamento] Error al subir comprobante:", uploadError);
-      } else if (uploadData) {
-        const { data: publicUrlData } = supabase.storage
-          .from("comprobantes-campa")
-          .getPublicUrl(uploadData.path);
-        comprobanteUrl = publicUrlData.publicUrl;
+      if (uploadError || !uploadData?.path) {
+        console.error("[registrarPagoCampamento] Error al subir comprobante al almacenamiento.");
+        return {
+          ok: false,
+          error: "No se pudo subir el comprobante adjunto. El pago no fue registrado.",
+        };
       }
-    } catch (fileErr) {
-      console.error("[registrarPagoCampamento] Excepción al procesar archivo:", fileErr);
+
+      const { data: publicUrlData } = supabase.storage
+        .from("comprobantes-campa")
+        .getPublicUrl(uploadData.path);
+
+      if (!publicUrlData?.publicUrl) {
+        console.error("[registrarPagoCampamento] No se pudo obtener URL pública del comprobante.");
+        return {
+          ok: false,
+          error: "No se pudo subir el comprobante adjunto. El pago no fue registrado.",
+        };
+      }
+
+      comprobanteUrl = publicUrlData.publicUrl;
+    } catch {
+      console.error("[registrarPagoCampamento] Excepción al procesar archivo de comprobante.");
+      return {
+        ok: false,
+        error: "No se pudo procesar el comprobante adjunto. El pago no fue registrado.",
+      };
     }
   }
 
@@ -279,16 +446,14 @@ export async function registrarPagoCampamento(
   }
 
   if (insertError) {
-    console.error("[registrarPagoCampamento] Error al insertar pago:", insertError);
+    console.error("[registrarPagoCampamento] Error al insertar pago en la base de datos.");
     return {
       ok: false,
-      error: `Error al registrar el pago: ${insertError.message || "Intentá nuevamente."}`,
+      error: "No se pudo registrar el pago. Intentá nuevamente.",
     };
   }
 
-  if (etapa) {
-    revalidatePath(`/campamento/etapa/${etapa}`);
-  }
+  revalidatePath(`/campamento/etapa/${etapaAutorizada}`);
 
   return { ok: true };
 }
@@ -302,8 +467,14 @@ export async function actualizarPagoCampamento(
   etapaNum: string,
 ): Promise<{ ok: boolean; error?: string }> {
   const session = await getCampaSession();
-  if (!session) {
+  const etapaAutorizada = session ? validarEtapaParam(session.etapaNum) : null;
+  if (!session || !etapaAutorizada) {
     return { ok: false, error: "Sesión no válida o expirada." };
+  }
+
+  const etapaSolicitada = validarEtapaParam(etapaNum);
+  if (!etapaSolicitada || etapaSolicitada !== etapaAutorizada) {
+    return { ok: false, error: "No tenés permisos para modificar pagos de otra etapa." };
   }
 
   const esEfectivo = Boolean(data.es_efectivo);
@@ -311,6 +482,14 @@ export async function actualizarPagoCampamento(
 
   if (esEfectivo && !recibidoPor) {
     return { ok: false, error: "Para pagos en efectivo, debés indicar quién recibió el dinero." };
+  }
+
+  const supabase = createCampamentoClient();
+
+  // Comprobar en el servidor que tanto el pago como el inscripto pertenecen a la etapa autorizada
+  const checkPago = await verificarPagoPerteneceAEtapa(supabase, pagoId, etapaAutorizada);
+  if (!checkPago.ok) {
+    return { ok: false, error: checkPago.error };
   }
 
   const updateData: Record<string, unknown> = {
@@ -322,18 +501,20 @@ export async function actualizarPagoCampamento(
     updateData.observaciones = data.observaciones?.trim() || null;
   }
 
-  const supabase = createCampamentoClient();
-  const { error } = await supabase
+  const { data: updatedPago, error } = await supabase
     .from("pagos")
     .update(updateData)
-    .eq("id", pagoId);
+    .eq("id", checkPago.pagoId)
+    .eq("inscripto_id", checkPago.inscriptoId)
+    .select("id")
+    .maybeSingle();
 
-  if (error) {
-    console.error("[actualizarPagoCampamento] Error al actualizar:", error);
-    return { ok: false, error: error.message || "Error al actualizar pago." };
+  if (error || !updatedPago?.id) {
+    console.error("[actualizarPagoCampamento] Error o registro no encontrado al actualizar pago.");
+    return { ok: false, error: "No se pudo actualizar el pago solicitado." };
   }
 
-  revalidatePath(`/campamento/etapa/${etapaNum}`);
+  revalidatePath(`/campamento/etapa/${etapaAutorizada}`);
   return { ok: true };
 }
 
@@ -347,8 +528,14 @@ export async function aprobarPagoCampamento(
   datosPago?: { es_efectivo?: boolean; recibido_por?: string | null; observaciones?: string | null },
 ): Promise<{ ok: boolean; error?: string }> {
   const session = await getCampaSession();
-  if (!session) {
+  const etapaAutorizada = session ? validarEtapaParam(session.etapaNum) : null;
+  if (!session || !etapaAutorizada) {
     return { ok: false, error: "Sesión no válida o expirada." };
+  }
+
+  const etapaSolicitada = validarEtapaParam(etapaNum);
+  if (!etapaSolicitada || etapaSolicitada !== etapaAutorizada) {
+    return { ok: false, error: "No tenés permisos para aprobar pagos de otra etapa." };
   }
 
   const updateData: Record<string, unknown> = {
@@ -378,17 +565,27 @@ export async function aprobarPagoCampamento(
   }
 
   const supabase = createCampamentoClient();
-  const { error } = await supabase
-    .from("pagos")
-    .update(updateData)
-    .eq("id", pagoId);
 
-  if (error) {
-    console.error("[aprobarPagoCampamento] Error al aprobar:", error);
-    return { ok: false, error: error.message || "Error al aprobar pago." };
+  // Comprobar en el servidor que tanto el pago como el inscripto pertenecen a la etapa autorizada
+  const checkPago = await verificarPagoPerteneceAEtapa(supabase, pagoId, etapaAutorizada);
+  if (!checkPago.ok) {
+    return { ok: false, error: checkPago.error };
   }
 
-  revalidatePath(`/campamento/etapa/${etapaNum}`);
+  const { data: updatedPago, error } = await supabase
+    .from("pagos")
+    .update(updateData)
+    .eq("id", checkPago.pagoId)
+    .eq("inscripto_id", checkPago.inscriptoId)
+    .select("id")
+    .maybeSingle();
+
+  if (error || !updatedPago?.id) {
+    console.error("[aprobarPagoCampamento] Error o registro no encontrado al aprobar pago.");
+    return { ok: false, error: "No se pudo aprobar el pago solicitado." };
+  }
+
+  revalidatePath(`/campamento/etapa/${etapaAutorizada}`);
   return { ok: true };
 }
 
@@ -401,27 +598,45 @@ export async function observarPagoCampamento(
   etapaNum: string,
 ): Promise<{ ok: boolean; error?: string }> {
   const session = await getCampaSession();
-  if (!session) {
+  const etapaAutorizada = session ? validarEtapaParam(session.etapaNum) : null;
+  if (!session || !etapaAutorizada) {
     return { ok: false, error: "Sesión no válida o expirada." };
   }
 
+  const etapaSolicitada = validarEtapaParam(etapaNum);
+  if (!etapaSolicitada || etapaSolicitada !== etapaAutorizada) {
+    return { ok: false, error: "No tenés permisos para observar o rechazar pagos de otra etapa." };
+  }
+
   const supabase = createCampamentoClient();
-  const { error } = await supabase
+
+  // Comprobar en el servidor que tanto el pago como el inscripto pertenecen a la etapa autorizada
+  const checkPago = await verificarPagoPerteneceAEtapa(supabase, pagoId, etapaAutorizada);
+  if (!checkPago.ok) {
+    return { ok: false, error: checkPago.error };
+  }
+
+  const motivoLimpio = typeof motivo === "string" ? motivo.trim() : "";
+
+  const { data: updatedPago, error } = await supabase
     .from("pagos")
     .update({
       estado: "RECHAZADO",
-      motivo_rechazo: motivo.trim() || "Pago observado o rechazado por coordinación.",
+      motivo_rechazo: motivoLimpio || "Pago observado o rechazado por coordinación.",
       verificado_por: session.coordinador,
       verificado_at: new Date().toISOString(),
     })
-    .eq("id", pagoId);
+    .eq("id", checkPago.pagoId)
+    .eq("inscripto_id", checkPago.inscriptoId)
+    .select("id")
+    .maybeSingle();
 
-  if (error) {
-    console.error("[observarPagoCampamento] Error al rechazar:", error);
-    return { ok: false, error: error.message || "Error al observar pago." };
+  if (error || !updatedPago?.id) {
+    console.error("[observarPagoCampamento] Error o registro no encontrado al observar pago.");
+    return { ok: false, error: "No se pudo observar o rechazar el pago solicitado." };
   }
 
-  revalidatePath(`/campamento/etapa/${etapaNum}`);
+  revalidatePath(`/campamento/etapa/${etapaAutorizada}`);
   return { ok: true };
 }
 
