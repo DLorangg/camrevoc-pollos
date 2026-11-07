@@ -51,15 +51,16 @@ Ubicadas en [src/app/campamento/actions/](file:///mnt/HDD/proyectos/camrevoc-pol
   - `buscarInscriptoPorDni(dni)`: Obtiene datos del participante, computa total abonado (solo pagos aprobados), saldo pendiente y alerta si tiene pagos rechazados.
   - `subirPagoFamilia(formData)`: Sube el comprobante a `comprobantes-campa` y registra un pago en `pagos` por cada hermano con `estado = 'PENDIENTE'` y `subido_por = 'FAMILIA'`.
 - **`coordinacion-auth.ts`:**
-  - `loginCoordinador(etapa, coordinador, pin)`: Valida el PIN contra `etapas_pines`, auto-registra al coordinador en `coordinadores_etapa` y genera la cookie HTTP-Only `campa_etapa_session`.
-  - `getCampaSession()`: Lee y deserializa la sesión del coordinador.
+  - `loginCoordinador(etapa, coordinador, pin)`: Valida el PIN contra `etapas_pines` en tiempo constante, auto-registra al coordinador en `coordinadores_etapa` y genera la cookie HTTP-Only `campa_etapa_session` firmada con HMAC-SHA256 usando exclusivamente `CAMPAMENTO_SESSION_SECRET` (mínimo 32 caracteres, requerido en el entorno de servidor de Vercel) e información de vigencia (`iat`, `exp`, máx. 12 horas).
+  - `getCampaSession()`: Verifica la firma HMAC-SHA256 en tiempo constante (`timingSafeEqual`), la vigencia máxima (`exp - iat <= 12h`), la expiración y la estructura de la sesión del coordinador.
   - `logoutCoordinador()`: Destruye la cookie de sesión.
-  - `actualizarPinEtapa(actual, nuevo, confirmacion)`: Permite cambiar el PIN de la etapa en `etapas_pines` (mínimo 6 caracteres).
+  - `actualizarPinEtapa(actual, nuevo, confirmacion)`: Permite cambiar el PIN de la etapa en `etapas_pines` (mínimo 6 caracteres) y renueva la cookie firmada.
 - **`coordinacion-pagos.ts`:**
-  - `getInscriptosEtapa(etapaParam)`: Consulta inscriptos y pagos de la etapa, computando métricas de recaudación en tiempo real.
-  - `aprobarPagoCampamento(pagoId, etapaNum)`: Pasa el pago a `'APROBADO'`, guardando auditor y timestamp; descuenta del saldo restante.
-  - `observarPagoCampamento(pagoId, motivo, etapaNum)`: Pasa el pago a `'RECHAZADO'` registrando el motivo explicativo obligatorio.
-  - `registrarPagoCampamento(formData)`: Registra un pago manual directo ingresado por el coordinador (`estado = 'APROBADO'`, `subido_por = 'COORDINADOR'`).
+  - `getInscriptosEtapa(etapaParam)`: Verifica la sesión activa con `getCampaSession()`, comprueba que `session.etapaNum === etapaNum` y consulta inscriptos y pagos de la etapa autorizada, computando métricas de recaudación en tiempo real.
+  - `aprobarPagoCampamento(pagoId, etapaNum)`: Verifica sesión y pertenencia del pago e inscripto a la etapa autorizada (anti-IDOR), y pasa el pago a `'APROBADO'`, guardando auditor y timestamp.
+  - `observarPagoCampamento(pagoId, motivo, etapaNum)`: Verifica sesión y pertenencia del pago e inscripto a la etapa autorizada (anti-IDOR), y pasa el pago a `'RECHAZADO'` registrando el motivo explicativo obligatorio.
+  - `actualizarPagoCampamento(pagoId, data, etapaNum)`: Verifica sesión y pertenencia del pago e inscripto a la etapa autorizada (anti-IDOR), y actualiza modalidad de pago/observaciones.
+  - `registrarPagoCampamento(formData)`: Verifica sesión y pertenencia del inscripto a la etapa autorizada (anti-IDOR), y registra un pago manual directo ingresado por el coordinador (`estado = 'APROBADO'`, `subido_por = 'COORDINADOR'`).
 - **`admin-general-auth.ts`:**
   - `loginAdminGeneral(password)`: Valida la contraseña contra `CAMPAMENTO_ADMIN_GENERAL_PASSWORD` y setea la cookie criptográfica `campa_admin_general_session`.
   - `logoutAdminGeneral()`: Destruye la cookie de sesión general.
